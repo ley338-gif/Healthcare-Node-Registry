@@ -12,6 +12,8 @@ final class DashboardTest extends TestCase
 
     public function test_authenticated_user_can_view_dashboard(): void
     {
+        $this->withoutVite();
+
         $user = User::factory()->create();
 
         $this->actingAs($user)
