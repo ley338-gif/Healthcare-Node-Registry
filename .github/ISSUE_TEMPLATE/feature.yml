@@ -1,0 +1,38 @@
+name: Feature
+description: Neue Produktfunktion oder Verbesserung
+title: "feat: "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Welches reale Nutzerproblem wird gelöst?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Gewünschtes Ergebnis
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Akzeptanzkriterien
+    validations:
+      required: true
+  - type: dropdown
+    id: data
+    attributes:
+      label: Patientendaten erforderlich?
+      options:
+        - Nein
+        - Unklar – Datenschutzreview erforderlich
+        - Ja – Scope grundsätzlich prüfen
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Security-, Qualitäts- und Betriebsrisiken

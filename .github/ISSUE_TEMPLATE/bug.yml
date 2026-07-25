@@ -1,0 +1,32 @@
+name: Bug
+description: Reproduzierbarer Fehler
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: observed
+    attributes:
+      label: Beobachtetes Verhalten
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Erwartetes Verhalten
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduktionsschritte
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+  - type: textarea
+    id: sanitized
+    attributes:
+      label: Bereinigte Logs/Screenshots
+      description: Keine Secrets oder echten Patientendaten.
