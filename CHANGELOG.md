@@ -2,28 +2,27 @@
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-07-25
+## [0.1.1] - 2026-07-25
 
 ### Added
 
-- Laravel-13-/Vue-3-/Inertia-3-Grundgerüst
-- modularer Monolith mit reservierten Domänengrenzen
-- PostgreSQL-18- und Docker-Compose-Umgebung
-- lokale sessionbasierte Anmeldung
-- native Rollen- und Berechtigungsgrundlage
-- Dashboard-Basislayout
-- Health Endpoint
-- strukturierte JSON-Logs auf stderr
-- Backend-, Frontend- und Container-CI
-- Featuretests für Health, Login und Dashboard
-- akzeptierter Technologie-ADR
+- sicherer `registry:create-admin`-Befehl
+- `registry:doctor`
+- Security-Event-Tabelle
+- zentraler RBAC-Bootstrapper
+- Backup-/Restore-Skripte mit SHA-256
+- Clean-Install-Anleitung
+- Tests für Setup und Installationsprüfung
+
+### Changed
+
+- Seeder und produktiver Setup-Prozess getrennt
+- CI um Composer-Validierung, Audits, `.env`-Schutz und Compose-Prüfung erweitert
+- Roadmap und Known Issues synchronisiert
 
 ### Security
 
-- Debug standardmäßig deaktiviert
-- verschlüsselte Datenbanksessions
-- Rate Limiting für Anmeldungen
-- keine öffentliche Registrierung
-- sichere Nginx-Header
-- getrennte Frontend- und interne Backend-Netze
-- Datenbank ohne veröffentlichten Host-Port
+- Passwort nur verdeckt abgefragt
+- keine Passwortoption in der Shell
+- zweites Initialkonto wird verweigert
+- Restore verlangt explizite Bestätigung
