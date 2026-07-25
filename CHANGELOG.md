@@ -1,42 +1,29 @@
 # Changelog
 
-Alle wesentlichen Änderungen werden nach dem Prinzip von Keep a Changelog dokumentiert. Produktversionen folgen Semantic Versioning.
-
 ## [Unreleased]
 
-### Added
-
-- ADR-Index und zehn blockierende Sprint-0-Entscheidungsvorlagen
-- Healthcare-Glossar
-- Personas und User Journeys
-- Requirements-Traceability-Matrix
-- Datenwörterbuch und Statusmodelle
-- Authentisierungs-, Upload- und Security-Event-Konzept
-- Kontextdiagramm und Modulabhängigkeitsregeln
-- Sprint-0-Backlog
-
-### Changed
-
-- Versionslogik zwischen Foundation und geplanter Produktversion bereinigt
-- Requirements um messbare Akzeptanzkriterien erweitert
-- initiales ERD fachlich geschärft
-- Rollen- und Berechtigungsmodell konkretisiert
-- Threat Model um Datenflüsse, Trust Boundaries und Risikobehandlung erweitert
-- Testing Strategy konkretisiert
-- Roadmap und Known Issues mit ADRs verknüpft
-
-## [0.0.1] - 2026-07-25
+## [0.1.0] - 2026-07-25
 
 ### Added
 
-- initiales Repository-Grundgerüst
-- Produktvision und MVP-Scope
-- AI Engineering Manual
-- Architektur-, Datenbank-, UI-, Security- und Compliance-Dokumentation
-- GitHub Issue- und Pull-Request-Templates
-- Referenzbilder für Architektur und GUI
+- Laravel-13-/Vue-3-/Inertia-3-Grundgerüst
+- modularer Monolith mit reservierten Domänengrenzen
+- PostgreSQL-18- und Docker-Compose-Umgebung
+- lokale sessionbasierte Anmeldung
+- native Rollen- und Berechtigungsgrundlage
+- Dashboard-Basislayout
+- Health Endpoint
+- strukturierte JSON-Logs auf stderr
+- Backend-, Frontend- und Container-CI
+- Featuretests für Health, Login und Dashboard
+- akzeptierter Technologie-ADR
 
-### Notes
+### Security
 
-- Foundation- und Dokumentationsstand
-- keine ausführbare Produktversion
+- Debug standardmäßig deaktiviert
+- verschlüsselte Datenbanksessions
+- Rate Limiting für Anmeldungen
+- keine öffentliche Registrierung
+- sichere Nginx-Header
+- getrennte Frontend- und interne Backend-Netze
+- Datenbank ohne veröffentlichten Host-Port

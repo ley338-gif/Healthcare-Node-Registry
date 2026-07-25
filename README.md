@@ -1,86 +1,97 @@
-# Healthcare Node Registry
+# Healthcare Node Registry 0.1.0
 
-> On-Premise-Webanwendung zur zentralen Dokumentation und Visualisierung medizinischer IT-Systeme, Endpunkte und Kommunikationsbeziehungen.
+Technisches Grundgerüst der On-Premise-Registry für Healthcare-IT-Systeme und Kommunikationsbeziehungen.
 
-## Status
+## Enthalten
 
-- **Projektphase:** Sprint 0 – Foundation
-- **Foundation-Version:** 0.0.1
-- **Geplanter Produktstatus:** Pre-Alpha
-- **Ausführbare Anwendung:** noch nicht vorhanden
-- **Nächster geplanter Produktstand:** 0.1.0 – Technisches Grundgerüst
+- Laravel 13 / PHP 8.4
+- Vue 3 / TypeScript / Inertia 3
+- Tailwind CSS 4
+- PostgreSQL 18
+- Docker Compose
+- Nginx + PHP-FPM
+- sessionbasierte Anmeldung
+- native RBAC-Grundlage
+- modularer Monolith
+- Health Endpoint
+- strukturierte Logs
+- GitHub Actions für Backend, Frontend und Container
+- Dashboard-Basislayout gemäß Enterprise-Admin-Richtung
 
-Dieses Repository enthält die verbindliche Produktspezifikation, Architekturgrundlagen, Entwicklungsregeln, Security- und Compliance-Vorbereitung. Die Laravel-/Vue-Anwendung wird erst nach formeller Freigabe der blockierenden Sprint-0-Entscheidungen initialisiert.
+## Noch nicht enthalten
 
-## Produktziel
+- produktive Registry-Fachmodule
+- DICOM- oder HL7-Kommunikation
+- Monitoring und Discovery
+- Dokumenten-Uploads
+- vollständige Benutzerverwaltung
+- MFA oder externe Verzeichnisanbindung
 
-Die Anwendung stellt eine zentrale, nachvollziehbare und durchsuchbare Registry für Healthcare-IT bereit. Sie dokumentiert insbesondere:
+## Lokaler Start
 
-- DICOM-Nodes und DICOM Application Entities
-- PACS-, RIS-, KIS- und PVS-Systeme
-- Modalitäten, Archive, Viewer und KI-Systeme
-- HL7-, FHIR-, REST-, LDAP-, Datenbank-, Datei- und S3-Endpunkte
-- Kommunikationsbeziehungen, Abhängigkeiten, Dienste und Ports
-- Standorte, Abteilungen, Teams und Verantwortlichkeiten
-- technische Dokumente und Conformance Statements
-- Änderungen und Audit-Ereignisse
+Voraussetzungen: Docker Engine und Docker Compose Plugin.
 
-Der Schwerpunkt der Version 1.0 liegt auf **Dokumentation, Topologie, Suche und Auditierbarkeit**. Das Produkt ist kein PACS, RIS, KIS, Monitoring-System, Netzwerkscanner oder Interface Engine.
+```bash
+cp .env.example .env
+docker compose build
+docker compose run --rm app composer install --no-interaction
+docker compose run --rm node npm ci
+docker compose run --rm app php artisan key:generate
+docker compose up -d db
+docker compose run --rm app php artisan migrate --seed
+docker compose run --rm node npm run build
+docker compose up -d
+```
 
-## Betriebsmodell
+Anwendung: `http://localhost:8080`
 
-- On-Premise-first
-- vollständig im Kundennetz betreibbar
-- ohne verpflichtende Internetverbindung
+Synthetischer Entwicklungszugang:
+
+- E-Mail: `admin@example.test`
+- Passwort: `ChangeMe-Development-Only!`
+
+Der Seeder ist nur für lokale Entwicklung gedacht. Produktive Installationen müssen ein eigenes initiales Administratorkonto über einen kontrollierten Setup-Prozess anlegen.
+
+## Entwicklung
+
+```bash
+docker compose up -d db app web
+docker compose run --rm node npm run dev -- --host 0.0.0.0
+```
+
+## Tests
+
+```bash
+docker compose run --rm app composer test
+docker compose run --rm node npm run check
+```
+
+## Modulstruktur
+
+```text
+app/Modules/
+├── Identity/
+├── Organizations/
+├── Assets/
+├── Endpoints/
+├── Dicom/
+├── Connections/
+├── Topology/
+├── Documents/
+├── Taxonomy/
+├── Audit/
+├── ImportExport/
+└── Administration/
+```
+
+Jedes Modul erhält bei fachlicher Implementierung eigene Application-, Domain-, Infrastructure- und Presentation-Bereiche. Das Grundgerüst führt noch keine unnötigen Abstraktionen ein.
+
+## Sicherheit
+
+- keine echten Patientendaten in Seeds, Tests oder Logs
+- Debug standardmäßig deaktiviert
+- Session-Cookies HttpOnly und SameSite=Lax
+- serverseitige Autorisierung
 - keine verpflichtende Telemetrie
-- browserbasierte Bedienung
-- Docker Compose als primärer Installationsweg
-- PostgreSQL als primäre Datenbank
-- Reverse Proxy und TLS durch Kundeninfrastruktur oder Referenzkonfiguration
-- Private/Local Cloud zulässig, solange der Kunde Daten und Dienste kontrolliert
-
-## Geplanter Technologie-Stack
-
-Die konkreten Versionen werden in `docs/Decisions/ADR-0001-technology-versions.md` festgelegt.
-
-- Backend: Laravel
-- Frontend: Vue 3, TypeScript, Inertia.js
-- Styling: Tailwind CSS
-- Datenbank: PostgreSQL
-- Topologie: Vue Flow, vorbehaltlich ADR-Freigabe
-- Deployment: Docker Compose
-- CI/CD: GitHub Actions
-
-Keine unkontrollierten `latest`-Tags.
-
-## Verbindliche Referenzen
-
-- [Produktvision](specification/ProductVision.md)
-- [Scope](specification/Scope.md)
-- [Requirements](specification/Requirements.md)
-- [Netzwerkarchitektur](specification/NetworkArchitecture.md)
-- [UI-Referenz](specification/UIReference.md)
-- [Healthcare-Glossar](docs/Healthcare/Glossary.md)
-- [Initiales ERD](docs/Database/ERD.md)
-- [Security Threat Model](docs/Security/ThreatModel.md)
-- [ADR-Index](docs/Decisions/README.md)
-- [Roadmap](ROADMAP.md)
-
-Die Referenzbilder bleiben verbindliche konzeptionelle beziehungsweise visuelle Leitlinien, sind aber keine pixelgenauen Implementierungsspezifikationen.
-
-## Compliance-Hinweis
-
-Das Repository unterstützt eine spätere Einbettung in ein ISMS und QMS. Es orientiert sich an ISO/IEC 27001, ISO 9001, Datenschutzgrundsätzen und OWASP ASVS.
-
-**Das Repository und die Software stellen keine Zertifizierung und keine automatische vollständige Normkonformität dar.**
-
-## Freigaberegel vor der Laravel-Initialisierung
-
-Die Initialisierung darf beginnen, wenn:
-
-1. alle blockierenden ADRs akzeptiert sind,
-2. das Rollen- und Berechtigungsmodell freigegeben ist,
-3. das Datenmodell implementierbar ist,
-4. offene hohe oder kritische Risiken behandelt oder formell akzeptiert sind,
-5. User Stories und Akzeptanzkriterien für 0.1.0 vorliegen,
-6. die Lizenzentscheidung getroffen ist.
+- keine externen CDN-Abhängigkeiten
+- Datenbank nicht auf Host-Port veröffentlicht
