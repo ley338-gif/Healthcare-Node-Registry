@@ -2,28 +2,48 @@
 
 ## Leitprinzip
 
-Die Roadmap beschreibt geplante Ergebnisse, keine unveränderliche Zusage. Änderungen werden begründet, versioniert und im Changelog dokumentiert.
+Die Roadmap beschreibt geplante Ergebnisse. Änderungen werden begründet, versioniert und im Changelog dokumentiert.
 
-## Sprint 0 – Foundation
-
-**Ziel:** Freigegebene Produkt-, Architektur-, Sicherheits- und Qualitätsgrundlage.
+## 0.0.1 – Foundation-Baseline
 
 - [x] Produktvision
 - [x] MVP-Scope
-- [x] Referenzbilder integrieren
+- [x] Referenzbilder
 - [x] AI Engineering Manual
-- [x] ISO-27001-/ISO-9001-Vorbereitung dokumentieren
-- [x] initiales Datenmodell
+- [x] initiale Architektur- und Datenbankdokumentation
+- [x] ISO-27001-/ISO-9001-Vorbereitung
 - [x] GitHub-Templates
-- [ ] ADR: konkrete Framework-Versionen
-- [ ] ADR: Authentisierungsstrategie
-- [ ] ADR: Topologie-Bibliothek
-- [ ] ADR: Dokumentenspeicher
-- [ ] Bedrohungsmodell-Workshop
-- [ ] priorisierte User Stories und Akzeptanzkriterien
+
+## Sprint 0 – Foundation-Freigabe
+
+**Ziel:** Implementierbare Produkt-, Architektur-, Security- und Qualitätsgrundlage.
+
+### Blockierende Entscheidungen
+
+- [ ] ADR-0001 Technologieversionen akzeptieren
+- [ ] ADR-0002 Authentisierung akzeptieren
+- [ ] ADR-0003 Zugriffskontrolle akzeptieren
+- [ ] ADR-0004 Identifikatoren akzeptieren
+- [ ] ADR-0005 Organisationsmodell akzeptieren
+- [ ] ADR-0006 Endpoint- und DICOM-Modell akzeptieren
+- [ ] ADR-0007 Topologie-Bibliothek akzeptieren
+- [ ] ADR-0008 Dokumentenspeicher akzeptieren
+- [ ] ADR-0009 Audit und Logging akzeptieren
+- [ ] ADR-0010 Import/Export akzeptieren
+- [ ] Threat-Model-Review durchführen
+- [ ] priorisierte User Stories für 0.1.0 freigeben
 - [ ] Lizenzmodell festlegen
 
-**Exit-Kriterien:** Keine offenen Blocker für Projektinitialisierung; Verantwortlichkeiten und MVP-Abgrenzung freigegeben.
+### Exit-Kriterien
+
+- keine widersprüchlichen Versionsangaben
+- keine offenen Architekturblocker für die Projektinitialisierung
+- Rollen- und Berechtigungsmatrix freigegeben
+- Datenmodell implementierbar und fachlich geprüft
+- Security-Risiken bewertet
+- keine ungeklärten kritischen oder hohen Risiken
+- Teststrategie und Definition of Done freigegeben
+- Backlog für 0.1.0 vorhanden
 
 ## 0.1.0 – Technisches Grundgerüst
 
@@ -32,73 +52,70 @@ Die Roadmap beschreibt geplante Ergebnisse, keine unveränderliche Zusage. Ände
 - Docker-Compose-Entwicklungsumgebung
 - CI-Grundpipeline
 - Basislayout gemäß UI-Referenz
-- Authentisierung
+- lokale sessionbasierte Authentisierung
 - Rollen- und Berechtigungsgrundlage
 - Health Endpoint ohne interne Details
-- strukturierte Logs
+- strukturierte technische Logs
 - erste Installationsanleitung
 
 ## 0.2.0 – Registry Core
 
-- Organisation, Standort und Abteilung
-- Systeme/Assets
-- Systemtypen und Status
+- Organisationen, Standorte und Abteilungen
+- Systeme und Assets
+- Systemtypen und Lifecycle-Status
 - Hersteller, Modell und Version
-- Tags und benutzerdefinierte Notizen
+- Tags und Notizen
 - Listen-, Detail-, Erstell- und Bearbeitungsansichten
 - Suche und Filter
-- Audit-Events für CRUD-Aktionen
+- Audit für CRUD-Aktionen
 
 ## 0.3.0 – Endpoints & DICOM
 
-- mehrere Endpunkte pro System
+- mehrere Endpunkte je System
+- protokollspezifische Endpoint-Details
 - DICOM AE Title, Host/IP und Port
-- SCU-/SCP-Rollen je Dienst
-- Validierung und Duplikatwarnungen
-- DICOM-fachliche Detailansicht
+- DICOM-Dienste und SCU-/SCP-Rollen
+- Duplikatwarnungen
 - kontrollierter CSV-Import
 - Export
 
 ## 0.4.0 – Connections & Topology
 
 - gerichtete Verbindungen zwischen Endpunkten
-- Protokoll, Dienst, Zweck und Status
+- Dienst, Zweck und Dokumentationsstatus
 - Topologieansicht
-- Filter nach Standort, Protokoll und Systemtyp
+- Filter
 - Detail-Drawer
-- Impact-Ansicht „Was hängt davon ab?“
-- druck-/exportfähige Darstellung
+- Impact-Ansicht
+- exportfähige Darstellung
 
 ## 0.5.0 – Documents & Knowledge
 
 - sichere Dokumentenanhänge
-- Kategorien
-- Version und Gültigkeit
+- Kategorien und Versionen
 - SHA-256-Prüfsumme
 - Berechtigungen
 - Download-Audit
-- optionaler Malware-Scan-Adapter
-- Conformance Statements verknüpfen
+- Malware-Scan-Adapter
+- Conformance Statements
 
 ## 0.6.0 – Operational Readiness
 
-- Backup-/Restore-Prozess
+- Backup und Restore
 - Update- und Migrationsprozess
-- Admin- und Security-Dokumentation
-- Security-Header
-- Dependency-/Container-Scanning
+- Security Header
+- Dependency- und Container-Scanning
 - SBOM
-- Basis-Performance-Tests
+- Performance-Baseline
 - Accessibility-Review
 - Pilotinstallationsleitfaden
 
 ## 0.9.0 – Pilot
 
-- Pilotbetrieb mit synthetischen oder bereinigten Daten
+- Pilotbetrieb ausschließlich mit synthetischen oder formal bereinigten Daten
 - Feedbackprozess
 - Usability-Tests
 - Korrekturmaßnahmen
-- Datenimportverbesserungen
 - vollständige Betriebsdokumentation
 - Release Candidate
 
@@ -116,10 +133,8 @@ Die Roadmap beschreibt geplante Ergebnisse, keine unveränderliche Zusage. Ände
 - aktive C-ECHO-/TCP-Prüfungen
 - segmentbasierter Monitoring-Agent
 - automatische Discovery
-- DICOM Conformance Parser
-- HL7-/FHIR-Spezialmodule
-- Vertrags-, Wartungs- und Zertifikatsfristen
+- DICOM-Conformance-Parser
+- erweiterte HL7-/FHIR-Module
+- Fristen- und Zertifikatsmanagement
 - externe API
-- Mandanten-/Systemhausfunktionen
-
-Diese Punkte sind bewusst nicht Teil des MVP.
+- Systemhaus- oder echte Mandantenfunktionen

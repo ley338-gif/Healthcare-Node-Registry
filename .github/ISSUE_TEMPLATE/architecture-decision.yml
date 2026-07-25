@@ -1,0 +1,39 @@
+name: Architecture Decision
+description: Architekturentscheidung vorbereiten oder freigeben
+title: "docs: ADR "
+labels: ["architecture", "documentation"]
+body:
+  - type: input
+    id: adr
+    attributes:
+      label: ADR
+      placeholder: ADR-0001
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Kontext und Problem
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Realistische Alternativen
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Bewertungskriterien
+      description: Sicherheit, Wartbarkeit, Betrieb, Aufwand und Healthcare-Fachlichkeit.
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Empfohlene Entscheidung
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Notwendige Nachweise und Tests

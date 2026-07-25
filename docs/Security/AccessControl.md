@@ -2,37 +2,39 @@
 
 ## Grundmodell
 
-RBAC mit serverseitiger Durchsetzung. Rollen sind Ausgangspunkt; besonders kritische Rechte können granular vergeben werden.
+RBAC mit serverseitiger Durchsetzung, Default Deny und optionalen Ressourcen-Scopes.
 
-## Vorgeschlagene Rollen
+## Rollenmatrix
 
-- System Administrator
-- Registry Administrator
-- Editor
-- Auditor/Read Only
-- Document Manager
-- External Support Read Only
+| Fähigkeit | System Admin | Registry Admin | Editor | Document Manager | Auditor | External Support |
+|---|---:|---:|---:|---:|---:|---:|
+| Systeme lesen | ja | ja | ja | ja | ja | eingeschränkt |
+| Systeme ändern | ja | ja | ja | nein | nein | nein |
+| Endpoints/Connections ändern | ja | ja | ja | nein | nein | nein |
+| Dokumente hochladen | ja | ja | optional | ja | nein | nein |
+| Dokumente herunterladen | ja | ja | nach Recht | ja | nach Recht | eingeschränkt |
+| Topologie anzeigen | ja | ja | ja | ja | ja | eingeschränkt |
+| Export ausführen | ja | gesondert | nein | nein | gesondert | nein |
+| Audit anzeigen | ja | ja | nein | nein | ja | nein |
+| Benutzer verwalten | ja | nein | nein | nein | nein | nein |
+| Rollen verwalten | ja | nein | nein | nein | nein | nein |
+| Systemeinstellungen | ja | nein | nein | nein | nein | nein |
 
-## Beispielberechtigungen
+## Scopes
 
-- assets.view/create/update/archive
-- endpoints.view/create/update
-- connections.view/create/update/delete
-- documents.view/upload/download/delete
-- topology.view/export
-- audit.view/export
-- users.manage
-- roles.manage
-- settings.manage
-- imports.execute
-- exports.execute
+- installationsweit
+- Organisation
+- Standort
+- optional Abteilung
+
+Echte technische Tenant-Isolation ist nicht Bestandteil des MVP.
 
 ## Regeln
 
-- Default Deny
-- Least Privilege
 - keine Autorisierung nur im Frontend
-- Rollenänderungen auditieren
-- eigenes Konto nicht unkontrolliert zum letzten Administrator degradieren
-- sensible Exporte gesondert berechtigen
-- regelmäßiger Access Review als Organisationsprozess
+- jede schreibende Aktion besitzt Policy-/Gate-Tests
+- Rollenänderungen werden auditiert
+- letzter aktiver Systemadministrator darf nicht unkontrolliert entfernt werden
+- sensible Exporte und Downloads werden gesondert berechtigt
+- External Support ist standardmäßig read-only, zeitlich begrenzbar und ohne Export
+- regelmäßiger Access Review ist Organisationsprozess
