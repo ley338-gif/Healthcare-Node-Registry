@@ -7,31 +7,20 @@ use App\Models\Role;
 
 final class RbacBootstrapper
 {
-    /** @var array<string, string> */
+    /** @var array<string,string> */
     private const PERMISSIONS = [
-        'audit.view' => 'Audit anzeigen',
-        'users.manage' => 'Benutzer verwalten',
-        'roles.manage' => 'Rollen verwalten',
-        'settings.manage' => 'Einstellungen verwalten',
+        'audit.view' => 'Audit anzeigen', 'users.manage' => 'Benutzer verwalten', 'roles.manage' => 'Rollen verwalten',
+        'settings.manage' => 'Einstellungen verwalten', 'registry.view' => 'Registry anzeigen', 'registry.manage' => 'Registry verwalten',
     ];
 
     public function ensureSystemAdministratorRole(): Role
     {
-        $permissionIds = [];
-
-        foreach (self::PERMISSIONS as $name => $displayName) {
-            $permission = Permission::query()->firstOrCreate(
-                ['name' => $name],
-                ['display_name' => $displayName],
-            );
-            $permissionIds[] = $permission->id;
+        $ids = [];
+        foreach (self::PERMISSIONS as $name => $display) {
+            $ids[] = Permission::query()->firstOrCreate(['name' => $name], ['display_name' => $display])->id;
         }
-
-        $role = Role::query()->firstOrCreate(
-            ['name' => 'system-administrator'],
-            ['display_name' => 'System Administrator'],
-        );
-        $role->permissions()->syncWithoutDetaching($permissionIds);
+        $role = Role::query()->firstOrCreate(['name' => 'system-administrator'], ['display_name' => 'System Administrator']);
+        $role->permissions()->syncWithoutDetaching($ids);
 
         return $role;
     }

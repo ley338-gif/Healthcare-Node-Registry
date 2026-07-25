@@ -1,29 +1,19 @@
-# 0.1.1 anwenden
+# UI Foundation anwenden
+
+Branch: `feature/navigation-dashboard`
+
+Inhalt in das Repository-Stammverzeichnis kopieren.
 
 ```powershell
-git checkout main
-git pull origin main
-git checkout -b hardening/foundation-0.1.1
-```
-
-Den Inhalt dieses Ordners in das Repository-Stammverzeichnis kopieren und vorhandene Dateien ersetzen.
-
-```powershell
-docker compose exec app composer dump-autoload
-docker compose exec app php artisan migrate
-docker compose exec app composer lint
-docker compose exec app composer quality
+docker compose run --rm node npm run format
 docker compose run --rm node npm run check
-docker compose exec app php artisan registry:create-admin
-docker compose exec app php artisan registry:doctor
+docker compose --profile test run --rm app-test composer quality
 ```
 
-Danach:
+Commit:
 
 ```powershell
-git status
-git diff --check
 git add .
-git commit -m "feat: harden foundation for 0.1.1"
-git push -u origin HEAD
+git commit -m "feat: establish reusable registry UI foundation"
+git push
 ```

@@ -55,6 +55,66 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  app-test:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    profiles: ["test"]
+    environment:
+      APP_NAME: Healthcare Node Registry Tests
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      APP_DEBUG: "false"
+      APP_URL: http://localhost
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: warning
+      DB_CONNECTION: pgsql
+      DB_HOST: db-test
+      DB_PORT: "5432"
+      DB_DATABASE: healthcare_node_registry_test
+      DB_USERNAME: registry_test
+      DB_PASSWORD: registry-test-only
+      DB_SSLMODE: prefer
+      SESSION_DRIVER: array
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      FILESYSTEM_DISK: local
+      BCRYPT_ROUNDS: "4"
+    volumes:
+      - ./:/var/www/html
+      - app_test_storage:/var/www/html/storage
+    depends_on:
+      db-test:
+        condition: service_healthy
+    networks:
+      - test_backend
+    security_opt:
+      - no-new-privileges:true
+
+  db-test:
+    image: postgres:18.4-bookworm
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: healthcare_node_registry_test
+      POSTGRES_USER: registry_test
+      POSTGRES_PASSWORD: registry-test-only
+    volumes:
+      - postgres_test_data:/var/lib/postgresql
+    networks:
+      - test_backend
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U registry_test -d healthcare_node_registry_test",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    security_opt:
+      - no-new-privileges:true
+
   node:
     image: node:24.18.0-bookworm-slim
     working_dir: /app
@@ -66,9 +126,13 @@ services:
 
 volumes:
   postgres_data:
+  postgres_test_data:
   app_storage:
+  app_test_storage:
 
 networks:
   frontend:
   backend:
+    internal: true
+  test_backend:
     internal: true

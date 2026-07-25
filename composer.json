@@ -36,11 +36,15 @@
       "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
       "@php artisan package:discover --ansi"
     ],
-    "test": ["@php vendor/bin/phpunit"],
+    "test": "@php vendor/bin/phpunit",
     "lint": "pint --parallel",
     "lint:check": "pint --parallel --test",
     "analyse": "phpstan analyse --memory-limit=1G",
-    "quality": ["@lint:check", "@analyse", "@test"]
+    "quality": [
+      "@lint:check",
+      "@analyse",
+      "@test"
+    ]
   },
   "config": {
     "optimize-autoloader": true,
@@ -50,7 +54,9 @@
       "pestphp/pest-plugin": true,
       "php-http/discovery": true
     },
-    "audit": {"abandoned": "fail"}
+    "audit": {
+      "abandoned": "fail"
+    }
   },
   "minimum-stability": "stable",
   "prefer-stable": true

@@ -2,6 +2,10 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\OrganizationStructureController;
+use App\Http\Controllers\SiteController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -12,4 +16,21 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+    Route::get('/structure', OrganizationStructureController::class)->name('structure.index');
+
+    Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
+    Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');
+    Route::put('/organizations/{organization}', [OrganizationController::class, 'update'])->name('organizations.update');
+    Route::post('/organizations/{organization}/archive', [OrganizationController::class, 'archive'])->name('organizations.archive');
+
+    Route::get('/sites', [SiteController::class, 'index'])->name('sites.index');
+    Route::post('/sites', [SiteController::class, 'store'])->name('sites.store');
+    Route::put('/sites/{site}', [SiteController::class, 'update'])->name('sites.update');
+    Route::post('/sites/{site}/archive', [SiteController::class, 'archive'])->name('sites.archive');
+
+    Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
+    Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
+    Route::put('/departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
+    Route::post('/departments/{department}/archive', [DepartmentController::class, 'archive'])->name('departments.archive');
 });
