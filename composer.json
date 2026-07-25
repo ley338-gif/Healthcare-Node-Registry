@@ -37,8 +37,7 @@
       "@php artisan package:discover --ansi"
     ],
     "test": [
-      "@php artisan config:clear --ansi",
-      "@php artisan test"
+    "@php vendor/bin/phpunit"
     ],
     "lint": "pint --parallel",
     "lint:check": "pint --parallel --test",

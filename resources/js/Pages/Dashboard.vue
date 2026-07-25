@@ -33,7 +33,11 @@ const cards = [
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <article v-for="card in cards" :key="card.key" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <article
+                v-for="card in cards"
+                :key="card.key"
+                class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
                 <div class="mb-5 flex items-center justify-between">
                     <p class="text-sm font-medium text-slate-600">{{ card.label }}</p>
                     <component :is="card.icon" :size="20" class="text-blue-600" />
@@ -51,11 +55,19 @@ const cards = [
                 </div>
 
                 <div class="divide-y divide-slate-100">
-                    <div v-for="item in foundationStatus" :key="item.label" class="flex items-center justify-between py-3">
+                    <div
+                        v-for="item in foundationStatus"
+                        :key="item.label"
+                        class="flex items-center justify-between py-3"
+                    >
                         <span class="text-sm">{{ item.label }}</span>
                         <span
                             class="rounded-full px-2.5 py-1 text-xs font-medium"
-                            :class="item.status === 'bereit' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-600'"
+                            :class="
+                                item.status === 'bereit'
+                                    ? 'bg-emerald-50 text-emerald-800'
+                                    : 'bg-slate-100 text-slate-600'
+                            "
                         >
                             {{ item.status }}
                         </span>
@@ -66,8 +78,8 @@ const cards = [
             <aside class="rounded-xl border border-blue-200 bg-blue-50 p-6">
                 <h2 class="font-semibold text-blue-950">Wichtiger Hinweis</h2>
                 <p class="mt-2 text-sm leading-6 text-blue-900">
-                    Angezeigte Verbindungen und Statuswerte werden später dokumentierte Informationen darstellen.
-                    Ohne echte Messdaten werden keine Begriffe wie „online“, „healthy“ oder „erreichbar“ verwendet.
+                    Angezeigte Verbindungen und Statuswerte werden später dokumentierte Informationen darstellen. Ohne
+                    echte Messdaten werden keine Begriffe wie „online“, „healthy“ oder „erreichbar“ verwendet.
                 </p>
             </aside>
         </div>

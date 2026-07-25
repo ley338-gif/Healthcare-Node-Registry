@@ -29,8 +29,18 @@ COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/10-opcache.ini
 
 WORKDIR /var/www/html
 
-RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache
+RUN mkdir -p \
+        storage/framework/cache \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+        bootstrap/cache \
+        /var/www/.composer/cache \
+    && chown -R www-data:www-data \
+        storage \
+        bootstrap/cache \
+        /var/www/.composer \
+    && git config --system --add safe.directory /var/www/html
 
 USER www-data
 

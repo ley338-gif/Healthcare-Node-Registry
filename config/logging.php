@@ -1,5 +1,7 @@
 <?php
 
+use Monolog\Formatter\JsonFormatter;
+use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
@@ -12,7 +14,7 @@ return [
             'level' => env('LOG_LEVEL', 'info'),
             'handler' => StreamHandler::class,
             'handler_with' => ['stream' => 'php://stderr'],
-            'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'formatter' => JsonFormatter::class,
             'processors' => [PsrLogMessageProcessor::class],
         ],
         'single' => [
@@ -21,6 +23,6 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],
-        'null' => ['driver' => 'monolog', 'handler' => Monolog\Handler\NullHandler::class],
+        'null' => ['driver' => 'monolog', 'handler' => NullHandler::class],
     ],
 ];

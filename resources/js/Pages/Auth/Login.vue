@@ -40,7 +40,7 @@ const submit = () => {
                         autocomplete="username"
                         required
                         autofocus
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none ring-blue-500 focus:ring-2"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 ring-blue-500 outline-none focus:ring-2"
                     />
                     <p v-if="form.errors.email" class="mt-1 text-sm text-red-700">{{ form.errors.email }}</p>
                 </div>
@@ -53,7 +53,7 @@ const submit = () => {
                         type="password"
                         autocomplete="current-password"
                         required
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none ring-blue-500 focus:ring-2"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 ring-blue-500 outline-none focus:ring-2"
                     />
                     <p v-if="form.errors.password" class="mt-1 text-sm text-red-700">{{ form.errors.password }}</p>
                 </div>

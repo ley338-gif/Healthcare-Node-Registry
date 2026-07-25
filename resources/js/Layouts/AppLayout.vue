@@ -43,7 +43,7 @@ const navigation = [
                     >
                         <component :is="item.icon" :size="18" />
                         {{ item.label }}
-                        <span class="ml-auto text-[10px] uppercase tracking-wide">geplant</span>
+                        <span class="ml-auto text-[10px] tracking-wide uppercase">geplant</span>
                     </div>
                 </template>
             </nav>
@@ -60,7 +60,9 @@ const navigation = [
         </aside>
 
         <div class="lg:pl-64">
-            <header class="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur">
+            <header
+                class="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur"
+            >
                 <div>
                     <p class="text-sm font-medium text-slate-900">Zentrale Systemdokumentation</p>
                     <p class="text-xs text-slate-500">On-Premise · ohne verpflichtende Telemetrie</p>

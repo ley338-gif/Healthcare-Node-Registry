@@ -1,23 +1,33 @@
 import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/vue3';
-import { createApp, h } from 'vue';
+import { createApp, h, type DefineComponent } from 'vue';
+
+const pages = import.meta.glob<{ default: DefineComponent }>('./Pages/**/*.vue');
 
 createInertiaApp({
     title: (title) => (title ? `${title} – Healthcare Node Registry` : 'Healthcare Node Registry'),
-    resolve: async (name) => {
-        const pages = import.meta.glob('./Pages/**/*.vue');
+
+    resolve: async (name): Promise<DefineComponent> => {
         const page = pages[`./Pages/${name}.vue`];
 
         if (!page) {
-            throw new Error(`Page not found: ${name}`);
+            throw new Error(`Inertia page not found: ${name}`);
         }
 
-        return page();
+        const module = await page();
+
+        return module.default;
     },
+
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) }).use(plugin).mount(el);
+        createApp({
+            render: () => h(App, props),
+        })
+            .use(plugin)
+            .mount(el);
     },
+
     progress: {
         color: '#2563eb',
     },

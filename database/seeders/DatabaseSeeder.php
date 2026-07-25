@@ -27,7 +27,7 @@ final class DatabaseSeeder extends Seeder
             ['name' => 'system-administrator'],
             ['display_name' => 'System Administrator'],
         );
-        $role->permissions()->sync($permissions->modelKeys());
+        $role->permissions()->sync($permissions->pluck('id')->all());
 
         if (app()->isLocal()) {
             $user = User::query()->firstOrCreate(
