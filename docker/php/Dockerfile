@@ -42,6 +42,11 @@ RUN mkdir -p \
         /var/www/.composer \
     && git config --system --add safe.directory /var/www/html
 
-USER www-data
+COPY docker/php/entrypoint.sh /usr/local/bin/registry-entrypoint
+
+RUN sed -i 's/\r$//' /usr/local/bin/registry-entrypoint \
+    && chmod 0755 /usr/local/bin/registry-entrypoint
+
+ENTRYPOINT ["/usr/local/bin/registry-entrypoint"]
 
 CMD ["php-fpm", "-F"]

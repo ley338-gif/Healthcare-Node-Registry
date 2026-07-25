@@ -1,39 +1,29 @@
-# Anwendung dieses Foundation-Overlays
+# 0.1.1 anwenden
 
-Dieses ZIP ist für das Repository `ley338-gif/Healthcare-Node-Registry` bestimmt.
-
-## Zweck
-
-Das Overlay bereinigt die Foundation-Dokumentation vor der ersten Laravel-Initialisierung. Es enthält keine ausführbare Anwendung und verändert keine Referenzbilder.
-
-## Empfohlener Git-Ablauf
-
-```bash
+```powershell
 git checkout main
-git pull
-git checkout -b docs/sprint-0-foundation-decisions
+git pull origin main
+git checkout -b hardening/foundation-0.1.1
 ```
 
-Den Inhalt dieses Ordners anschließend in das Stammverzeichnis des Repositorys kopieren und vorhandene Textdateien ersetzen.
+Den Inhalt dieses Ordners in das Repository-Stammverzeichnis kopieren und vorhandene Dateien ersetzen.
 
-```bash
+```powershell
+docker compose exec app composer dump-autoload
+docker compose exec app php artisan migrate
+docker compose exec app composer lint
+docker compose exec app composer quality
+docker compose run --rm node npm run check
+docker compose exec app php artisan registry:create-admin
+docker compose exec app php artisan registry:doctor
+```
+
+Danach:
+
+```powershell
 git status
 git diff --check
-git add README.md ROADMAP.md CHANGELOG.md KNOWN_ISSUES.md specification docs .github
-git commit -m "docs: finalize sprint 0 foundation decisions"
-git push -u origin docs/sprint-0-foundation-decisions
+git add .
+git commit -m "feat: harden foundation for 0.1.1"
+git push -u origin HEAD
 ```
-
-Danach einen Draft Pull Request gegen `main` eröffnen.
-
-## Nicht überschreiben oder löschen
-
-Die vorhandenen Dateien bleiben bestehen:
-
-- `specification/network-architecture-reference.png`
-- `specification/ui-reference.png`
-- sonstige Repository-Dateien, die in diesem Overlay nicht enthalten sind
-
-## Erwartetes Ergebnis
-
-Nach Übernahme sind die wichtigsten Foundation-Entscheidungen dokumentiert. Vor der Laravel-Initialisierung müssen nur noch die als `Proposed` markierten ADRs geprüft und formell akzeptiert werden.

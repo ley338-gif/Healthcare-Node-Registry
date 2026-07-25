@@ -9,6 +9,28 @@ permissions:
   contents: read
 
 jobs:
+  repository:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Reject committed runtime configuration
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        if git ls-files --error-unmatch .env >/dev/null 2>&1; then
+          echo ".env must not be committed."
+          exit 1
+        fi
+
+    - name: Prepare CI environment file
+      shell: bash
+      run: cp .env.example .env
+
+    - name: Validate Docker Compose
+      run: docker compose config --quiet
+
   backend:
     runs-on: ubuntu-latest
     services:
@@ -45,11 +67,12 @@ jobs:
           extensions: intl, pdo_pgsql, zip
           coverage: none
           tools: composer:v2
+      - run: composer validate --strict --no-check-publish
       - run: composer install --no-interaction --prefer-dist
-      - run: composer lint:check
-      - run: composer analyse
-      - run: php artisan migrate --force
-      - run: composer test
+      - run: composer audit --locked --no-interaction
+      - run: composer quality
+      - run: php artisan migrate:fresh --force
+      - run: php artisan registry:doctor --skip-assets
 
   frontend:
     runs-on: ubuntu-latest
@@ -60,6 +83,7 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=high --omit=dev
       - run: npm run check
 
   container:
