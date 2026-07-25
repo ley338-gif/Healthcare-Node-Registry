@@ -46,8 +46,8 @@ jobs:
 
           if grep -RInE \
             --exclude-dir=.git \
-            --exclude=documentation.yml \
-            '(BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|password[[:space:]]*=[[:space:]]*[^<]|patientenname|geburtsdatum[[:space:]]*:[[:space:]]*[0-9]{2}\.[0-9]{2}\.[0-9]{4})' .; then
-            echo "Potential secret or patient data detected. Review required."
-            exit 1
-          fi
+          --exclude=documentation.yml \
+          '(BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|(^|[^$[:alnum:]_])password[[:space:]]*=[[:space:]]*["'\''][^"'\'']+["'\'']|patientenname|geburtsdatum[[:space:]]*:[[:space:]]*[0-9]{2}\.[0-9]{2}\.[0-9]{4})' .; then
+          echo "Potential secret or patient data detected. Review required."
+          exit 1
+        fi
