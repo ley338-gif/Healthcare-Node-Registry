@@ -2,8 +2,19 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property string $event_id
+ * @property string $event_type
+ * @property string $actor_type
+ * @property string|null $subject_type
+ * @property string|null $subject_public_id
+ * @property array<string, mixed> $metadata
+ * @property CarbonImmutable $occurred_at
+ */
 final class SecurityEvent extends Model
 {
     public $timestamps = false;
