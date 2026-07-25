@@ -1,0 +1,15 @@
+{
+  "scope": "ui foundation",
+  "files": [
+    "APPLY_INSTRUCTIONS.md",
+    "CHANGELOG_UI_FOUNDATION_FRAGMENT.md",
+    "docs/UX/UIFoundation.md",
+    "resources/js/Components/layout/AppHeader.vue",
+    "resources/js/Components/layout/AppSidebar.vue",
+    "resources/js/Components/ui/ContentCard.vue",
+    "resources/js/Components/ui/PageHeader.vue",
+    "resources/js/Components/ui/StatCard.vue",
+    "resources/js/Components/ui/StatusBadge.vue",
+    "resources/js/Layouts/AppLayout.vue"
+  ]
+}
