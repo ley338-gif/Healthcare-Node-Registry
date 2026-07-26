@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSystemRequest;
 use App\Http\Requests\UpdateSystemRequest;
+use App\Models\Department;
+use App\Models\Organization;
+use App\Models\Site;
 use App\Models\System;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
@@ -81,6 +84,21 @@ final class SystemController extends Controller
                 ['value' => 'inactive', 'label' => 'Inaktiv'],
                 ['value' => 'retired', 'label' => 'Außer Betrieb'],
             ],
+            'organizations' => Organization::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'name']),
+
+            'sites' => Site::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'organization_id', 'name']),
+
+            'departments' => Department::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'site_id', 'name']),
+
             'canManage' => $request->user()?->can('create', System::class) ?? false,
         ]);
     }

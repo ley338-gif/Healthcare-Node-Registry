@@ -1,15 +1,33 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
+import { Search, Server } from '@lucide/vue';
 import { computed, ref } from 'vue';
-import AppLayout from '../../../Layouts/AppLayout.vue';
+import SystemCreateSlideOver from '../../../Components/registry/systems/SystemCreateSlideOver.vue';
 import ContentCard from '../../../Components/ui/ContentCard.vue';
 import EmptyState from '../../../Components/ui/EmptyState.vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
-import { Search, Server } from '@lucide/vue';
+import AppLayout from '../../../Layouts/AppLayout.vue';
 
 type SelectOption = {
     value: string;
     label: string;
+};
+
+type OrganizationOption = {
+    id: number;
+    name: string;
+};
+
+type SiteOption = {
+    id: number;
+    organization_id: number;
+    name: string;
+};
+
+type DepartmentOption = {
+    id: number;
+    site_id: number;
+    name: string;
 };
 
 type SystemItem = {
@@ -40,19 +58,27 @@ type PaginatedSystems = {
 
 const props = defineProps<{
     items: PaginatedSystems;
+
     filters: {
         search: string;
         type: string;
         status: string;
     };
+
     systemTypes: SelectOption[];
     statuses: SelectOption[];
+
+    organizations: OrganizationOption[];
+    sites: SiteOption[];
+    departments: DepartmentOption[];
+
     canManage: boolean;
 }>();
 
 const search = ref(props.filters.search);
 const type = ref(props.filters.type);
 const status = ref(props.filters.status);
+const createPanelOpen = ref(false);
 
 const hasSystems = computed(() => props.items.data.length > 0);
 
@@ -88,7 +114,8 @@ const labelFor = (options: SelectOption[], value: string): string =>
                 <button
                     type="button"
                     :disabled="!canManage"
-                    class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                    class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    @click="createPanelOpen = true"
                 >
                     Neues System
                 </button>
@@ -102,6 +129,7 @@ const labelFor = (options: SelectOption[], value: string): string =>
             >
                 <div class="relative">
                     <Search :size="18" class="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
+
                     <input
                         v-model="search"
                         type="search"
@@ -112,6 +140,7 @@ const labelFor = (options: SelectOption[], value: string): string =>
 
                 <select v-model="type" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
                     <option value="">Alle Typen</option>
+
                     <option v-for="option in systemTypes" :key="option.value" :value="option.value">
                         {{ option.label }}
                     </option>
@@ -119,12 +148,16 @@ const labelFor = (options: SelectOption[], value: string): string =>
 
                 <select v-model="status" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
                     <option value="">Alle Status</option>
+
                     <option v-for="option in statuses" :key="option.value" :value="option.value">
                         {{ option.label }}
                     </option>
                 </select>
 
-                <button type="submit" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium">
+                <button
+                    type="submit"
+                    class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium hover:bg-slate-50"
+                >
                     Filtern
                 </button>
             </form>
@@ -141,21 +174,26 @@ const labelFor = (options: SelectOption[], value: string): string =>
                     <thead class="bg-slate-50">
                         <tr>
                             <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">System</th>
+
                             <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Typ</th>
+
                             <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">
                                 Zuordnung
                             </th>
+
                             <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Netzwerk</th>
+
                             <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
                         </tr>
                     </thead>
 
                     <tbody class="divide-y divide-slate-100">
-                        <tr v-for="system in items.data" :key="system.public_id" class="hover:bg-slate-50">
+                        <tr v-for="system in items.data" :key="system.public_id" class="transition hover:bg-slate-50">
                             <td class="px-5 py-4">
                                 <div class="font-semibold text-slate-900">
                                     {{ system.name }}
                                 </div>
+
                                 <div class="mt-1 text-xs text-slate-500">
                                     {{
                                         [system.vendor, system.product].filter(Boolean).join(' · ') ||
@@ -172,6 +210,7 @@ const labelFor = (options: SelectOption[], value: string): string =>
                                 <div class="text-sm text-slate-800">
                                     {{ system.organization.name }}
                                 </div>
+
                                 <div class="mt-1 text-xs text-slate-500">
                                     {{
                                         [system.site?.name, system.department?.name].filter(Boolean).join(' · ') ||
@@ -184,6 +223,7 @@ const labelFor = (options: SelectOption[], value: string): string =>
                                 <div class="text-sm text-slate-800">
                                     {{ system.hostname || 'Kein Hostname' }}
                                 </div>
+
                                 <div class="mt-1 text-xs text-slate-500">
                                     {{ system.ip_address || 'Keine IP-Adresse' }}
                                 </div>
@@ -197,5 +237,15 @@ const labelFor = (options: SelectOption[], value: string): string =>
                 </table>
             </div>
         </ContentCard>
+
+        <SystemCreateSlideOver
+            :open="createPanelOpen"
+            :organizations="organizations"
+            :sites="sites"
+            :departments="departments"
+            :system-types="systemTypes"
+            :statuses="statuses"
+            @close="createPanelOpen = false"
+        />
     </AppLayout>
 </template>
