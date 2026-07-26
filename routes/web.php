@@ -6,6 +6,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
 use App\Http\Controllers\SiteController;
+use App\Http\Controllers\SystemController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -33,4 +34,13 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
     Route::put('/departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
     Route::post('/departments/{department}/archive', [DepartmentController::class, 'archive'])->name('departments.archive');
+
+    Route::post('/systems', [SystemController::class, 'store'])
+        ->name('systems.store');
+
+    Route::put('/systems/{system}', [SystemController::class, 'update'])
+        ->name('systems.update');
+
+    Route::post('/systems/{system}/archive', [SystemController::class, 'archive'])
+        ->name('systems.archive');
 });
