@@ -73,7 +73,7 @@ const items = [
 
         <div class="absolute inset-x-4 bottom-4">
             <div class="rounded-xl border border-slate-800 p-3 text-xs text-slate-400">
-                <p class="font-medium text-slate-300">Version 0.2.0-dev</p>
+                <p class="font-medium text-slate-300">Version 0.2.0</p>
                 <p class="mt-1">Dokumentation, keine aktive Systemsteuerung</p>
             </div>
         </div>
