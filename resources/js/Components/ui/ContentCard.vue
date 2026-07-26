@@ -1,5 +1,16 @@
 <script setup lang="ts">
-withDefaults(defineProps<{ title?: string; description?: string; padded?: boolean }>(), { padded: true });
+withDefaults(
+    defineProps<{
+        title?: string;
+        description?: string;
+        padded?: boolean;
+    }>(),
+    {
+        title: '',
+        description: '',
+        padded: true,
+    },
+);
 </script>
 <template>
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

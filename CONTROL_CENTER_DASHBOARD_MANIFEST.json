@@ -1,0 +1,11 @@
+{
+  "scope": "control center dashboard",
+  "files": [
+    "APPLY_INSTRUCTIONS.md",
+    "CHANGELOG_CONTROL_CENTER_FRAGMENT.md",
+    "app/Http/Controllers/DashboardController.php",
+    "docs/UX/DashboardControlCenter.md",
+    "resources/js/Components/layout/AppSidebar.vue",
+    "resources/js/Pages/Dashboard.vue"
+  ]
+}
