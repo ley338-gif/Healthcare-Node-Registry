@@ -10,9 +10,81 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Inertia\Response;
 
 final class SystemController extends Controller
 {
+    public function index(Request $request): Response
+    {
+        Gate::authorize('viewAny', System::class);
+
+        $search = trim((string) $request->query('search', ''));
+        $type = trim((string) $request->query('type', ''));
+        $status = trim((string) $request->query('status', ''));
+
+        $systems = System::query()
+            ->with([
+                'organization:id,public_id,name',
+                'site:id,public_id,name',
+                'department:id,public_id,name',
+            ])
+            ->whereNull('archived_at')
+            ->when(
+                $search !== '',
+                fn ($query) => $query->where(
+                    fn ($searchQuery) => $searchQuery
+                        ->where('name', 'ilike', "%{$search}%")
+                        ->orWhere('hostname', 'ilike', "%{$search}%")
+                        ->orWhere('fqdn', 'ilike', "%{$search}%")
+                        ->orWhere('ip_address', 'ilike', "%{$search}%")
+                        ->orWhere('vendor', 'ilike', "%{$search}%")
+                        ->orWhere('product', 'ilike', "%{$search}%"),
+                ),
+            )
+            ->when(
+                $type !== '',
+                fn ($query) => $query->where('system_type', $type),
+            )
+            ->when(
+                $status !== '',
+                fn ($query) => $query->where('status', $status),
+            )
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString();
+
+        return Inertia::render('Registry/Systems/Index', [
+            'items' => $systems,
+            'filters' => [
+                'search' => $search,
+                'type' => $type,
+                'status' => $status,
+            ],
+            'systemTypes' => [
+                ['value' => 'pacs', 'label' => 'PACS'],
+                ['value' => 'ris', 'label' => 'RIS'],
+                ['value' => 'kis', 'label' => 'KIS'],
+                ['value' => 'modality', 'label' => 'Modalität'],
+                ['value' => 'viewer', 'label' => 'Viewer'],
+                ['value' => 'integration_engine', 'label' => 'Integrationsserver'],
+                ['value' => 'server', 'label' => 'Server'],
+                ['value' => 'database', 'label' => 'Datenbank'],
+                ['value' => 'storage', 'label' => 'Storage'],
+                ['value' => 'network', 'label' => 'Netzwerkgerät'],
+                ['value' => 'other', 'label' => 'Sonstiges'],
+            ],
+            'statuses' => [
+                ['value' => 'active', 'label' => 'Aktiv'],
+                ['value' => 'planned', 'label' => 'Geplant'],
+                ['value' => 'maintenance', 'label' => 'Wartung'],
+                ['value' => 'inactive', 'label' => 'Inaktiv'],
+                ['value' => 'retired', 'label' => 'Außer Betrieb'],
+            ],
+            'canManage' => $request->user()?->can('create', System::class) ?? false,
+        ]);
+    }
+
     public function store(
         StoreSystemRequest $request,
         RegistryAudit $audit,

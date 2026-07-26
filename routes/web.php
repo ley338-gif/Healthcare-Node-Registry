@@ -43,4 +43,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::post('/systems/{system}/archive', [SystemController::class, 'archive'])
         ->name('systems.archive');
+
+    Route::get('/systems', [SystemController::class, 'index'])
+        ->name('systems.index');
 });

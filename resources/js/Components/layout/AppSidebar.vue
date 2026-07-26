@@ -26,7 +26,7 @@ const groups = [
                 icon: Building2,
                 enabled: true,
             },
-            { label: 'Systeme', href: '#', paths: [], icon: Boxes, enabled: false, badge: 'nächster Sprint' },
+            { label: 'Systeme', href: '/systems', paths: ['/systems'], icon: Boxes, enabled: true },
             { label: 'Verbindungen', href: '#', paths: [], icon: Cable, enabled: false, badge: 'geplant' },
             { label: 'Topologie', href: '#', paths: [], icon: Network, enabled: false, badge: 'geplant' },
         ],
