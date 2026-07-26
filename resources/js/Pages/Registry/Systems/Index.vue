@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { Archive, Pencil, Search, Server } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import SystemArchiveDialog from '../../../Components/registry/systems/SystemArchiveDialog.vue';
@@ -252,9 +252,12 @@ const archiveSystem = (): void => {
                     <tbody class="divide-y divide-slate-100">
                         <tr v-for="system in items.data" :key="system.public_id" class="transition hover:bg-slate-50">
                             <td class="px-5 py-4">
-                                <div class="font-semibold text-slate-900">
+                                <Link
+                                    :href="`/systems/${system.public_id}`"
+                                    class="font-semibold text-slate-900 transition hover:text-blue-700"
+                                >
                                     {{ system.name }}
-                                </div>
+                                </Link>
 
                                 <div class="mt-1 text-xs text-slate-500">
                                     {{

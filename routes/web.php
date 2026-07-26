@@ -46,4 +46,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/systems', [SystemController::class, 'index'])
         ->name('systems.index');
+
+    Route::get('/systems/{system}', [SystemController::class, 'show'])
+        ->name('systems.show');
 });

@@ -103,6 +103,42 @@ final class SystemController extends Controller
         ]);
     }
 
+    public function show(Request $request, System $system): Response
+    {
+        Gate::authorize('view', $system);
+
+        $system->load([
+            'organization:id,public_id,name',
+            'site:id,public_id,name',
+            'department:id,public_id,name',
+        ]);
+
+        return Inertia::render('Registry/Systems/Show', [
+            'system' => $system,
+            'systemTypes' => [
+                ['value' => 'pacs', 'label' => 'PACS'],
+                ['value' => 'ris', 'label' => 'RIS'],
+                ['value' => 'kis', 'label' => 'KIS'],
+                ['value' => 'modality', 'label' => 'Modalität'],
+                ['value' => 'viewer', 'label' => 'Viewer'],
+                ['value' => 'integration_engine', 'label' => 'Integrationsserver'],
+                ['value' => 'server', 'label' => 'Server'],
+                ['value' => 'database', 'label' => 'Datenbank'],
+                ['value' => 'storage', 'label' => 'Storage'],
+                ['value' => 'network', 'label' => 'Netzwerkgerät'],
+                ['value' => 'other', 'label' => 'Sonstiges'],
+            ],
+            'statuses' => [
+                ['value' => 'active', 'label' => 'Aktiv'],
+                ['value' => 'planned', 'label' => 'Geplant'],
+                ['value' => 'maintenance', 'label' => 'Wartung'],
+                ['value' => 'inactive', 'label' => 'Inaktiv'],
+                ['value' => 'retired', 'label' => 'Außer Betrieb'],
+            ],
+            'canManage' => $request->user()?->can('update', $system) ?? false,
+        ]);
+    }
+
     public function store(
         StoreSystemRequest $request,
         RegistryAudit $audit,
