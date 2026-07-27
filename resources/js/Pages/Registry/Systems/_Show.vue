@@ -85,13 +85,14 @@ const editPanelOpen = ref(false);
 const tabs: Array<{
     id: TabId;
     label: string;
+    enabled: boolean;
 }> = [
-    { id: 'general', label: 'Allgemein' },
-    { id: 'network', label: 'Netzwerk' },
-    { id: 'dicom', label: 'DICOM' },
-    { id: 'hl7', label: 'HL7' },
-    { id: 'documentation', label: 'Dokumentation' },
-    { id: 'history', label: 'Historie' },
+    { id: 'general', label: 'Allgemein', enabled: true },
+    { id: 'network', label: 'Netzwerk', enabled: true },
+    { id: 'dicom', label: 'DICOM', enabled: true },
+    { id: 'hl7', label: 'HL7', enabled: true },
+    { id: 'documentation', label: 'Dokumentation', enabled: true },
+    { id: 'history', label: 'Historie', enabled: true },
 ];
 
 const productDescription = computed(
@@ -110,14 +111,6 @@ const formatDate = (value: string): string =>
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(new Date(value));
-
-const openEditPanel = (): void => {
-    editPanelOpen.value = true;
-};
-
-const closeEditPanel = (): void => {
-    editPanelOpen.value = false;
-};
 </script>
 
 <template>
@@ -143,7 +136,7 @@ const closeEditPanel = (): void => {
                         v-if="canManage"
                         type="button"
                         class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-                        @click="openEditPanel"
+                        @click="editPanelOpen = true"
                     >
                         <Pencil :size="17" />
                         Bearbeiten
@@ -158,6 +151,7 @@ const closeEditPanel = (): void => {
                     v-for="tab in tabs"
                     :key="tab.id"
                     type="button"
+                    :disabled="!tab.enabled"
                     class="border-b-2 px-4 py-3 text-sm font-medium transition"
                     :class="
                         activeTab === tab.id
@@ -226,24 +220,39 @@ const closeEditPanel = (): void => {
                     <div class="grid gap-6 sm:grid-cols-2">
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Hersteller</p>
-                            <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.vendor) }}</p>
+                            <p class="mt-1 text-sm text-slate-900">
+                                {{ displayValue(system.vendor) }}
+                            </p>
                         </div>
+
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Produkt</p>
-                            <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.product) }}</p>
+                            <p class="mt-1 text-sm text-slate-900">
+                                {{ displayValue(system.product) }}
+                            </p>
                         </div>
+
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Modell</p>
-                            <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.model) }}</p>
+                            <p class="mt-1 text-sm text-slate-900">
+                                {{ displayValue(system.model) }}
+                            </p>
                         </div>
+
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Version</p>
-                            <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.version) }}</p>
+                            <p class="mt-1 text-sm text-slate-900">
+                                {{ displayValue(system.version) }}
+                            </p>
                         </div>
+
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Betriebssystem</p>
-                            <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.operating_system) }}</p>
+                            <p class="mt-1 text-sm text-slate-900">
+                                {{ displayValue(system.operating_system) }}
+                            </p>
                         </div>
+
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Betriebssystemversion</p>
                             <p class="mt-1 text-sm text-slate-900">
@@ -261,6 +270,7 @@ const closeEditPanel = (): void => {
                                 {{ displayValue(system.description) }}
                             </p>
                         </div>
+
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Interne Notizen</p>
                             <p class="mt-2 text-sm leading-6 whitespace-pre-line text-slate-700">
@@ -313,15 +323,23 @@ const closeEditPanel = (): void => {
                 <div class="grid gap-6 sm:grid-cols-3">
                     <div>
                         <p class="text-xs font-semibold text-slate-500 uppercase">Hostname</p>
-                        <p class="mt-1 font-mono text-sm text-slate-900">{{ displayValue(system.hostname) }}</p>
+                        <p class="mt-1 font-mono text-sm text-slate-900">
+                            {{ displayValue(system.hostname) }}
+                        </p>
                     </div>
+
                     <div>
                         <p class="text-xs font-semibold text-slate-500 uppercase">FQDN</p>
-                        <p class="mt-1 font-mono text-sm text-slate-900">{{ displayValue(system.fqdn) }}</p>
+                        <p class="mt-1 font-mono text-sm text-slate-900">
+                            {{ displayValue(system.fqdn) }}
+                        </p>
                     </div>
+
                     <div>
                         <p class="text-xs font-semibold text-slate-500 uppercase">IP-Adresse</p>
-                        <p class="mt-1 font-mono text-sm text-slate-900">{{ displayValue(system.ip_address) }}</p>
+                        <p class="mt-1 font-mono text-sm text-slate-900">
+                            {{ displayValue(system.ip_address) }}
+                        </p>
                     </div>
                 </div>
             </ContentCard>
@@ -375,7 +393,7 @@ const closeEditPanel = (): void => {
             :departments="departments"
             :system-types="systemTypes"
             :statuses="statuses"
-            @close="closeEditPanel"
+            @close="editPanelOpen = false"
         />
     </AppLayout>
 </template>

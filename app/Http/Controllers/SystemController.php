@@ -115,6 +115,7 @@ final class SystemController extends Controller
 
         return Inertia::render('Registry/Systems/Show', [
             'system' => $system,
+
             'systemTypes' => [
                 ['value' => 'pacs', 'label' => 'PACS'],
                 ['value' => 'ris', 'label' => 'RIS'],
@@ -128,6 +129,7 @@ final class SystemController extends Controller
                 ['value' => 'network', 'label' => 'Netzwerkgerät'],
                 ['value' => 'other', 'label' => 'Sonstiges'],
             ],
+
             'statuses' => [
                 ['value' => 'active', 'label' => 'Aktiv'],
                 ['value' => 'planned', 'label' => 'Geplant'],
@@ -135,6 +137,30 @@ final class SystemController extends Controller
                 ['value' => 'inactive', 'label' => 'Inaktiv'],
                 ['value' => 'retired', 'label' => 'Außer Betrieb'],
             ],
+
+            'organizations' => Organization::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'name']),
+
+            'sites' => Site::query()
+                ->active()
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'organization_id',
+                    'name',
+                ]),
+
+            'departments' => Department::query()
+                ->active()
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'site_id',
+                    'name',
+                ]),
+
             'canManage' => $request->user()?->can('update', $system) ?? false,
         ]);
     }
