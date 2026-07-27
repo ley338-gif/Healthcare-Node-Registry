@@ -11,8 +11,23 @@ import {
     Radio,
     RefreshCw,
     X,
+    History,
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+
+type DicomNodeVerification = {
+    public_id: string;
+    status: string;
+    successful: boolean;
+    duration_ms: number;
+    exit_code: number;
+    message: string | null;
+    verified_at: string;
+    triggered_by_user: {
+        id: number;
+        name: string;
+    } | null;
+};
 
 export type DicomNode = {
     public_id: string;
@@ -36,6 +51,7 @@ export type DicomNode = {
     last_verification_status: string | null;
     last_verification_duration_ms: number | null;
     last_verification_message: string | null;
+    verifications: DicomNodeVerification[];
 };
 
 const props = defineProps<{
@@ -46,6 +62,7 @@ const props = defineProps<{
 
 const createOpen = ref(false);
 const editOpen = ref(false);
+const historyOpen = ref(false);
 const archiveOpen = ref(false);
 const archiveProcessing = ref(false);
 const verifyProcessingId = ref<string | null>(null);
@@ -184,7 +201,15 @@ const submitEdit = (): void => {
         onSuccess: closeEdit,
     });
 };
+const openHistory = (node: DicomNode): void => {
+    selectedNode.value = node;
+    historyOpen.value = true;
+};
 
+const closeHistory = (): void => {
+    historyOpen.value = false;
+    selectedNode.value = null;
+};
 const openArchive = (node: DicomNode): void => {
     selectedNode.value = node;
     archiveOpen.value = true;
@@ -274,6 +299,11 @@ const verificationStatusClass = (node: DicomNode): string => {
 
     return 'bg-red-500';
 };
+const verificationTextClass = (verification: DicomNodeVerification): string =>
+    verification.successful ? 'text-emerald-700' : 'text-red-700';
+
+const verificationIconClass = (verification: DicomNodeVerification): string =>
+    verification.successful ? 'text-emerald-600' : 'text-red-600';
 </script>
 
 <template>
@@ -439,6 +469,16 @@ const verificationStatusClass = (node: DicomNode): string => {
                                         class="animate-spin"
                                     />
                                     <RefreshCw v-else :size="17" />
+                                </button>
+
+                                <button
+                                    type="button"
+                                    :aria-label="`${node.name} Verifikationshistorie anzeigen`"
+                                    title="C-ECHO-Historie"
+                                    class="rounded-lg p-2 text-slate-500 transition hover:bg-violet-50 hover:text-violet-700"
+                                    @click="openHistory(node)"
+                                >
+                                    <History :size="17" />
                                 </button>
 
                                 <button
@@ -778,6 +818,123 @@ const verificationStatusClass = (node: DicomNode): string => {
                         </button>
                     </footer>
                 </form>
+            </aside>
+        </div>
+
+        <div
+            v-if="historyOpen && selectedNode"
+            class="fixed inset-0 z-50"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dicom-history-title"
+        >
+            <button
+                type="button"
+                aria-label="Historie schließen"
+                class="absolute inset-0 bg-slate-950/40"
+                @click="closeHistory"
+            />
+
+            <aside class="absolute inset-y-0 right-0 flex w-full max-w-xl flex-col bg-white shadow-2xl">
+                <header class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+                    <div>
+                        <p class="text-xs font-semibold tracking-wider text-violet-600 uppercase">C-ECHO</p>
+
+                        <h2 id="dicom-history-title" class="mt-1 text-xl font-semibold text-slate-950">
+                            Verifikationshistorie
+                        </h2>
+
+                        <p class="mt-1 text-sm text-slate-500">
+                            {{ selectedNode.name }}
+                            · {{ selectedNode.ae_title }}
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
+                        @click="closeHistory"
+                    >
+                        <X :size="20" />
+                    </button>
+                </header>
+
+                <div class="flex-1 overflow-y-auto px-6 py-6">
+                    <div v-if="selectedNode.verifications.length === 0" class="py-12 text-center">
+                        <History :size="34" class="mx-auto text-slate-300" />
+
+                        <p class="mt-4 font-medium text-slate-900">Noch keine Prüfungen</p>
+
+                        <p class="mt-1 text-sm text-slate-500">Führe zunächst einen C-ECHO-Test aus.</p>
+                    </div>
+
+                    <ol v-else class="space-y-4">
+                        <li
+                            v-for="verification in selectedNode.verifications"
+                            :key="verification.public_id"
+                            class="rounded-2xl border border-slate-200 p-4"
+                        >
+                            <div class="flex items-start gap-3">
+                                <CircleCheck
+                                    v-if="verification.successful"
+                                    :size="20"
+                                    class="mt-0.5 shrink-0"
+                                    :class="verificationIconClass(verification)"
+                                />
+
+                                <CircleX
+                                    v-else
+                                    :size="20"
+                                    class="mt-0.5 shrink-0"
+                                    :class="verificationIconClass(verification)"
+                                />
+
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                        <p class="text-sm font-semibold" :class="verificationTextClass(verification)">
+                                            {{ verificationLabel(verification.status) }}
+                                        </p>
+
+                                        <time class="text-xs text-slate-500" :datetime="verification.verified_at">
+                                            {{ formatVerificationDate(verification.verified_at) }}
+                                        </time>
+                                    </div>
+
+                                    <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                                        <span> {{ verification.duration_ms }} ms </span>
+
+                                        <span>
+                                            Exit-Code:
+                                            {{ verification.exit_code }}
+                                        </span>
+
+                                        <span v-if="verification.triggered_by_user">
+                                            Ausgeführt von
+                                            {{ verification.triggered_by_user.name }}
+                                        </span>
+                                    </div>
+
+                                    <p
+                                        v-if="verification.message"
+                                        class="mt-3 rounded-xl bg-slate-50 p-3 font-mono text-xs leading-5 whitespace-pre-wrap text-slate-600"
+                                    >
+                                        {{ verification.message }}
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+
+                <footer class="flex justify-end border-t border-slate-200 px-6 py-4">
+                    <button
+                        type="button"
+                        class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                        @click="closeHistory"
+                    >
+                        Schließen
+                    </button>
+                </footer>
             </aside>
         </div>
 

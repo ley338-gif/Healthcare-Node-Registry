@@ -165,6 +165,12 @@ final class SystemController extends Controller
             'dicomNodes' => $system
                 ->dicomNodes()
                 ->active()
+                ->with([
+                    'verifications' => fn ($query) => $query
+                        ->with('triggeredByUser:id,name')
+                        ->latest('verified_at')
+                        ->limit(20),
+                ])
                 ->orderBy('name')
                 ->get(),
 
