@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Activity, ArrowLeft, Building2, Database, FileText, History, Network, Pencil, Server } from '@lucide/vue';
+import { Activity, ArrowLeft, Building2, Database, FileText, History, Pencil, Server } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import DicomNodeManager, { type DicomNode } from '../../../Components/registry/dicom/DicomNodeManager.vue';
 import SystemEditSlideOver from '../../../Components/registry/systems/SystemEditSlideOver.vue';
 import ContentCard from '../../../Components/ui/ContentCard.vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
@@ -76,7 +77,9 @@ const props = defineProps<{
     organizations: OrganizationOption[];
     sites: SiteOption[];
     departments: DepartmentOption[];
+    dicomNodes: DicomNode[];
     canManage: boolean;
+    canManageDicomNodes: boolean;
 }>();
 
 const activeTab = ref<TabId>('general');
@@ -328,15 +331,11 @@ const closeEditPanel = (): void => {
         </div>
 
         <div v-else-if="activeTab === 'dicom'" class="mt-6">
-            <ContentCard title="DICOM-Knoten" description="AE Titles, Hosts, Ports und unterstützte DICOM-Dienste.">
-                <div class="py-10 text-center">
-                    <Network :size="32" class="mx-auto text-slate-300" />
-                    <p class="mt-4 font-medium text-slate-900">Noch keine DICOM-Knoten</p>
-                    <p class="mt-1 text-sm text-slate-500">
-                        Dieses Modul wird im nächsten Entwicklungsschritt ergänzt.
-                    </p>
-                </div>
-            </ContentCard>
+            <DicomNodeManager
+                :system-public-id="system.public_id"
+                :nodes="dicomNodes"
+                :can-manage="canManageDicomNodes"
+            />
         </div>
 
         <div v-else-if="activeTab === 'hl7'" class="mt-6">

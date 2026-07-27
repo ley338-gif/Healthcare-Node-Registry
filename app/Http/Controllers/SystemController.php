@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreSystemRequest;
 use App\Http\Requests\UpdateSystemRequest;
 use App\Models\Department;
+use App\Models\DicomNode;
 use App\Models\Organization;
 use App\Models\Site;
 use App\Models\System;
@@ -160,6 +161,16 @@ final class SystemController extends Controller
                     'site_id',
                     'name',
                 ]),
+
+            'dicomNodes' => $system
+                ->dicomNodes()
+                ->active()
+                ->orderBy('name')
+                ->get(),
+
+            'canManageDicomNodes' => $request
+                ->user()
+                ?->can('create', DicomNode::class) ?? false,
 
             'canManage' => $request->user()?->can('update', $system) ?? false,
         ]);

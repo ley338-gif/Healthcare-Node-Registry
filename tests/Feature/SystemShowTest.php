@@ -43,6 +43,8 @@ final class SystemShowTest extends TestCase
                 ->has('system.organization')
                 ->has('system.site')
                 ->has('system.department')
+                ->has('dicomNodes')
+                ->where('canManageDicomNodes', true)
                 ->has('systemTypes')
                 ->has('statuses')
                 ->where('canManage', true)
