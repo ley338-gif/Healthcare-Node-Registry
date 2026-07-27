@@ -79,6 +79,16 @@ final class DicomNodeVerificationTest extends TestCase
             'subject_type' => DicomNode::class,
             'subject_public_id' => $dicomNode->public_id,
         ]);
+
+        $this->assertDatabaseHas('dicom_node_verifications', [
+            'dicom_node_id' => $dicomNode->id,
+            'triggered_by_user_id' => $user->id,
+            'status' => 'success',
+            'successful' => true,
+            'duration_ms' => 32,
+            'exit_code' => 0,
+        ]);
+
     }
 
     public function test_failed_verification_is_saved(): void
@@ -134,6 +144,15 @@ final class DicomNodeVerificationTest extends TestCase
             5000,
             $dicomNode->last_verification_duration_ms,
         );
+
+        $this->assertDatabaseHas('dicom_node_verifications', [
+            'dicom_node_id' => $dicomNode->id,
+            'triggered_by_user_id' => $user->id,
+            'status' => 'timeout',
+            'successful' => false,
+            'duration_ms' => 5000,
+            'exit_code' => 1,
+        ]);
     }
 
     public function test_node_without_echo_support_cannot_be_verified(): void
@@ -156,6 +175,13 @@ final class DicomNodeVerificationTest extends TestCase
         $dicomNode->refresh();
 
         $this->assertNull($dicomNode->last_verified_at);
+
+        $this->assertNull($dicomNode->last_verification_status);
+
+        $this->assertDatabaseCount(
+            'dicom_node_verifications',
+            0,
+        );
     }
 
     public function test_unprivileged_user_cannot_verify_a_dicom_node(): void

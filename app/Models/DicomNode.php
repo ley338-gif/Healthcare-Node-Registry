@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 /**
@@ -109,6 +110,14 @@ final class DicomNode extends Model
     public function system(): BelongsTo
     {
         return $this->belongsTo(System::class);
+    }
+
+    /**
+     * @return HasMany<DicomNodeVerification, $this>
+     */
+    public function verifications(): HasMany
+    {
+        return $this->hasMany(DicomNodeVerification::class);
     }
 
     /**

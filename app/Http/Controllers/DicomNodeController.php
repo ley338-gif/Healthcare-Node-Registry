@@ -114,6 +114,15 @@ final class DicomNodeController extends Controller
                     'last_verification_duration_ms' => $result->durationMilliseconds,
                     'last_verification_message' => $result->message,
                 ]);
+                $dicomNode->verifications()->create([
+                    'triggered_by_user_id' => $request->user()?->id,
+                    'status' => $result->status,
+                    'successful' => $result->successful,
+                    'duration_ms' => $result->durationMilliseconds,
+                    'exit_code' => $result->exitCode,
+                    'message' => $result->message,
+                    'verified_at' => now(),
+                ]);
 
                 $audit->record(
                     'registry.dicom_node.verified',

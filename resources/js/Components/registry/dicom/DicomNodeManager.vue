@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
-import { Archive, CircleCheck, CircleX, LoaderCircle, LockKeyhole, Pencil, Plus, Radio, RefreshCw, X, } from '@lucide/vue';
+import {
+    Archive,
+    CircleCheck,
+    CircleX,
+    LoaderCircle,
+    LockKeyhole,
+    Pencil,
+    Plus,
+    Radio,
+    RefreshCw,
+    X,
+} from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 
 export type DicomNode = {
@@ -207,6 +218,7 @@ const confirmArchive = (): void => {
         },
     );
 };
+
 const verifyNode = (node: DicomNode): void => {
     if (!node.supports_echo || verifyProcessingId.value !== null) {
         return;
@@ -249,8 +261,19 @@ const verificationLabel = (status: string | null): string => {
     return status === null ? 'Ungeprüft' : (labels[status] ?? status);
 };
 
-const verificationSuccessful = (node: DicomNode): boolean =>
-    node.last_verification_status === 'success';
+const verificationSuccessful = (node: DicomNode): boolean => node.last_verification_status === 'success';
+
+const verificationStatusClass = (node: DicomNode): string => {
+    if (node.last_verification_status === 'success') {
+        return 'bg-emerald-500';
+    }
+
+    if (node.last_verification_status === null) {
+        return 'bg-slate-300';
+    }
+
+    return 'bg-red-500';
+};
 </script>
 
 <template>
@@ -289,7 +312,7 @@ const verificationSuccessful = (node: DicomNode): boolean =>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Rolle</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Dienste</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Letzter C-ECHO</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Connectivity</th>
                         <th
                             v-if="canManage"
                             class="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase"
@@ -302,9 +325,16 @@ const verificationSuccessful = (node: DicomNode): boolean =>
                 <tbody class="divide-y divide-slate-100">
                     <tr v-for="node in nodes" :key="node.public_id" class="align-top transition hover:bg-slate-50">
                         <td class="px-5 py-4">
-                            <p class="font-semibold text-slate-900">
-                                {{ node.name }}
-                            </p>
+                            <div class="flex items-center gap-2">
+                                <span
+                                    class="h-2.5 w-2.5 shrink-0 rounded-full"
+                                    :class="verificationStatusClass(node)"
+                                    aria-hidden="true"
+                                />
+                                <p class="font-semibold text-slate-900">
+                                    {{ node.name }}
+                                </p>
+                            </div>
                             <p class="mt-1 font-mono text-xs text-slate-500">
                                 {{ node.ae_title }}
                             </p>
@@ -350,89 +380,67 @@ const verificationSuccessful = (node: DicomNode): boolean =>
                         </td>
 
                         <td class="px-5 py-4">
-    <div
-        v-if="node.last_verified_at"
-        class="flex items-start gap-2"
-    >
-        <CircleCheck
-            v-if="verificationSuccessful(node)"
-            :size="17"
-            class="mt-0.5 shrink-0 text-emerald-600"
-        />
+                            <div v-if="node.last_verified_at" class="flex min-w-48 items-start gap-2">
+                                <CircleCheck
+                                    v-if="verificationSuccessful(node)"
+                                    :size="17"
+                                    class="mt-0.5 shrink-0 text-emerald-600"
+                                />
 
-        <CircleX
-            v-else
-            :size="17"
-            class="mt-0.5 shrink-0 text-red-600"
-        />
+                                <CircleX v-else :size="17" class="mt-0.5 shrink-0 text-red-600" />
 
-        <div>
-            <p
-                class="text-sm font-medium"
-                :class="
-                    verificationSuccessful(node)
-                        ? 'text-emerald-700'
-                        : 'text-red-700'
-                "
-            >
-                {{
-                    verificationLabel(
-                        node.last_verification_status,
-                    )
-                }}
-            </p>
+                                <div class="min-w-0">
+                                    <p
+                                        class="text-sm font-medium"
+                                        :class="verificationSuccessful(node) ? 'text-emerald-700' : 'text-red-700'"
+                                    >
+                                        {{ verificationLabel(node.last_verification_status) }}
+                                    </p>
 
-            <p class="mt-1 text-xs text-slate-500">
-                {{ formatVerificationDate(node.last_verified_at) }}
-                <template
-                    v-if="
-                        node.last_verification_duration_ms !== null
-                    "
-                >
-                    · {{ node.last_verification_duration_ms }} ms
-                </template>
-            </p>
+                                    <p class="mt-1 text-xs text-slate-500">
+                                        {{ formatVerificationDate(node.last_verified_at) }}
+                                        <template v-if="node.last_verification_duration_ms !== null">
+                                            ·
+                                            {{ node.last_verification_duration_ms }}
+                                            ms
+                                        </template>
+                                    </p>
 
-            <p
-                v-if="node.last_verification_message"
-                class="mt-1 max-w-xs truncate text-xs text-slate-400"
-                :title="node.last_verification_message"
-            >
-                {{ node.last_verification_message }}
-            </p>
-        </div>
-    </div>
+                                    <p
+                                        v-if="node.last_verification_message"
+                                        class="mt-1 max-w-64 truncate text-xs text-slate-400"
+                                        :title="node.last_verification_message"
+                                    >
+                                        {{ node.last_verification_message }}
+                                    </p>
+                                </div>
+                            </div>
 
-    <span v-else class="text-xs text-slate-400">
-        Noch nicht geprüft
-    </span>
-</td>
+                            <span v-else class="text-xs text-slate-400"> Noch nicht geprüft </span>
+                        </td>
 
                         <td v-if="canManage" class="px-5 py-4 text-right">
                             <div class="flex justify-end gap-1">
-                            <button
-    type="button"
-    :disabled="
-        !node.supports_echo ||
-        verifyProcessingId !== null
-    "
-    :aria-label="`${node.name} per C-ECHO prüfen`"
-    :title="
-        node.supports_echo
-            ? 'C-ECHO testen'
-            : 'C-ECHO ist für diesen Knoten deaktiviert'
-    "
-    class="rounded-lg p-2 text-slate-500 transition hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-35"
-    @click="verifyNode(node)"
->
-    <LoaderCircle
-        v-if="verifyProcessingId === node.public_id"
-        :size="17"
-        class="animate-spin"
-    />
+                                <button
+                                    type="button"
+                                    :disabled="!node.supports_echo || verifyProcessingId !== null"
+                                    :aria-label="`${node.name} per C-ECHO prüfen`"
+                                    :title="
+                                        node.supports_echo
+                                            ? 'C-ECHO testen'
+                                            : 'C-ECHO ist für diesen Knoten deaktiviert'
+                                    "
+                                    class="rounded-lg p-2 text-slate-500 transition hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-35"
+                                    @click="verifyNode(node)"
+                                >
+                                    <LoaderCircle
+                                        v-if="verifyProcessingId === node.public_id"
+                                        :size="17"
+                                        class="animate-spin"
+                                    />
+                                    <RefreshCw v-else :size="17" />
+                                </button>
 
-    <RefreshCw v-else :size="17" />
-</button>
                                 <button
                                     type="button"
                                     :aria-label="`${node.name} bearbeiten`"
