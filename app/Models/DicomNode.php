@@ -18,6 +18,7 @@ use Illuminate\Support\Str;
  * @property string $ae_title
  * @property string $host
  * @property int $port
+ * @property int|null $last_verification_duration_ms
  * @property string $role
  * @property string $status
  * @property bool $tls_enabled
@@ -57,6 +58,7 @@ final class DicomNode extends Model
         'notes',
         'last_verified_at',
         'last_verification_status',
+        'last_verification_duration_ms',
         'last_verification_message',
         'archived_at',
     ];
@@ -92,6 +94,7 @@ final class DicomNode extends Model
             'supports_worklist' => 'boolean',
             'last_verified_at' => 'immutable_datetime',
             'archived_at' => 'immutable_datetime',
+            'last_verification_duration_ms' => 'integer',
         ];
     }
 

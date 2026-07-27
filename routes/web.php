@@ -59,4 +59,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::post('/dicom-nodes/{dicomNode}/archive', [DicomNodeController::class, 'archive'])
         ->name('dicom-nodes.archive');
+
+    Route::post('/dicom-nodes/{dicomNode}/verify', [DicomNodeController::class, 'verify'])
+        ->name('dicom-nodes.verify');
 });

@@ -6,7 +6,7 @@ use App\Models\DicomNode;
 use Symfony\Component\Process\Process;
 use Throwable;
 
-final class DicomEchoService
+class DicomEchoService
 {
     public function test(DicomNode $dicomNode): DicomEchoResult
     {

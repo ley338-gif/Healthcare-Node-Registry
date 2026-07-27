@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
-import { Archive, LockKeyhole, Pencil, Plus, Radio, X } from '@lucide/vue';
+import { Archive, CircleCheck, CircleX, LoaderCircle, LockKeyhole, Pencil, Plus, Radio, RefreshCw, X, } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 
 export type DicomNode = {
@@ -23,6 +23,8 @@ export type DicomNode = {
     notes: string | null;
     last_verified_at: string | null;
     last_verification_status: string | null;
+    last_verification_duration_ms: number | null;
+    last_verification_message: string | null;
 };
 
 const props = defineProps<{
@@ -35,6 +37,7 @@ const createOpen = ref(false);
 const editOpen = ref(false);
 const archiveOpen = ref(false);
 const archiveProcessing = ref(false);
+const verifyProcessingId = ref<string | null>(null);
 const selectedNode = ref<DicomNode | null>(null);
 
 const roleLabels: Record<DicomNode['role'], string> = {
@@ -204,6 +207,50 @@ const confirmArchive = (): void => {
         },
     );
 };
+const verifyNode = (node: DicomNode): void => {
+    if (!node.supports_echo || verifyProcessingId.value !== null) {
+        return;
+    }
+
+    verifyProcessingId.value = node.public_id;
+
+    router.post(
+        `/dicom-nodes/${node.public_id}/verify`,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                verifyProcessingId.value = null;
+            },
+        },
+    );
+};
+
+const formatVerificationDate = (value: string | null): string => {
+    if (value === null) {
+        return 'Noch nicht geprüft';
+    }
+
+    return new Intl.DateTimeFormat('de-DE', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+    }).format(new Date(value));
+};
+
+const verificationLabel = (status: string | null): string => {
+    const labels: Record<string, string> = {
+        success: 'Erfolgreich',
+        timeout: 'Timeout',
+        unreachable: 'Nicht erreichbar',
+        failed: 'Fehlgeschlagen',
+        error: 'Fehler',
+    };
+
+    return status === null ? 'Ungeprüft' : (labels[status] ?? status);
+};
+
+const verificationSuccessful = (node: DicomNode): boolean =>
+    node.last_verification_status === 'success';
 </script>
 
 <template>
@@ -242,6 +289,7 @@ const confirmArchive = (): void => {
                         <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Rolle</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Dienste</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Letzter C-ECHO</th>
                         <th
                             v-if="canManage"
                             class="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase"
@@ -301,8 +349,90 @@ const confirmArchive = (): void => {
                             </span>
                         </td>
 
+                        <td class="px-5 py-4">
+    <div
+        v-if="node.last_verified_at"
+        class="flex items-start gap-2"
+    >
+        <CircleCheck
+            v-if="verificationSuccessful(node)"
+            :size="17"
+            class="mt-0.5 shrink-0 text-emerald-600"
+        />
+
+        <CircleX
+            v-else
+            :size="17"
+            class="mt-0.5 shrink-0 text-red-600"
+        />
+
+        <div>
+            <p
+                class="text-sm font-medium"
+                :class="
+                    verificationSuccessful(node)
+                        ? 'text-emerald-700'
+                        : 'text-red-700'
+                "
+            >
+                {{
+                    verificationLabel(
+                        node.last_verification_status,
+                    )
+                }}
+            </p>
+
+            <p class="mt-1 text-xs text-slate-500">
+                {{ formatVerificationDate(node.last_verified_at) }}
+                <template
+                    v-if="
+                        node.last_verification_duration_ms !== null
+                    "
+                >
+                    · {{ node.last_verification_duration_ms }} ms
+                </template>
+            </p>
+
+            <p
+                v-if="node.last_verification_message"
+                class="mt-1 max-w-xs truncate text-xs text-slate-400"
+                :title="node.last_verification_message"
+            >
+                {{ node.last_verification_message }}
+            </p>
+        </div>
+    </div>
+
+    <span v-else class="text-xs text-slate-400">
+        Noch nicht geprüft
+    </span>
+</td>
+
                         <td v-if="canManage" class="px-5 py-4 text-right">
                             <div class="flex justify-end gap-1">
+                            <button
+    type="button"
+    :disabled="
+        !node.supports_echo ||
+        verifyProcessingId !== null
+    "
+    :aria-label="`${node.name} per C-ECHO prüfen`"
+    :title="
+        node.supports_echo
+            ? 'C-ECHO testen'
+            : 'C-ECHO ist für diesen Knoten deaktiviert'
+    "
+    class="rounded-lg p-2 text-slate-500 transition hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-35"
+    @click="verifyNode(node)"
+>
+    <LoaderCircle
+        v-if="verifyProcessingId === node.public_id"
+        :size="17"
+        class="animate-spin"
+    />
+
+    <RefreshCw v-else :size="17" />
+</button>
                                 <button
                                     type="button"
                                     :aria-label="`${node.name} bearbeiten`"

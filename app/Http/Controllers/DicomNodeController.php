@@ -6,6 +6,7 @@ use App\Http\Requests\StoreDicomNodeRequest;
 use App\Http\Requests\UpdateDicomNodeRequest;
 use App\Models\DicomNode;
 use App\Models\System;
+use App\Services\Dicom\DicomEchoService;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -52,6 +53,7 @@ final class DicomNodeController extends Controller
         DB::transaction(
             function () use ($request, $dicomNode, $audit): void {
                 $validated = $request->validated();
+
                 $before = $dicomNode->only(array_keys($validated));
 
                 $dicomNode->update($validated);
@@ -61,13 +63,9 @@ final class DicomNodeController extends Controller
                     $dicomNode,
                     $request->user(),
                     [
-                        'system_public_id' => $dicomNode
-                            ->system
-                            ->public_id,
+                        'system_public_id' => $dicomNode->system->public_id,
                         'before' => $before,
-                        'after' => $dicomNode->only(
-                            array_keys($validated),
-                        ),
+                        'after' => $dicomNode->only(array_keys($validated)),
                     ],
                 );
             },
@@ -76,6 +74,78 @@ final class DicomNodeController extends Controller
         return back()->with(
             'success',
             'DICOM-Knoten wurde aktualisiert.',
+        );
+    }
+
+    public function verify(
+        Request $request,
+        DicomNode $dicomNode,
+        DicomEchoService $echoService,
+        RegistryAudit $audit,
+    ): RedirectResponse {
+        Gate::authorize('verify', $dicomNode);
+
+        if ($dicomNode->archived_at !== null) {
+            return back()->with(
+                'error',
+                'Ein archivierter DICOM-Knoten kann nicht geprüft werden.',
+            );
+        }
+
+        if (! $dicomNode->supports_echo) {
+            return back()->with(
+                'error',
+                'Für diesen DICOM-Knoten ist C-ECHO nicht aktiviert.',
+            );
+        }
+
+        $result = $echoService->test($dicomNode);
+
+        DB::transaction(
+            function () use (
+                $request,
+                $dicomNode,
+                $result,
+                $audit,
+            ): void {
+                $dicomNode->update([
+                    'last_verified_at' => now(),
+                    'last_verification_status' => $result->status,
+                    'last_verification_duration_ms' => $result->durationMilliseconds,
+                    'last_verification_message' => $result->message,
+                ]);
+
+                $audit->record(
+                    'registry.dicom_node.verified',
+                    $dicomNode,
+                    $request->user(),
+                    [
+                        'successful' => $result->successful,
+                        'status' => $result->status,
+                        'duration_milliseconds' => $result->durationMilliseconds,
+                        'exit_code' => $result->exitCode,
+                        'system_public_id' => $dicomNode->system->public_id,
+                    ],
+                );
+            },
+        );
+
+        if ($result->successful) {
+            return back()->with(
+                'success',
+                sprintf(
+                    'C-ECHO erfolgreich (%d ms).',
+                    $result->durationMilliseconds,
+                ),
+            );
+        }
+
+        return back()->with(
+            'error',
+            sprintf(
+                'C-ECHO fehlgeschlagen: %s',
+                $result->message,
+            ),
         );
     }
 
@@ -105,9 +175,7 @@ final class DicomNodeController extends Controller
                     $dicomNode,
                     $request->user(),
                     [
-                        'system_public_id' => $dicomNode
-                            ->system
-                            ->public_id,
+                        'system_public_id' => $dicomNode->system->public_id,
                     ],
                 );
             },

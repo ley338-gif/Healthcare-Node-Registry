@@ -32,4 +32,9 @@ final class DicomNodePolicy
     {
         return $user->hasPermission('registry.manage');
     }
+
+    public function verify(User $user, DicomNode $dicomNode): bool
+    {
+        return $user->hasPermission('registry.manage');
+    }
 }
