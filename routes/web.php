@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DicomNodeController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
 use App\Http\Controllers\SiteController;
@@ -49,4 +50,13 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/systems/{system}', [SystemController::class, 'show'])
         ->name('systems.show');
+
+    Route::post('/systems/{system}/dicom-nodes', [DicomNodeController::class, 'store'])
+        ->name('dicom-nodes.store');
+
+    Route::put('/dicom-nodes/{dicomNode}', [DicomNodeController::class, 'update'])
+        ->name('dicom-nodes.update');
+
+    Route::post('/dicom-nodes/{dicomNode}/archive', [DicomNodeController::class, 'archive'])
+        ->name('dicom-nodes.archive');
 });
