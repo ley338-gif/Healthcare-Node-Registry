@@ -127,4 +127,37 @@ final class DicomNode extends Model
     {
         $query->whereNull('archived_at');
     }
+
+    /**
+     * @return HasMany<DicomConnection, $this>
+     */
+    public function outgoingConnections(): HasMany
+    {
+        return $this->hasMany(
+            DicomConnection::class,
+            'source_dicom_node_id',
+        );
+    }
+
+    /**
+     * @return HasMany<DicomConnection, $this>
+     */
+    public function incomingConnections(): HasMany
+    {
+        return $this->hasMany(
+            DicomConnection::class,
+            'target_dicom_node_id',
+        );
+    }
+
+    /**
+     * @return HasMany<DicomConnection, $this>
+     */
+    public function moveDestinationConnections(): HasMany
+    {
+        return $this->hasMany(
+            DicomConnection::class,
+            'destination_dicom_node_id',
+        );
+    }
 }
