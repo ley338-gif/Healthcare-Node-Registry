@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DicomConnectionController;
+use App\Http\Controllers\DicomNetworkMapController;
 use App\Http\Controllers\DicomNodeController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
@@ -72,4 +73,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::post('/dicom-connections/{dicomConnection}/archive', [DicomConnectionController::class, 'archive'])
         ->name('dicom-connections.archive');
+
+    Route::get('/network', DicomNetworkMapController::class)
+        ->name('network.index');
 });
