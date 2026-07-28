@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreSystemRequest;
 use App\Http\Requests\UpdateSystemRequest;
 use App\Models\Department;
+use App\Models\DicomConnection;
 use App\Models\DicomNode;
 use App\Models\Organization;
 use App\Models\Site;
@@ -173,6 +174,50 @@ final class SystemController extends Controller
                 ])
                 ->orderBy('name')
                 ->get(),
+
+            'dicomConnections' => DicomConnection::query()
+                ->active()
+                ->with([
+                    'sourceNode:id,public_id,system_id,name,ae_title,host,port',
+                    'sourceNode.system:id,name',
+                    'targetNode:id,public_id,system_id,name,ae_title,host,port',
+                    'targetNode.system:id,name',
+                    'destinationNode:id,public_id,system_id,name,ae_title,host,port',
+                    'destinationNode.system:id,name',
+                ])
+                ->where(
+                    fn ($query) => $query
+                        ->whereHas(
+                            'sourceNode',
+                            fn ($nodeQuery) => $nodeQuery
+                                ->where('system_id', $system->id),
+                        )
+                        ->orWhereHas(
+                            'targetNode',
+                            fn ($nodeQuery) => $nodeQuery
+                                ->where('system_id', $system->id),
+                        ),
+                )
+                ->orderBy('name')
+                ->get(),
+
+            'dicomNodeOptions' => DicomNode::query()
+                ->active()
+                ->with('system:id,name')
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'public_id',
+                    'system_id',
+                    'name',
+                    'ae_title',
+                    'host',
+                    'port',
+                ]),
+
+            'canManageDicomConnections' => $request
+                ->user()
+                ?->can('create', DicomConnection::class) ?? false,
 
             'canManageDicomNodes' => $request
                 ->user()

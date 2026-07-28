@@ -44,6 +44,8 @@ final class SystemShowTest extends TestCase
                 ->has('system.site')
                 ->has('system.department')
                 ->has('dicomNodes')
+                ->has('dicomConnections')
+                ->has('dicomNodeOptions')
                 ->where('canManageDicomNodes', true)
                 ->has('systemTypes')
                 ->has('statuses')
