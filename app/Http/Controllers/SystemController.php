@@ -27,11 +27,23 @@ final class SystemController extends Controller
         $type = trim((string) $request->query('type', ''));
         $status = trim((string) $request->query('status', ''));
 
+        $organizationId = $request->integer('organization');
+        $siteId = $request->integer('site');
+        $departmentId = $request->integer('department');
+
         $systems = System::query()
             ->with([
                 'organization:id,public_id,name',
                 'site:id,public_id,name',
                 'department:id,public_id,name',
+            ])
+            ->withCount([
+                'dicomNodes as dicom_nodes_count' => fn ($query) => $query
+                    ->active(),
+                'dicomNodes as failed_dicom_nodes_count' => fn ($query) => $query
+                    ->active()
+                    ->whereNotNull('last_verification_status')
+                    ->where('last_verification_status', '!=', 'success'),
             ])
             ->whereNull('archived_at')
             ->when(
@@ -54,30 +66,63 @@ final class SystemController extends Controller
                 $status !== '',
                 fn ($query) => $query->where('status', $status),
             )
+            ->when(
+                $organizationId > 0,
+                fn ($query) => $query->where(
+                    'organization_id',
+                    $organizationId,
+                ),
+            )
+            ->when(
+                $siteId > 0,
+                fn ($query) => $query->where('site_id', $siteId),
+            )
+            ->when(
+                $departmentId > 0,
+                fn ($query) => $query->where(
+                    'department_id',
+                    $departmentId,
+                ),
+            )
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();
 
         return Inertia::render('Registry/Systems/Index', [
             'items' => $systems,
+
             'filters' => [
                 'search' => $search,
                 'type' => $type,
                 'status' => $status,
+                'organization' => $organizationId > 0
+                    ? $organizationId
+                    : null,
+                'site' => $siteId > 0
+                    ? $siteId
+                    : null,
+                'department' => $departmentId > 0
+                    ? $departmentId
+                    : null,
             ],
+
             'systemTypes' => [
                 ['value' => 'pacs', 'label' => 'PACS'],
                 ['value' => 'ris', 'label' => 'RIS'],
                 ['value' => 'kis', 'label' => 'KIS'],
                 ['value' => 'modality', 'label' => 'Modalität'],
                 ['value' => 'viewer', 'label' => 'Viewer'],
-                ['value' => 'integration_engine', 'label' => 'Integrationsserver'],
+                [
+                    'value' => 'integration_engine',
+                    'label' => 'Integrationsserver',
+                ],
                 ['value' => 'server', 'label' => 'Server'],
                 ['value' => 'database', 'label' => 'Datenbank'],
                 ['value' => 'storage', 'label' => 'Storage'],
                 ['value' => 'network', 'label' => 'Netzwerkgerät'],
                 ['value' => 'other', 'label' => 'Sonstiges'],
             ],
+
             'statuses' => [
                 ['value' => 'active', 'label' => 'Aktiv'],
                 ['value' => 'planned', 'label' => 'Geplant'],
@@ -85,6 +130,7 @@ final class SystemController extends Controller
                 ['value' => 'inactive', 'label' => 'Inaktiv'],
                 ['value' => 'retired', 'label' => 'Außer Betrieb'],
             ],
+
             'organizations' => Organization::query()
                 ->active()
                 ->orderBy('name')
@@ -100,7 +146,9 @@ final class SystemController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'site_id', 'name']),
 
-            'canManage' => $request->user()?->can('create', System::class) ?? false,
+            'canManage' => $request
+                ->user()
+                ?->can('create', System::class) ?? false,
         ]);
     }
 
