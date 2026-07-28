@@ -48,6 +48,9 @@ final class SystemShowTest extends TestCase
                 ->has('systemTypes')
                 ->has('statuses')
                 ->where('canManage', true)
+                ->has('dicomConnections')
+                ->has('dicomNodeOptions')
+                ->where('canManageDicomConnections', true)
             );
     }
 

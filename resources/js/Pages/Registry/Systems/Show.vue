@@ -18,6 +18,10 @@ import {
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import DicomNodeManager, { type DicomNode } from '../../../Components/registry/dicom/DicomNodeManager.vue';
+import DicomConnectionManager, {
+    type DicomConnection,
+    type DicomNodeOption,
+} from '../../../Components/registry/dicom/DicomConnectionManager.vue';
 import SystemEditSlideOver from '../../../Components/registry/systems/SystemEditSlideOver.vue';
 import ContentCard from '../../../Components/ui/ContentCard.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
@@ -92,8 +96,11 @@ const props = defineProps<{
     sites: SiteOption[];
     departments: DepartmentOption[];
     dicomNodes: DicomNode[];
+    dicomConnections: DicomConnection[];
+    dicomNodeOptions: DicomNodeOption[];
     canManage: boolean;
     canManageDicomNodes: boolean;
+    canManageDicomConnections: boolean;
 }>();
 
 const activeTab = ref<TabId>('general');
@@ -535,11 +542,17 @@ const closeEditPanel = (): void => {
             </ContentCard>
         </div>
 
-        <div v-else-if="activeTab === 'dicom'" class="mt-6">
+        <div v-else-if="activeTab === 'dicom'" class="mt-6 space-y-6">
             <DicomNodeManager
                 :system-public-id="system.public_id"
                 :nodes="dicomNodes"
                 :can-manage="canManageDicomNodes"
+            />
+
+            <DicomConnectionManager
+                :connections="dicomConnections"
+                :node-options="dicomNodeOptions"
+                :can-manage="canManageDicomConnections"
             />
         </div>
 
