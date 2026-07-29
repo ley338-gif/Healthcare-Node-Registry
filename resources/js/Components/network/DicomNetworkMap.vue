@@ -4,6 +4,7 @@ import { Maximize2 } from '@lucide/vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import DicomNetworkNode, { type DicomMapNodeData } from './DicomNetworkNode.vue';
 import DicomNodeDetails from './DicomNodeDetails.vue';
+import SystemGroupNode, { type SystemGroupData } from './SystemGroupNode.vue';
 
 export type NetworkNode = {
     id: number;
@@ -44,6 +45,8 @@ export type NetworkConnection = {
     test_enabled: boolean;
 };
 
+type TopologyNodeData = DicomMapNodeData | SystemGroupData;
+
 const props = defineProps<{
     nodes: NetworkNode[];
     connections: NetworkConnection[];
@@ -72,31 +75,80 @@ const serviceStroke: Record<string, string> = {
     get: '#059669',
 };
 
-const flowNodes = computed<Node<DicomMapNodeData>[]>(() => {
+const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
     const grouped = new Map<string, NetworkNode[]>();
 
     for (const node of props.nodes) {
-        const current = grouped.get(node.system.public_id) ?? [];
-        current.push(node);
-        grouped.set(node.system.public_id, current);
+        const systemNodes = grouped.get(node.system.public_id) ?? [];
+
+        systemNodes.push(node);
+        grouped.set(node.system.public_id, systemNodes);
     }
 
-    const result: Node<DicomMapNodeData>[] = [];
-    const columns = Math.max(1, Math.ceil(Math.sqrt(grouped.size)));
-    const horizontalGap = 350;
-    const verticalGap = 235;
+    const result: Node<TopologyNodeData>[] = [];
+    const systems = Array.from(grouped.entries());
+    const columns = Math.max(1, Math.ceil(Math.sqrt(systems.length)));
 
-    Array.from(grouped.entries()).forEach(([systemPublicId, systemNodes], systemIndex) => {
+    const groupWidth = 330;
+    const nodeHeight = 205;
+    const groupHeaderHeight = 96;
+    const groupPadding = 26;
+    const groupGapX = 110;
+    const groupGapY = 90;
+
+    systems.forEach(([systemPublicId, systemNodes], systemIndex) => {
         const column = systemIndex % columns;
-        const rowBase = Math.floor(systemIndex / columns);
+        const row = Math.floor(systemIndex / columns);
+        const groupHeight = groupHeaderHeight + groupPadding + systemNodes.length * nodeHeight + groupPadding;
+
+        const x = column * (groupWidth + groupGapX);
+        const previousRows = systems.slice(0, row * columns).filter((_, index) => index % columns === column);
+
+        const y = previousRows.reduce(
+            (offset, [, rowNodes]) =>
+                offset + groupHeaderHeight + groupPadding * 2 + rowNodes.length * nodeHeight + groupGapY,
+            0,
+        );
+
+        const firstNode = systemNodes[0];
+
+        result.push({
+            id: `system-${systemPublicId}`,
+            type: 'systemGroup',
+            position: { x, y },
+            data: {
+                publicId: systemPublicId,
+                name: firstNode.system.name,
+                systemType: firstNode.system.system_type,
+                status: firstNode.system.status,
+                organization: firstNode.system.organization,
+                site: firstNode.system.site,
+                department: firstNode.system.department,
+                nodeCount: systemNodes.length,
+                failedCount: systemNodes.filter(
+                    (node) => node.last_verification_status !== null && node.last_verification_status !== 'success',
+                ).length,
+                unverifiedCount: systemNodes.filter((node) => node.last_verified_at === null).length,
+            },
+            style: {
+                width: `${groupWidth}px`,
+                height: `${groupHeight}px`,
+            },
+            draggable: true,
+            selectable: false,
+            connectable: false,
+            zIndex: -1,
+        });
 
         systemNodes.forEach((node, nodeIndex) => {
             result.push({
                 id: String(node.id),
                 type: 'dicomNode',
+                parentNode: `system-${systemPublicId}`,
+                extent: 'parent',
                 position: {
-                    x: column * horizontalGap,
-                    y: rowBase * verticalGap * 2 + nodeIndex * verticalGap,
+                    x: groupPadding + 10,
+                    y: groupHeaderHeight + groupPadding + nodeIndex * nodeHeight,
                 },
                 data: {
                     publicId: node.public_id,
@@ -114,6 +166,7 @@ const flowNodes = computed<Node<DicomMapNodeData>[]>(() => {
                 },
                 draggable: true,
                 selectable: true,
+                zIndex: 1,
             });
         });
     });
@@ -135,7 +188,7 @@ const flowEdges = computed<Edge[]>(() =>
         },
         style: {
             stroke: serviceStroke[connection.service] ?? '#64748b',
-            strokeWidth: 2,
+            strokeWidth: 2.5,
         },
         labelStyle: {
             fill: '#334155',
@@ -144,10 +197,11 @@ const flowEdges = computed<Edge[]>(() =>
         },
         labelBgStyle: {
             fill: '#ffffff',
-            fillOpacity: 0.95,
+            fillOpacity: 0.96,
         },
         labelBgPadding: [8, 5],
         labelBgBorderRadius: 8,
+        zIndex: 5,
     })),
 );
 
@@ -155,13 +209,17 @@ const fitMap = async (): Promise<void> => {
     await nextTick();
 
     fitView({
-        padding: 0.18,
+        padding: 0.12,
         duration: 350,
-        maxZoom: 1.15,
+        maxZoom: 1.05,
     });
 };
 
 const openNodeDetails = (event: NodeMouseEvent): void => {
+    if (event.node.type !== 'dicomNode') {
+        return;
+    }
+
     const id = Number(event.node.id);
 
     selectedNode.value = props.nodes.find((node) => node.id === id) ?? null;
@@ -180,28 +238,33 @@ watch(() => [props.nodes, props.connections], fitMap, { deep: true });
 </script>
 
 <template>
-    <div class="relative h-[680px] overflow-hidden rounded-2xl">
+    <div class="relative h-[720px] overflow-hidden rounded-2xl">
         <VueFlow
             :nodes="flowNodes"
             :edges="flowEdges"
-            :min-zoom="0.2"
+            :min-zoom="0.15"
             :max-zoom="1.8"
-            :default-viewport="{ x: 0, y: 0, zoom: 0.8 }"
+            :default-viewport="{ x: 0, y: 0, zoom: 0.75 }"
             class="bg-slate-50"
             fit-view-on-init
+            elevate-edges-on-select
             @node-click="openNodeDetails"
         >
+            <template #node-systemGroup="nodeProps">
+                <SystemGroupNode v-bind="nodeProps" />
+            </template>
+
             <template #node-dicomNode="nodeProps">
                 <DicomNetworkNode v-bind="nodeProps" />
             </template>
 
             <svg>
                 <defs>
-                    <pattern id="network-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+                    <pattern id="network-grid-v2" width="24" height="24" patternUnits="userSpaceOnUse">
                         <circle cx="1" cy="1" r="1" fill="#cbd5e1" />
                     </pattern>
                 </defs>
-                <rect width="100%" height="100%" fill="url(#network-grid)" />
+                <rect width="100%" height="100%" fill="url(#network-grid-v2)" />
             </svg>
         </VueFlow>
 
