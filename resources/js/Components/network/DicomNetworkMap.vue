@@ -1,7 +1,16 @@
 <script setup lang="ts">
-import { MarkerType, VueFlow, useVueFlow, type Edge, type Node, type NodeMouseEvent } from '@vue-flow/core';
+import {
+    MarkerType,
+    VueFlow,
+    useVueFlow,
+    type Edge,
+    type EdgeMouseEvent,
+    type Node,
+    type NodeMouseEvent,
+} from '@vue-flow/core';
 import { Maximize2 } from '@lucide/vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import DicomConnectionDetails from './DicomConnectionDetails.vue';
 import DicomNetworkNode, { type DicomMapNodeData } from './DicomNetworkNode.vue';
 import DicomNodeDetails from './DicomNodeDetails.vue';
 import SystemGroupNode, { type SystemGroupData } from './SystemGroupNode.vue';
@@ -55,7 +64,10 @@ const props = defineProps<{
 const { fitView } = useVueFlow();
 
 const selectedNode = ref<NetworkNode | null>(null);
-const detailsOpen = ref(false);
+const nodeDetailsOpen = ref(false);
+
+const selectedConnection = ref<NetworkConnection | null>(null);
+const connectionDetailsOpen = ref(false);
 
 const serviceLabels: Record<string, string> = {
     echo: 'C-ECHO',
@@ -74,6 +86,22 @@ const serviceStroke: Record<string, string> = {
     move: '#d97706',
     get: '#059669',
 };
+
+const selectedSourceNode = computed<NetworkNode | null>(() => {
+    if (selectedConnection.value === null) {
+        return null;
+    }
+
+    return props.nodes.find((node) => node.id === selectedConnection.value?.source_node_id) ?? null;
+});
+
+const selectedTargetNode = computed<NetworkNode | null>(() => {
+    if (selectedConnection.value === null) {
+        return null;
+    }
+
+    return props.nodes.find((node) => node.id === selectedConnection.value?.target_node_id) ?? null;
+});
 
 const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
     const grouped = new Map<string, NetworkNode[]>();
@@ -175,34 +203,43 @@ const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
 });
 
 const flowEdges = computed<Edge[]>(() =>
-    props.connections.map((connection) => ({
-        id: connection.public_id,
-        source: String(connection.source_node_id),
-        target: String(connection.target_node_id),
-        label: serviceLabels[connection.service] ?? connection.service.toUpperCase(),
-        type: 'smoothstep',
-        animated: connection.status === 'active',
-        markerEnd: {
-            type: MarkerType.ArrowClosed,
-            color: serviceStroke[connection.service] ?? '#64748b',
-        },
-        style: {
-            stroke: serviceStroke[connection.service] ?? '#64748b',
-            strokeWidth: 2.5,
-        },
-        labelStyle: {
-            fill: '#334155',
-            fontSize: 12,
-            fontWeight: 600,
-        },
-        labelBgStyle: {
-            fill: '#ffffff',
-            fillOpacity: 0.96,
-        },
-        labelBgPadding: [8, 5],
-        labelBgBorderRadius: 8,
-        zIndex: 5,
-    })),
+    props.connections.map((connection) => {
+        const selected = selectedConnection.value?.public_id === connection.public_id;
+
+        const color = serviceStroke[connection.service] ?? '#64748b';
+
+        return {
+            id: connection.public_id,
+            source: String(connection.source_node_id),
+            target: String(connection.target_node_id),
+            label: serviceLabels[connection.service] ?? connection.service.toUpperCase(),
+            type: 'smoothstep',
+            animated: connection.status === 'active' && !selected,
+            markerEnd: {
+                type: MarkerType.ArrowClosed,
+                color,
+            },
+            style: {
+                stroke: color,
+                strokeWidth: selected ? 4 : 2.5,
+                filter: selected ? 'drop-shadow(0 0 4px rgba(37, 99, 235, 0.45))' : undefined,
+            },
+            labelStyle: {
+                fill: selected ? '#1d4ed8' : '#334155',
+                fontSize: selected ? 13 : 12,
+                fontWeight: 700,
+            },
+            labelBgStyle: {
+                fill: '#ffffff',
+                fillOpacity: 0.97,
+                stroke: selected ? '#93c5fd' : '#e2e8f0',
+                strokeWidth: 1,
+            },
+            labelBgPadding: [8, 5],
+            labelBgBorderRadius: 8,
+            zIndex: selected ? 20 : 5,
+        };
+    }),
 );
 
 const fitMap = async (): Promise<void> => {
@@ -220,16 +257,31 @@ const openNodeDetails = (event: NodeMouseEvent): void => {
         return;
     }
 
+    closeConnectionDetails();
+
     const id = Number(event.node.id);
 
     selectedNode.value = props.nodes.find((node) => node.id === id) ?? null;
 
-    detailsOpen.value = selectedNode.value !== null;
+    nodeDetailsOpen.value = selectedNode.value !== null;
 };
 
 const closeNodeDetails = (): void => {
-    detailsOpen.value = false;
+    nodeDetailsOpen.value = false;
     selectedNode.value = null;
+};
+
+const openConnectionDetails = (event: EdgeMouseEvent): void => {
+    closeNodeDetails();
+
+    selectedConnection.value = props.connections.find((connection) => connection.public_id === event.edge.id) ?? null;
+
+    connectionDetailsOpen.value = selectedConnection.value !== null;
+};
+
+const closeConnectionDetails = (): void => {
+    connectionDetailsOpen.value = false;
+    selectedConnection.value = null;
 };
 
 onMounted(fitMap);
@@ -249,6 +301,7 @@ watch(() => [props.nodes, props.connections], fitMap, { deep: true });
             fit-view-on-init
             elevate-edges-on-select
             @node-click="openNodeDetails"
+            @edge-click="openConnectionDetails"
         >
             <template #node-systemGroup="nodeProps">
                 <SystemGroupNode v-bind="nodeProps" />
@@ -278,5 +331,13 @@ watch(() => [props.nodes, props.connections], fitMap, { deep: true });
         </button>
     </div>
 
-    <DicomNodeDetails :open="detailsOpen" :node="selectedNode" @close="closeNodeDetails" />
+    <DicomNodeDetails :open="nodeDetailsOpen" :node="selectedNode" @close="closeNodeDetails" />
+
+    <DicomConnectionDetails
+        :open="connectionDetailsOpen"
+        :connection="selectedConnection"
+        :source-node="selectedSourceNode"
+        :target-node="selectedTargetNode"
+        @close="closeConnectionDetails"
+    />
 </template>
