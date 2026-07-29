@@ -35,9 +35,7 @@ final class OrganizationStructureOverviewTest extends TestCase
                 ->where('summary.organizations', 1)
                 ->where('summary.sites', 1)
                 ->where('summary.departments', 1)
-                ->has('recentOrganizations', 1)
-                ->has('recentSites', 1)
-                ->has('recentDepartments', 1)
+                ->has('organizations')
             );
     }
 }

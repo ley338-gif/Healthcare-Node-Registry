@@ -12,29 +12,35 @@ final class OrganizationStructureController extends Controller
 {
     public function __invoke(): Response
     {
+        $organizations = Organization::query()
+            ->active()
+            ->with([
+                'sites' => fn ($query) => $query
+                    ->active()
+                    ->with([
+                        'departments' => fn ($departmentQuery) => $departmentQuery
+                            ->active()
+                            ->orderBy('name'),
+                    ])
+                    ->orderBy('name'),
+            ])
+            ->orderBy('name')
+            ->get([
+                'id',
+                'public_id',
+                'name',
+                'short_name',
+                'description',
+                'updated_at',
+            ]);
+
         return Inertia::render('OrganizationStructure/Index', [
             'summary' => [
                 'organizations' => Organization::query()->active()->count(),
                 'sites' => Site::query()->active()->count(),
                 'departments' => Department::query()->active()->count(),
             ],
-            'recentOrganizations' => Organization::query()
-                ->active()
-                ->latest('updated_at')
-                ->limit(5)
-                ->get(['public_id', 'name', 'short_name', 'updated_at']),
-            'recentSites' => Site::query()
-                ->active()
-                ->with('organization:id,name')
-                ->latest('updated_at')
-                ->limit(5)
-                ->get(['public_id', 'organization_id', 'name', 'city', 'updated_at']),
-            'recentDepartments' => Department::query()
-                ->active()
-                ->with('site:id,name')
-                ->latest('updated_at')
-                ->limit(5)
-                ->get(['public_id', 'site_id', 'name', 'specialty', 'updated_at']),
+            'organizations' => $organizations,
         ]);
     }
 }
