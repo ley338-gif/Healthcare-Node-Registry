@@ -1,10 +1,29 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Activity, ArrowLeft, Building2, Database, FileText, History, Network, Pencil, Server } from '@lucide/vue';
+import {
+    Activity,
+    ArrowLeft,
+    Building2,
+    CircleAlert,
+    CircleCheck,
+    CircleHelp,
+    Database,
+    FileText,
+    History,
+    MapPin,
+    Network,
+    Pencil,
+    Radio,
+    Server,
+} from '@lucide/vue';
 import { computed, ref } from 'vue';
+import DicomNodeManager, { type DicomNode } from '../../../Components/registry/dicom/DicomNodeManager.vue';
+import DicomConnectionManager, {
+    type DicomConnection,
+    type DicomNodeOption,
+} from '../../../Components/registry/dicom/DicomConnectionManager.vue';
 import SystemEditSlideOver from '../../../Components/registry/systems/SystemEditSlideOver.vue';
 import ContentCard from '../../../Components/ui/ContentCard.vue';
-import PageHeader from '../../../Components/ui/PageHeader.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
 
 type SelectOption = {
@@ -76,7 +95,12 @@ const props = defineProps<{
     organizations: OrganizationOption[];
     sites: SiteOption[];
     departments: DepartmentOption[];
+    dicomNodes: DicomNode[];
+    dicomConnections: DicomConnection[];
+    dicomNodeOptions: DicomNodeOption[];
     canManage: boolean;
+    canManageDicomNodes: boolean;
+    canManageDicomConnections: boolean;
 }>();
 
 const activeTab = ref<TabId>('general');
@@ -100,6 +124,35 @@ const productDescription = computed(
         'Technisches oder fachliches System',
 );
 
+const successfulDicomNodes = computed(
+    () => props.dicomNodes.filter((node) => node.last_verification_status === 'success').length,
+);
+
+const failedDicomNodes = computed(
+    () =>
+        props.dicomNodes.filter(
+            (node) => node.last_verification_status !== null && node.last_verification_status !== 'success',
+        ).length,
+);
+
+const unverifiedDicomNodes = computed(
+    () => props.dicomNodes.filter((node) => node.supports_echo && node.last_verified_at === null).length,
+);
+
+const latestVerification = computed<string | null>(() => {
+    const timestamps = props.dicomNodes
+        .map((node) => node.last_verified_at)
+        .filter((value): value is string => value !== null)
+        .map((value) => new Date(value).getTime())
+        .filter((value) => !Number.isNaN(value));
+
+    if (timestamps.length === 0) {
+        return null;
+    }
+
+    return new Date(Math.max(...timestamps)).toISOString();
+});
+
 const labelFor = (options: SelectOption[], value: string): string =>
     options.find((option) => option.value === value)?.label ?? value;
 
@@ -110,6 +163,18 @@ const formatDate = (value: string): string =>
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(new Date(value));
+
+const statusClass = (value: string): string => {
+    const classes: Record<string, string> = {
+        active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+        planned: 'bg-blue-50 text-blue-700 ring-blue-200',
+        maintenance: 'bg-amber-50 text-amber-700 ring-amber-200',
+        inactive: 'bg-slate-100 text-slate-600 ring-slate-200',
+        retired: 'bg-slate-200 text-slate-700 ring-slate-300',
+    };
+
+    return classes[value] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
+};
 
 const openEditPanel = (): void => {
     editPanelOpen.value = true;
@@ -132,25 +197,159 @@ const closeEditPanel = (): void => {
             Zurück zu Systeme
         </Link>
 
-        <PageHeader eyebrow="System Registry" :title="system.name" :description="productDescription">
-            <template #actions>
-                <div class="flex items-center gap-3">
-                    <span class="inline-flex rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">
-                        {{ labelFor(statuses, system.status) }}
-                    </span>
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div
+                class="flex flex-col gap-6 border-b border-slate-200 px-6 py-6 xl:flex-row xl:items-start xl:justify-between"
+            >
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span
+                            class="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700"
+                        >
+                            {{ labelFor(systemTypes, system.system_type) }}
+                        </span>
 
-                    <button
-                        v-if="canManage"
-                        type="button"
-                        class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-                        @click="openEditPanel"
-                    >
-                        <Pencil :size="17" />
-                        Bearbeiten
-                    </button>
+                        <span
+                            class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset"
+                            :class="statusClass(system.status)"
+                        >
+                            {{ labelFor(statuses, system.status) }}
+                        </span>
+                    </div>
+
+                    <h1 class="mt-4 truncate text-3xl font-semibold tracking-tight text-slate-950">
+                        {{ system.name }}
+                    </h1>
+
+                    <p class="mt-2 text-sm text-slate-500">
+                        {{ productDescription }}
+                    </p>
+
+                    <div class="mt-5 flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-600">
+                        <div class="flex items-center gap-2">
+                            <Server :size="17" class="text-slate-400" />
+                            <span class="font-mono">
+                                {{ system.hostname || 'Kein Hostname' }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <Network :size="17" class="text-slate-400" />
+                            <span class="font-mono">
+                                {{ system.ip_address || 'Keine IP-Adresse' }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            </template>
-        </PageHeader>
+
+                <button
+                    v-if="canManage"
+                    type="button"
+                    class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+                    @click="openEditPanel"
+                >
+                    <Pencil :size="17" />
+                    Bearbeiten
+                </button>
+            </div>
+
+            <div class="grid divide-y divide-slate-200 md:grid-cols-3 md:divide-x md:divide-y-0">
+                <div class="flex items-start gap-3 px-6 py-4">
+                    <Building2 :size="18" class="mt-0.5 shrink-0 text-blue-600" />
+                    <div>
+                        <p class="text-xs text-slate-500">Organisation</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-900">
+                            {{ system.organization.name }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 px-6 py-4">
+                    <MapPin :size="18" class="mt-0.5 shrink-0 text-blue-600" />
+                    <div>
+                        <p class="text-xs text-slate-500">Standort</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-900">
+                            {{ system.site?.name || 'Nicht zugeordnet' }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 px-6 py-4">
+                    <Activity :size="18" class="mt-0.5 shrink-0 text-blue-600" />
+                    <div>
+                        <p class="text-xs text-slate-500">Abteilung</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-900">
+                            {{ system.department?.name || 'Nicht zugeordnet' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <button
+                type="button"
+                class="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-300"
+                @click="activeTab = 'dicom'"
+            >
+                <div class="flex items-center justify-between">
+                    <Radio :size="19" class="text-blue-600" />
+                    <span class="text-xs text-slate-400"> DICOM </span>
+                </div>
+                <p class="mt-4 text-2xl font-semibold text-slate-950">
+                    {{ dicomNodes.length }}
+                </p>
+                <p class="mt-1 text-sm text-slate-500">Knoten</p>
+            </button>
+
+            <button
+                type="button"
+                class="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-emerald-300"
+                @click="activeTab = 'dicom'"
+            >
+                <div class="flex items-center justify-between">
+                    <CircleCheck :size="19" class="text-emerald-600" />
+                    <span class="text-xs text-slate-400"> C-ECHO </span>
+                </div>
+                <p class="mt-4 text-2xl font-semibold text-emerald-700">
+                    {{ successfulDicomNodes }}
+                </p>
+                <p class="mt-1 text-sm text-slate-500">Erfolgreich geprüft</p>
+            </button>
+
+            <button
+                type="button"
+                class="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-red-300"
+                @click="activeTab = 'dicom'"
+            >
+                <div class="flex items-center justify-between">
+                    <CircleAlert :size="19" class="text-red-600" />
+                    <span class="text-xs text-slate-400"> Handlungsbedarf </span>
+                </div>
+                <p
+                    class="mt-4 text-2xl font-semibold"
+                    :class="failedDicomNodes > 0 ? 'text-red-700' : 'text-emerald-700'"
+                >
+                    {{ failedDicomNodes }}
+                </p>
+                <p class="mt-1 text-sm text-slate-500">Fehlgeschlagene Prüfungen</p>
+            </button>
+
+            <button
+                type="button"
+                class="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-amber-300"
+                @click="activeTab = 'dicom'"
+            >
+                <div class="flex items-center justify-between">
+                    <CircleHelp :size="19" class="text-amber-600" />
+                    <span class="text-xs text-slate-400"> Letzte Prüfung </span>
+                </div>
+                <p class="mt-4 text-sm font-semibold text-slate-950">
+                    {{ latestVerification ? formatDate(latestVerification) : 'Noch nie geprüft' }}
+                </p>
+                <p class="mt-1 text-sm text-slate-500">{{ unverifiedDicomNodes }} Knoten ungeprüft</p>
+            </button>
+        </div>
 
         <nav class="mt-6 overflow-x-auto border-b border-slate-200" aria-label="Systembereiche">
             <div class="flex min-w-max gap-1">
@@ -226,23 +425,33 @@ const closeEditPanel = (): void => {
                     <div class="grid gap-6 sm:grid-cols-2">
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Hersteller</p>
-                            <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.vendor) }}</p>
+                            <p class="mt-1 text-sm text-slate-900">
+                                {{ displayValue(system.vendor) }}
+                            </p>
                         </div>
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Produkt</p>
-                            <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.product) }}</p>
+                            <p class="mt-1 text-sm text-slate-900">
+                                {{ displayValue(system.product) }}
+                            </p>
                         </div>
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Modell</p>
-                            <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.model) }}</p>
+                            <p class="mt-1 text-sm text-slate-900">
+                                {{ displayValue(system.model) }}
+                            </p>
                         </div>
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Version</p>
-                            <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.version) }}</p>
+                            <p class="mt-1 text-sm text-slate-900">
+                                {{ displayValue(system.version) }}
+                            </p>
                         </div>
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Betriebssystem</p>
-                            <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.operating_system) }}</p>
+                            <p class="mt-1 text-sm text-slate-900">
+                                {{ displayValue(system.operating_system) }}
+                            </p>
                         </div>
                         <div>
                             <p class="text-xs font-semibold text-slate-500 uppercase">Betriebssystemversion</p>
@@ -313,30 +522,38 @@ const closeEditPanel = (): void => {
                 <div class="grid gap-6 sm:grid-cols-3">
                     <div>
                         <p class="text-xs font-semibold text-slate-500 uppercase">Hostname</p>
-                        <p class="mt-1 font-mono text-sm text-slate-900">{{ displayValue(system.hostname) }}</p>
+                        <p class="mt-1 font-mono text-sm text-slate-900">
+                            {{ displayValue(system.hostname) }}
+                        </p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold text-slate-500 uppercase">FQDN</p>
-                        <p class="mt-1 font-mono text-sm text-slate-900">{{ displayValue(system.fqdn) }}</p>
+                        <p class="mt-1 font-mono text-sm text-slate-900">
+                            {{ displayValue(system.fqdn) }}
+                        </p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold text-slate-500 uppercase">IP-Adresse</p>
-                        <p class="mt-1 font-mono text-sm text-slate-900">{{ displayValue(system.ip_address) }}</p>
+                        <p class="mt-1 font-mono text-sm text-slate-900">
+                            {{ displayValue(system.ip_address) }}
+                        </p>
                     </div>
                 </div>
             </ContentCard>
         </div>
 
-        <div v-else-if="activeTab === 'dicom'" class="mt-6">
-            <ContentCard title="DICOM-Knoten" description="AE Titles, Hosts, Ports und unterstützte DICOM-Dienste.">
-                <div class="py-10 text-center">
-                    <Network :size="32" class="mx-auto text-slate-300" />
-                    <p class="mt-4 font-medium text-slate-900">Noch keine DICOM-Knoten</p>
-                    <p class="mt-1 text-sm text-slate-500">
-                        Dieses Modul wird im nächsten Entwicklungsschritt ergänzt.
-                    </p>
-                </div>
-            </ContentCard>
+        <div v-else-if="activeTab === 'dicom'" class="mt-6 space-y-6">
+            <DicomNodeManager
+                :system-public-id="system.public_id"
+                :nodes="dicomNodes"
+                :can-manage="canManageDicomNodes"
+            />
+
+            <DicomConnectionManager
+                :connections="dicomConnections"
+                :node-options="dicomNodeOptions"
+                :can-manage="canManageDicomConnections"
+            />
         </div>
 
         <div v-else-if="activeTab === 'hl7'" class="mt-6">

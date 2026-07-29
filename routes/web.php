@@ -3,6 +3,9 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DicomConnectionController;
+use App\Http\Controllers\DicomNetworkMapController;
+use App\Http\Controllers\DicomNodeController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
 use App\Http\Controllers\SiteController;
@@ -49,4 +52,28 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/systems/{system}', [SystemController::class, 'show'])
         ->name('systems.show');
+
+    Route::post('/systems/{system}/dicom-nodes', [DicomNodeController::class, 'store'])
+        ->name('dicom-nodes.store');
+
+    Route::put('/dicom-nodes/{dicomNode}', [DicomNodeController::class, 'update'])
+        ->name('dicom-nodes.update');
+
+    Route::post('/dicom-nodes/{dicomNode}/archive', [DicomNodeController::class, 'archive'])
+        ->name('dicom-nodes.archive');
+
+    Route::post('/dicom-nodes/{dicomNode}/verify', [DicomNodeController::class, 'verify'])
+        ->name('dicom-nodes.verify');
+
+    Route::post('/dicom-connections', [DicomConnectionController::class, 'store'])
+        ->name('dicom-connections.store');
+
+    Route::put('/dicom-connections/{dicomConnection}', [DicomConnectionController::class, 'update'])
+        ->name('dicom-connections.update');
+
+    Route::post('/dicom-connections/{dicomConnection}/archive', [DicomConnectionController::class, 'archive'])
+        ->name('dicom-connections.archive');
+
+    Route::get('/network', DicomNetworkMapController::class)
+        ->name('network.index');
 });

@@ -1,11 +1,27 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Archive, Pencil, Search, Server } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import {
+    ArrowRight,
+    Building2,
+    CircleAlert,
+    CircleCheck,
+    FilterX,
+    Hospital,
+    MapPin,
+    Network,
+    Pencil,
+    Search,
+    Server,
+    UsersRound,
+} from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
 import SystemArchiveDialog from '../../../Components/registry/systems/SystemArchiveDialog.vue';
 import SystemCreateSlideOver from '../../../Components/registry/systems/SystemCreateSlideOver.vue';
 import SystemEditSlideOver from '../../../Components/registry/systems/SystemEditSlideOver.vue';
-import ContentCard from '../../../Components/ui/ContentCard.vue';
+import DicomNetworkMap, {
+    type NetworkConnection,
+    type NetworkNode,
+} from '../../../Components/network/DicomNetworkMap.vue';
 import EmptyState from '../../../Components/ui/EmptyState.vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
@@ -46,6 +62,8 @@ type SystemItem = {
     ip_address: string | null;
     vendor: string | null;
     product: string | null;
+    dicom_nodes_count: number;
+    failed_dicom_nodes_count: number;
     organization: {
         name: string;
     };
@@ -62,36 +80,107 @@ type PaginatedSystems = {
     total: number;
 };
 
-const props = defineProps<{
-    items: PaginatedSystems;
-
-    filters: {
-        search: string;
-        type: string;
-        status: string;
-    };
-
-    systemTypes: SelectOption[];
-    statuses: SelectOption[];
-
-    organizations: OrganizationOption[];
-    sites: SiteOption[];
-    departments: DepartmentOption[];
-
-    canManage: boolean;
-}>();
+const props = withDefaults(
+    defineProps<{
+        items: PaginatedSystems;
+        filters: {
+            search: string;
+            type: string;
+            status: string;
+            organization: number | null;
+            site: number | null;
+            department: number | null;
+        };
+        systemTypes: SelectOption[];
+        statuses: SelectOption[];
+        organizations: OrganizationOption[];
+        sites: SiteOption[];
+        departments: DepartmentOption[];
+        topologyNodes?: NetworkNode[];
+        topologyConnections?: NetworkConnection[];
+        canManage: boolean;
+    }>(),
+    {
+        topologyNodes: () => [],
+        topologyConnections: () => [],
+    },
+);
 
 const search = ref(props.filters.search);
 const type = ref(props.filters.type);
 const status = ref(props.filters.status);
+const organization = ref<number | null>(props.filters.organization);
+const site = ref<number | null>(props.filters.site);
+const department = ref<number | null>(props.filters.department);
 
 const createPanelOpen = ref(false);
 const editPanelOpen = ref(false);
 const archiveDialogOpen = ref(false);
 const archiveProcessing = ref(false);
-const selectedSystem = ref<SystemItem | null>(null);
+
+const focusedSystem = ref<SystemItem | null>(props.items.data[0] ?? null);
+const actionSystem = ref<SystemItem | null>(null);
 
 const hasSystems = computed(() => props.items.data.length > 0);
+
+const filteredSites = computed(() =>
+    organization.value === null
+        ? props.sites
+        : props.sites.filter((item) => item.organization_id === organization.value),
+);
+
+const filteredDepartments = computed(() =>
+    site.value === null ? [] : props.departments.filter((item) => item.site_id === site.value),
+);
+
+const hasActiveFilters = computed(
+    () =>
+        search.value !== '' ||
+        type.value !== '' ||
+        status.value !== '' ||
+        organization.value !== null ||
+        site.value !== null ||
+        department.value !== null,
+);
+
+const currentProduct = computed(() => {
+    if (focusedSystem.value === null) {
+        return 'Keine Produktangaben';
+    }
+
+    return (
+        [focusedSystem.value.vendor, focusedSystem.value.product].filter(Boolean).join(' · ') || 'Keine Produktangaben'
+    );
+});
+
+watch(organization, () => {
+    if (site.value !== null && !filteredSites.value.some((item) => item.id === site.value)) {
+        site.value = null;
+        department.value = null;
+    }
+});
+
+watch(site, () => {
+    if (department.value !== null && !filteredDepartments.value.some((item) => item.id === department.value)) {
+        department.value = null;
+    }
+});
+
+watch(
+    () => props.items.data,
+    (systems) => {
+        if (systems.length === 0) {
+            focusedSystem.value = null;
+            return;
+        }
+
+        const currentStillExists = systems.some((system) => system.public_id === focusedSystem.value?.public_id);
+
+        if (!currentStillExists) {
+            focusedSystem.value = systems[0];
+        }
+    },
+);
 
 const applyFilters = (): void => {
     router.get(
@@ -100,7 +189,28 @@ const applyFilters = (): void => {
             search: search.value || undefined,
             type: type.value || undefined,
             status: status.value || undefined,
+            organization: organization.value ?? undefined,
+            site: site.value ?? undefined,
+            department: department.value ?? undefined,
         },
+        {
+            preserveState: true,
+            replace: true,
+        },
+    );
+};
+
+const resetFilters = (): void => {
+    search.value = '';
+    type.value = '';
+    status.value = '';
+    organization.value = null;
+    site.value = null;
+    department.value = null;
+
+    router.get(
+        '/systems',
+        {},
         {
             preserveState: true,
             replace: true,
@@ -111,19 +221,27 @@ const applyFilters = (): void => {
 const labelFor = (options: SelectOption[], value: string): string =>
     options.find((option) => option.value === value)?.label ?? value;
 
+const statusClass = (value: string): string =>
+    ({
+        active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+        planned: 'bg-blue-50 text-blue-700 ring-blue-200',
+        maintenance: 'bg-amber-50 text-amber-700 ring-amber-200',
+        inactive: 'bg-slate-100 text-slate-600 ring-slate-200',
+        retired: 'bg-slate-200 text-slate-700 ring-slate-300',
+    })[value] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
+
+const selectSystem = (system: SystemItem): void => {
+    focusedSystem.value = system;
+};
+
 const openEditPanel = (system: SystemItem): void => {
-    selectedSystem.value = system;
+    actionSystem.value = system;
     editPanelOpen.value = true;
 };
 
 const closeEditPanel = (): void => {
     editPanelOpen.value = false;
-    selectedSystem.value = null;
-};
-
-const openArchiveDialog = (system: SystemItem): void => {
-    selectedSystem.value = system;
-    archiveDialogOpen.value = true;
+    actionSystem.value = null;
 };
 
 const closeArchiveDialog = (): void => {
@@ -132,18 +250,18 @@ const closeArchiveDialog = (): void => {
     }
 
     archiveDialogOpen.value = false;
-    selectedSystem.value = null;
+    actionSystem.value = null;
 };
 
 const archiveSystem = (): void => {
-    if (selectedSystem.value === null) {
+    if (actionSystem.value === null) {
         return;
     }
 
     archiveProcessing.value = true;
 
     router.post(
-        `/systems/${selectedSystem.value.public_id}/archive`,
+        `/systems/${actionSystem.value.public_id}/archive`,
         {},
         {
             preserveScroll: true,
@@ -163,7 +281,7 @@ const archiveSystem = (): void => {
         <PageHeader
             eyebrow="Registry"
             title="Systeme"
-            description="Technische und fachliche Systeme der Healthcare-IT-Infrastruktur."
+            description="Systeme durchsuchen, einordnen und im Kontext ihrer DICOM-Kommunikation prüfen."
         >
             <template #actions>
                 <button
@@ -177,153 +295,505 @@ const archiveSystem = (): void => {
             </template>
         </PageHeader>
 
-        <ContentCard class="mt-6" :padded="false">
-            <form
-                class="grid gap-3 border-b border-slate-200 p-5 md:grid-cols-[1fr_220px_220px_auto]"
-                @submit.prevent="applyFilters"
-            >
-                <div class="relative">
-                    <Search :size="18" class="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
+        <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <form @submit.prevent="applyFilters">
+                <div class="grid gap-3 xl:grid-cols-[minmax(260px,1.4fr)_180px_180px_auto_auto]">
+                    <div class="relative">
+                        <Search :size="18" class="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
 
-                    <input
-                        v-model="search"
-                        type="search"
-                        placeholder="Name, Hostname, IP oder Hersteller"
-                        class="w-full rounded-xl border border-slate-300 py-2.5 pr-3 pl-10 text-sm"
-                    />
+                        <input
+                            v-model="search"
+                            type="search"
+                            placeholder="Name, Hostname, IP oder Hersteller"
+                            class="w-full rounded-xl border border-slate-300 py-2.5 pr-3 pl-10 text-sm"
+                        />
+                    </div>
+
+                    <select v-model="type" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                        <option value="">Alle Typen</option>
+                        <option v-for="option in systemTypes" :key="option.value" :value="option.value">
+                            {{ option.label }}
+                        </option>
+                    </select>
+
+                    <select v-model="status" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                        <option value="">Alle Status</option>
+                        <option v-for="option in statuses" :key="option.value" :value="option.value">
+                            {{ option.label }}
+                        </option>
+                    </select>
+
+                    <button type="submit" class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white">
+                        Filtern
+                    </button>
+
+                    <button
+                        type="button"
+                        :disabled="!hasActiveFilters"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 disabled:opacity-40"
+                        @click="resetFilters"
+                    >
+                        <FilterX :size="16" />
+                        Zurücksetzen
+                    </button>
                 </div>
 
-                <select v-model="type" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
-                    <option value="">Alle Typen</option>
+                <details class="mt-3">
+                    <summary class="cursor-pointer text-xs font-semibold text-slate-500">Organisationsfilter</summary>
 
-                    <option v-for="option in systemTypes" :key="option.value" :value="option.value">
-                        {{ option.label }}
-                    </option>
-                </select>
+                    <div class="mt-3 grid gap-3 lg:grid-cols-3">
+                        <select v-model="organization" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                            <option :value="null">Alle Organisationen</option>
+                            <option v-for="item in organizations" :key="item.id" :value="item.id">
+                                {{ item.name }}
+                            </option>
+                        </select>
 
-                <select v-model="status" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
-                    <option value="">Alle Status</option>
+                        <select v-model="site" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                            <option :value="null">Alle Standorte</option>
+                            <option v-for="item in filteredSites" :key="item.id" :value="item.id">
+                                {{ item.name }}
+                            </option>
+                        </select>
 
-                    <option v-for="option in statuses" :key="option.value" :value="option.value">
-                        {{ option.label }}
-                    </option>
-                </select>
-
-                <button
-                    type="submit"
-                    class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium hover:bg-slate-50"
-                >
-                    Filtern
-                </button>
+                        <select
+                            v-model="department"
+                            :disabled="site === null"
+                            class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm disabled:bg-slate-100"
+                        >
+                            <option :value="null">Alle Abteilungen</option>
+                            <option v-for="item in filteredDepartments" :key="item.id" :value="item.id">
+                                {{ item.name }}
+                            </option>
+                        </select>
+                    </div>
+                </details>
             </form>
+        </section>
 
-            <EmptyState
-                v-if="!hasSystems"
-                title="Keine Systeme vorhanden"
-                description="Legen Sie das erste System der Registry an."
-                :icon="Server"
-            />
+        <EmptyState
+            v-if="!hasSystems"
+            class="mt-6"
+            title="Keine Systeme gefunden"
+            description="Passe die Filter an oder lege ein neues System an."
+            :icon="Server"
+        />
 
-            <div v-else class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">System</th>
+        <div v-else class="mt-6 grid min-h-[680px] gap-4 xl:grid-cols-[320px_minmax(420px,1fr)_minmax(340px,0.9fr)]">
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                    <div>
+                        <h2 class="font-semibold text-slate-950">Systemauswahl</h2>
+                        <p class="text-xs text-slate-500">{{ items.total }} Systeme gefunden</p>
+                    </div>
+                </header>
 
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Typ</th>
+                <div class="max-h-[620px] divide-y divide-slate-100 overflow-y-auto">
+                    <button
+                        v-for="system in items.data"
+                        :key="system.public_id"
+                        type="button"
+                        class="w-full px-4 py-4 text-left transition"
+                        :class="
+                            focusedSystem?.public_id === system.public_id
+                                ? 'bg-blue-50 ring-1 ring-blue-200 ring-inset'
+                                : 'hover:bg-slate-50'
+                        "
+                        @click="selectSystem(system)"
+                    >
+                        <div class="flex items-start gap-3">
+                            <span
+                                class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
+                                :class="
+                                    system.failed_dicom_nodes_count > 0
+                                        ? 'bg-red-500'
+                                        : system.status === 'active'
+                                          ? 'bg-emerald-500'
+                                          : 'bg-amber-500'
+                                "
+                            />
 
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">
-                                Zuordnung
-                            </th>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-start justify-between gap-2">
+                                    <p class="truncate text-sm font-semibold text-slate-950">
+                                        {{ system.name }}
+                                    </p>
 
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Netzwerk</th>
+                                    <span
+                                        class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset"
+                                        :class="statusClass(system.status)"
+                                    >
+                                        {{ labelFor(statuses, system.status) }}
+                                    </span>
+                                </div>
 
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
+                                <p class="mt-1 text-xs font-medium text-blue-700">
+                                    {{ labelFor(systemTypes, system.system_type) }}
+                                </p>
 
-                            <th
-                                v-if="canManage"
-                                class="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase"
-                            >
-                                Aktionen
-                            </th>
-                        </tr>
-                    </thead>
+                                <p class="mt-2 truncate font-mono text-xs text-slate-500">
+                                    {{ system.ip_address || system.hostname || 'Kein Netzwerkendpunkt' }}
+                                </p>
 
-                    <tbody class="divide-y divide-slate-100">
-                        <tr v-for="system in items.data" :key="system.public_id" class="transition hover:bg-slate-50">
-                            <td class="px-5 py-4">
-                                <Link
-                                    :href="`/systems/${system.public_id}`"
-                                    class="font-semibold text-slate-900 transition hover:text-blue-700"
+                                <div class="mt-2 flex items-center gap-3 text-[11px] text-slate-500">
+                                    <span>
+                                        {{ system.dicom_nodes_count }}
+                                        DICOM
+                                    </span>
+
+                                    <span v-if="system.failed_dicom_nodes_count > 0" class="font-semibold text-red-700">
+                                        {{ system.failed_dicom_nodes_count }}
+                                        auffällig
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <section
+                v-if="focusedSystem"
+                class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+            >
+                <header class="border-b border-slate-200 px-6 py-5">
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap gap-2">
+                                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                                    {{ labelFor(systemTypes, focusedSystem.system_type) }}
+                                </span>
+
+                                <span
+                                    class="rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset"
+                                    :class="statusClass(focusedSystem.status)"
                                 >
-                                    {{ system.name }}
+                                    {{ labelFor(statuses, focusedSystem.status) }}
+                                </span>
+                            </div>
+
+                            <h2 class="mt-3 truncate text-2xl font-semibold text-slate-950">
+                                {{ focusedSystem.name }}
+                            </h2>
+
+                            <p class="mt-1 text-sm text-slate-500">
+                                {{ currentProduct }}
+                            </p>
+
+                            <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <Building2 :size="14" />
+                                    {{ focusedSystem.organization.name }}
+                                </span>
+
+                                <span v-if="focusedSystem.site" class="inline-flex items-center gap-1.5">
+                                    <Hospital :size="14" />
+                                    {{ focusedSystem.site.name }}
+                                </span>
+
+                                <span v-if="focusedSystem.department" class="inline-flex items-center gap-1.5">
+                                    <UsersRound :size="14" />
+                                    {{ focusedSystem.department.name }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="flex shrink-0 gap-2">
+                            <button
+                                v-if="canManage"
+                                type="button"
+                                class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                                @click="openEditPanel(focusedSystem)"
+                            >
+                                <Pencil :size="16" />
+                                Bearbeiten
+                            </button>
+
+                            <Link
+                                :href="`/systems/${focusedSystem.public_id}`"
+                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+                            >
+                                System öffnen
+                                <ArrowRight :size="16" />
+                            </Link>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="space-y-6 p-6">
+                    <!-- Systemstatus -->
+                    <section>
+                        <div class="mb-3 flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold text-slate-950">Systemstatus</h3>
+                                <p class="mt-0.5 text-xs text-slate-500">Technischer Zustand und Netzwerkdaten</p>
+                            </div>
+
+                            <div
+                                class="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold"
+                                :class="
+                                    focusedSystem.failed_dicom_nodes_count > 0
+                                        ? 'bg-red-50 text-red-700'
+                                        : 'bg-emerald-50 text-emerald-700'
+                                "
+                            >
+                                <CircleAlert v-if="focusedSystem.failed_dicom_nodes_count > 0" :size="15" />
+
+                                <CircleCheck v-else :size="15" />
+
+                                {{
+                                    focusedSystem.failed_dicom_nodes_count > 0
+                                        ? 'Handlungsbedarf'
+                                        : 'Keine bekannten Fehler'
+                                }}
+                            </div>
+                        </div>
+
+                        <dl class="divide-y divide-slate-100 rounded-2xl border border-slate-200">
+                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
+                                <dt class="flex items-center gap-2 text-xs text-slate-500">
+                                    <Server :size="15" />
+                                    Hostname
+                                </dt>
+                                <dd class="font-mono text-sm font-medium text-slate-900">
+                                    {{ focusedSystem.hostname || 'Nicht hinterlegt' }}
+                                </dd>
+                            </div>
+
+                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
+                                <dt class="flex items-center gap-2 text-xs text-slate-500">
+                                    <Network :size="15" />
+                                    IP-Adresse
+                                </dt>
+                                <dd class="font-mono text-sm font-medium text-slate-900">
+                                    {{ focusedSystem.ip_address || 'Nicht hinterlegt' }}
+                                </dd>
+                            </div>
+
+                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
+                                <dt class="flex items-center gap-2 text-xs text-slate-500">
+                                    <Network :size="15" />
+                                    DICOM-Knoten
+                                </dt>
+                                <dd class="text-sm font-semibold text-slate-900">
+                                    {{ focusedSystem.dicom_nodes_count }}
+                                </dd>
+                            </div>
+
+                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
+                                <dt class="flex items-center gap-2 text-xs text-slate-500">
+                                    <CircleAlert :size="15" />
+                                    Auffällige Knoten
+                                </dt>
+                                <dd
+                                    class="text-sm font-semibold"
+                                    :class="
+                                        focusedSystem.failed_dicom_nodes_count > 0 ? 'text-red-700' : 'text-emerald-700'
+                                    "
+                                >
+                                    {{ focusedSystem.failed_dicom_nodes_count }}
+                                </dd>
+                            </div>
+                        </dl>
+                    </section>
+
+                    <!-- Warnung -->
+                    <section
+                        v-if="focusedSystem.failed_dicom_nodes_count > 0"
+                        class="rounded-2xl border border-red-200 bg-red-50"
+                    >
+                        <div class="flex items-start gap-3 px-4 py-4">
+                            <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-100 text-red-700">
+                                <CircleAlert :size="18" />
+                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center justify-between gap-3">
+                                    <p class="text-sm font-semibold text-red-900">
+                                        DICOM-Prüfungen benötigen Aufmerksamkeit
+                                    </p>
+
+                                    <span
+                                        class="rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700"
+                                    >
+                                        {{ focusedSystem.failed_dicom_nodes_count }}
+                                    </span>
+                                </div>
+
+                                <p class="mt-1 text-sm text-red-700">
+                                    Mindestens ein DICOM-Knoten besitzt eine fehlgeschlagene letzte Prüfung.
+                                </p>
+
+                                <Link
+                                    :href="`/systems/${focusedSystem.public_id}`"
+                                    class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-red-800 hover:underline"
+                                >
+                                    DICOM-Knoten prüfen
+                                    <ArrowRight :size="14" />
                                 </Link>
+                            </div>
+                        </div>
+                    </section>
 
-                                <div class="mt-1 text-xs text-slate-500">
-                                    {{
-                                        [system.vendor, system.product].filter(Boolean).join(' · ') ||
-                                        'Keine Produktangaben'
-                                    }}
-                                </div>
-                            </td>
+                    <section
+                        v-else
+                        class="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4"
+                    >
+                        <div
+                            class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700"
+                        >
+                            <CircleCheck :size="18" />
+                        </div>
 
-                            <td class="px-5 py-4 text-sm text-slate-700">
-                                {{ labelFor(systemTypes, system.system_type) }}
-                            </td>
+                        <div>
+                            <p class="text-sm font-semibold text-emerald-900">Keine bekannten DICOM-Fehler</p>
+                            <p class="mt-1 text-sm text-emerald-700">
+                                Für dieses System liegen aktuell keine fehlgeschlagenen letzten Prüfungen vor.
+                            </p>
+                        </div>
+                    </section>
 
-                            <td class="px-5 py-4">
-                                <div class="text-sm text-slate-800">
-                                    {{ system.organization.name }}
-                                </div>
+                    <!-- Stammdaten -->
+                    <section>
+                        <div class="mb-3">
+                            <h3 class="font-semibold text-slate-950">Stammdaten</h3>
+                            <p class="mt-0.5 text-xs text-slate-500">Organisatorische und produktbezogene Zuordnung</p>
+                        </div>
 
-                                <div class="mt-1 text-xs text-slate-500">
-                                    {{
-                                        [system.site?.name, system.department?.name].filter(Boolean).join(' · ') ||
-                                        'Keine weitere Zuordnung'
-                                    }}
-                                </div>
-                            </td>
+                        <dl class="divide-y divide-slate-100 rounded-2xl border border-slate-200">
+                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
+                                <dt class="text-xs text-slate-500">Organisation</dt>
+                                <dd class="text-sm font-medium text-slate-900">
+                                    {{ focusedSystem.organization.name }}
+                                </dd>
+                            </div>
 
-                            <td class="px-5 py-4">
-                                <div class="text-sm text-slate-800">
-                                    {{ system.hostname || 'Kein Hostname' }}
-                                </div>
+                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
+                                <dt class="text-xs text-slate-500">Standort</dt>
+                                <dd class="text-sm font-medium text-slate-900">
+                                    {{ focusedSystem.site?.name || 'Nicht zugeordnet' }}
+                                </dd>
+                            </div>
 
-                                <div class="mt-1 text-xs text-slate-500">
-                                    {{ system.ip_address || 'Keine IP-Adresse' }}
-                                </div>
-                            </td>
+                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
+                                <dt class="text-xs text-slate-500">Abteilung</dt>
+                                <dd class="text-sm font-medium text-slate-900">
+                                    {{ focusedSystem.department?.name || 'Nicht zugeordnet' }}
+                                </dd>
+                            </div>
 
-                            <td class="px-5 py-4 text-sm text-slate-700">
-                                {{ labelFor(statuses, system.status) }}
-                            </td>
+                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
+                                <dt class="text-xs text-slate-500">Hersteller</dt>
+                                <dd class="text-sm font-medium text-slate-900">
+                                    {{ focusedSystem.vendor || 'Nicht hinterlegt' }}
+                                </dd>
+                            </div>
 
-                            <td v-if="canManage" class="px-5 py-4 text-right">
-                                <div class="flex justify-end gap-1">
-                                    <button
-                                        type="button"
-                                        :aria-label="`${system.name} bearbeiten`"
-                                        class="rounded-lg p-2 text-slate-500 transition hover:bg-blue-50 hover:text-blue-700"
-                                        @click="openEditPanel(system)"
-                                    >
-                                        <Pencil :size="17" />
-                                    </button>
+                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
+                                <dt class="text-xs text-slate-500">Produkt</dt>
+                                <dd class="text-sm font-medium text-slate-900">
+                                    {{ focusedSystem.product || 'Nicht hinterlegt' }}
+                                </dd>
+                            </div>
 
-                                    <button
-                                        type="button"
-                                        :aria-label="`${system.name} archivieren`"
-                                        class="rounded-lg p-2 text-slate-500 transition hover:bg-amber-50 hover:text-amber-700"
-                                        @click="openArchiveDialog(system)"
-                                    >
-                                        <Archive :size="17" />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </ContentCard>
+                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
+                                <dt class="text-xs text-slate-500">FQDN</dt>
+                                <dd class="font-mono text-sm font-medium break-all text-slate-900">
+                                    {{ focusedSystem.fqdn || 'Nicht hinterlegt' }}
+                                </dd>
+                            </div>
+                        </dl>
+                    </section>
+                </div>
+            </section>
+
+            <section
+                v-if="focusedSystem"
+                class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+            >
+                <header class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+                    <div>
+                        <h2 class="font-semibold text-slate-950">Netzwerkübersicht</h2>
+                    </div>
+
+                    <MapPin :size="18" class="text-blue-600" />
+                </header>
+
+                <div class="p-5">
+                    <DicomNetworkMap
+                        v-if="topologyNodes.length > 0"
+                        :nodes="topologyNodes"
+                        :connections="topologyConnections"
+                        :focus-system-public-id="focusedSystem.public_id"
+                        :details-enabled="false"
+                        compact
+                    />
+
+                    <div
+                        v-else
+                        class="grid min-h-[390px] place-items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6"
+                    >
+                        <div class="max-w-xs text-center">
+                            <div
+                                class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-blue-100 text-blue-700"
+                            >
+                                <Network :size="25" />
+                            </div>
+
+                            <h3 class="mt-4 font-semibold text-slate-950">Keine DICOM-Beziehungen vorhanden</h3>
+
+                            <p class="mt-2 text-sm leading-6 text-slate-500">
+                                Für dieses System wurden noch keine Knoten oder direkten Verbindungen dokumentiert.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 border-t border-slate-200 pt-4">
+                        <p class="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Legende</p>
+
+                        <div class="flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600">
+                            <span class="inline-flex items-center gap-2">
+                                <span class="h-0.5 w-5 rounded-full bg-blue-600" />
+                                C-STORE
+                            </span>
+
+                            <span class="inline-flex items-center gap-2">
+                                <span class="h-0.5 w-5 rounded-full bg-violet-600" />
+                                Worklist
+                            </span>
+
+                            <span class="inline-flex items-center gap-2">
+                                <span class="h-0.5 w-5 rounded-full bg-cyan-600" />
+                                Query
+                            </span>
+
+                            <span class="inline-flex items-center gap-2">
+                                <span class="h-0.5 w-5 rounded-full bg-amber-600" />
+                                C-MOVE
+                            </span>
+
+                            <span class="inline-flex items-center gap-2">
+                                <span class="h-0.5 w-5 rounded-full bg-emerald-600" />
+                                C-GET
+                            </span>
+
+                            <span class="inline-flex items-center gap-2">
+                                <span class="h-0.5 w-5 rounded-full bg-slate-500" />
+                                C-ECHO
+                            </span>
+                        </div>
+                    </div>
+
+                    <Link
+                        href="/network"
+                        class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                    >
+                        Gesamte Topologie öffnen
+                        <ArrowRight :size="15" />
+                    </Link>
+                </div>
+            </section>
+        </div>
 
         <SystemCreateSlideOver
             :open="createPanelOpen"
@@ -337,7 +807,7 @@ const archiveSystem = (): void => {
 
         <SystemEditSlideOver
             :open="editPanelOpen"
-            :system="selectedSystem"
+            :system="actionSystem"
             :organizations="organizations"
             :sites="sites"
             :departments="departments"
@@ -348,7 +818,7 @@ const archiveSystem = (): void => {
 
         <SystemArchiveDialog
             :open="archiveDialogOpen"
-            :system-name="selectedSystem?.name ?? ''"
+            :system-name="actionSystem?.name ?? ''"
             :processing="archiveProcessing"
             @close="closeArchiveDialog"
             @confirm="archiveSystem"
