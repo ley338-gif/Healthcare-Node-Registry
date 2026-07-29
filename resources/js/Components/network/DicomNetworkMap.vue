@@ -56,10 +56,20 @@ export type NetworkConnection = {
 
 type TopologyNodeData = DicomMapNodeData | SystemGroupData;
 
-const props = defineProps<{
-    nodes: NetworkNode[];
-    connections: NetworkConnection[];
-}>();
+const props = withDefaults(
+    defineProps<{
+        nodes: NetworkNode[];
+        connections: NetworkConnection[];
+        focusSystemPublicId?: string | null;
+        compact?: boolean;
+        detailsEnabled?: boolean;
+    }>(),
+    {
+        focusSystemPublicId: null,
+        compact: false,
+        detailsEnabled: true,
+    },
+);
 
 const { fitView } = useVueFlow();
 
@@ -103,10 +113,48 @@ const selectedTargetNode = computed<NetworkNode | null>(() => {
     return props.nodes.find((node) => node.id === selectedConnection.value?.target_node_id) ?? null;
 });
 
+const localNodeIds = computed(() => {
+    if (props.focusSystemPublicId === null) {
+        return new Set<number>();
+    }
+
+    return new Set(
+        props.nodes.filter((node) => node.system.public_id === props.focusSystemPublicId).map((node) => node.id),
+    );
+});
+
+const visibleConnections = computed(() => {
+    if (props.focusSystemPublicId === null) {
+        return props.connections;
+    }
+
+    return props.connections.filter(
+        (connection) =>
+            localNodeIds.value.has(connection.source_node_id) || localNodeIds.value.has(connection.target_node_id),
+    );
+});
+
+const visibleNodeIds = computed(() => {
+    if (props.focusSystemPublicId === null) {
+        return new Set(props.nodes.map((node) => node.id));
+    }
+
+    const ids = new Set(localNodeIds.value);
+
+    for (const connection of visibleConnections.value) {
+        ids.add(connection.source_node_id);
+        ids.add(connection.target_node_id);
+    }
+
+    return ids;
+});
+
+const visibleNodes = computed(() => props.nodes.filter((node) => visibleNodeIds.value.has(node.id)));
+
 const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
     const grouped = new Map<string, NetworkNode[]>();
 
-    for (const node of props.nodes) {
+    for (const node of visibleNodes.value) {
         const systemNodes = grouped.get(node.system.public_id) ?? [];
 
         systemNodes.push(node);
@@ -115,14 +163,16 @@ const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
 
     const result: Node<TopologyNodeData>[] = [];
     const systems = Array.from(grouped.entries());
-    const columns = Math.max(1, Math.ceil(Math.sqrt(systems.length)));
+    const columns = props.compact
+        ? Math.min(Math.max(systems.length, 1), 2)
+        : Math.max(1, Math.ceil(Math.sqrt(systems.length)));
 
     const groupWidth = 330;
     const nodeHeight = 205;
     const groupHeaderHeight = 96;
     const groupPadding = 26;
-    const groupGapX = 110;
-    const groupGapY = 90;
+    const groupGapX = props.compact ? 70 : 110;
+    const groupGapY = props.compact ? 60 : 90;
 
     systems.forEach(([systemPublicId, systemNodes], systemIndex) => {
         const column = systemIndex % columns;
@@ -162,7 +212,7 @@ const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
                 width: `${groupWidth}px`,
                 height: `${groupHeight}px`,
             },
-            draggable: true,
+            draggable: !props.compact,
             selectable: false,
             connectable: false,
             zIndex: -1,
@@ -192,8 +242,8 @@ const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
                     systemName: node.system.name,
                     systemType: node.system.system_type,
                 },
-                draggable: true,
-                selectable: true,
+                draggable: !props.compact,
+                selectable: props.detailsEnabled,
                 zIndex: 1,
             });
         });
@@ -203,7 +253,7 @@ const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
 });
 
 const flowEdges = computed<Edge[]>(() =>
-    props.connections.map((connection) => {
+    visibleConnections.value.map((connection) => {
         const selected = selectedConnection.value?.public_id === connection.public_id;
 
         const color = serviceStroke[connection.service] ?? '#64748b';
@@ -214,7 +264,7 @@ const flowEdges = computed<Edge[]>(() =>
             target: String(connection.target_node_id),
             label: serviceLabels[connection.service] ?? connection.service.toUpperCase(),
             type: 'smoothstep',
-            animated: connection.status === 'active' && !selected,
+            animated: connection.status === 'active' && !selected && !props.compact,
             markerEnd: {
                 type: MarkerType.ArrowClosed,
                 color,
@@ -226,7 +276,7 @@ const flowEdges = computed<Edge[]>(() =>
             },
             labelStyle: {
                 fill: selected ? '#1d4ed8' : '#334155',
-                fontSize: selected ? 13 : 12,
+                fontSize: props.compact ? 10 : selected ? 13 : 12,
                 fontWeight: 700,
             },
             labelBgStyle: {
@@ -246,14 +296,14 @@ const fitMap = async (): Promise<void> => {
     await nextTick();
 
     fitView({
-        padding: 0.12,
+        padding: props.compact ? 0.16 : 0.12,
         duration: 350,
-        maxZoom: 1.05,
+        maxZoom: props.compact ? 0.82 : 1.05,
     });
 };
 
 const openNodeDetails = (event: NodeMouseEvent): void => {
-    if (event.node.type !== 'dicomNode') {
+    if (!props.detailsEnabled || event.node.type !== 'dicomNode') {
         return;
     }
 
@@ -272,6 +322,10 @@ const closeNodeDetails = (): void => {
 };
 
 const openConnectionDetails = (event: EdgeMouseEvent): void => {
+    if (!props.detailsEnabled) {
+        return;
+    }
+
     closeNodeDetails();
 
     selectedConnection.value = props.connections.find((connection) => connection.public_id === event.edge.id) ?? null;
@@ -286,11 +340,11 @@ const closeConnectionDetails = (): void => {
 
 onMounted(fitMap);
 
-watch(() => [props.nodes, props.connections], fitMap, { deep: true });
+watch(() => [props.nodes, props.connections, props.focusSystemPublicId], fitMap, { deep: true });
 </script>
 
 <template>
-    <div class="relative h-[720px] overflow-hidden rounded-2xl">
+    <div class="relative overflow-hidden rounded-2xl" :class="compact ? 'h-[390px]' : 'h-[720px]'">
         <VueFlow
             :nodes="flowNodes"
             :edges="flowEdges"
@@ -300,6 +354,8 @@ watch(() => [props.nodes, props.connections], fitMap, { deep: true });
             class="bg-slate-50"
             fit-view-on-init
             elevate-edges-on-select
+            :nodes-draggable="!compact"
+            :elements-selectable="detailsEnabled"
             @node-click="openNodeDetails"
             @edge-click="openConnectionDetails"
         >
@@ -331,13 +387,15 @@ watch(() => [props.nodes, props.connections], fitMap, { deep: true });
         </button>
     </div>
 
-    <DicomNodeDetails :open="nodeDetailsOpen" :node="selectedNode" @close="closeNodeDetails" />
+    <template v-if="detailsEnabled">
+        <DicomNodeDetails :open="nodeDetailsOpen" :node="selectedNode" @close="closeNodeDetails" />
 
-    <DicomConnectionDetails
-        :open="connectionDetailsOpen"
-        :connection="selectedConnection"
-        :source-node="selectedSourceNode"
-        :target-node="selectedTargetNode"
-        @close="closeConnectionDetails"
-    />
+        <DicomConnectionDetails
+            :open="connectionDetailsOpen"
+            :connection="selectedConnection"
+            :source-node="selectedSourceNode"
+            :target-node="selectedTargetNode"
+            @close="closeConnectionDetails"
+        />
+    </template>
 </template>

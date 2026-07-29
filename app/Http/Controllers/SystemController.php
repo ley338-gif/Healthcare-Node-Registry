@@ -89,8 +89,119 @@ final class SystemController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $visibleSystemIds = $systems
+            ->getCollection()
+            ->pluck('id')
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->all();
+
+        $topologyConnectionModels = DicomConnection::query()
+            ->active()
+            ->where(function ($query) use ($visibleSystemIds): void {
+                $query
+                    ->whereHas(
+                        'sourceNode',
+                        fn ($nodeQuery) => $nodeQuery->whereIn(
+                            'system_id',
+                            $visibleSystemIds,
+                        ),
+                    )
+                    ->orWhereHas(
+                        'targetNode',
+                        fn ($nodeQuery) => $nodeQuery->whereIn(
+                            'system_id',
+                            $visibleSystemIds,
+                        ),
+                    );
+            })
+            ->get();
+
+        $topologyNodeIds = $topologyConnectionModels
+            ->flatMap(
+                static fn (DicomConnection $connection): array => [
+                    $connection->source_dicom_node_id,
+                    $connection->target_dicom_node_id,
+                ],
+            )
+            ->unique()
+            ->values()
+            ->all();
+
+        $topologyNodeModels = DicomNode::query()
+            ->active()
+            ->where(function ($query) use (
+                $visibleSystemIds,
+                $topologyNodeIds,
+            ): void {
+                $query
+                    ->whereIn('system_id', $visibleSystemIds)
+                    ->when(
+                        $topologyNodeIds !== [],
+                        fn ($nodeQuery) => $nodeQuery->orWhereIn(
+                            'id',
+                            $topologyNodeIds,
+                        ),
+                    );
+            })
+            ->with([
+                'system.organization:id,name',
+                'system.site:id,name',
+                'system.department:id,name',
+            ])
+            ->orderBy('name')
+            ->get();
+
+        $topologyNodes = $topologyNodeModels
+            ->map(static fn (DicomNode $node): array => [
+                'id' => $node->id,
+                'public_id' => $node->public_id,
+                'name' => $node->name,
+                'ae_title' => $node->ae_title,
+                'host' => $node->host,
+                'port' => $node->port,
+                'role' => $node->role,
+                'status' => $node->status,
+                'tls_enabled' => $node->tls_enabled,
+                'last_verified_at' => $node->last_verified_at?->toIso8601String(),
+                'last_verification_status' => $node->last_verification_status,
+                'last_verification_duration_ms' => $node->last_verification_duration_ms,
+                'system' => [
+                    'public_id' => $node->system->public_id,
+                    'name' => $node->system->name,
+                    'system_type' => $node->system->system_type,
+                    'status' => $node->system->status,
+                    'organization' => $node->system->organization?->name,
+                    'site' => $node->system->site?->name,
+                    'department' => $node->system->department?->name,
+                ],
+            ])
+            ->values();
+
+        /** @var list<array<string, mixed>> $topologyConnections */
+        $topologyConnections = [];
+
+        foreach ($topologyConnectionModels as $connection) {
+            $topologyConnections[] = [
+                'public_id' => $connection->public_id,
+                'name' => $connection->name,
+                'service' => $connection->service,
+                'status' => $connection->status,
+                'source_node_id' => $connection->source_dicom_node_id,
+                'target_node_id' => $connection->target_dicom_node_id,
+                'destination_node_id' => $connection->destination_dicom_node_id,
+                'calling_ae_title' => $connection->calling_ae_title ?? '',
+                'called_ae_title' => $connection->called_ae_title ?? '',
+                'port' => $connection->port_override,
+                'tls_enabled' => $connection->tls_enabled,
+                'test_enabled' => $connection->test_enabled,
+            ];
+        }
+
         return Inertia::render('Registry/Systems/Index', [
             'items' => $systems,
+
+            'topologyNodes' => $topologyNodes,
+            'topologyConnections' => $topologyConnections,
 
             'filters' => [
                 'search' => $search,
