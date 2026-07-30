@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Department;
 use App\Models\Organization;
 use App\Models\Site;
+use App\Models\System;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -34,6 +35,24 @@ final class OrganizationStructureController extends Controller
                 'updated_at',
             ]);
 
+        $systems = System::query()
+            ->active()
+            ->withCount('dicomNodes')
+            ->orderBy('name')
+            ->get([
+                'public_id',
+                'organization_id',
+                'site_id',
+                'department_id',
+                'name',
+                'system_type',
+                'status',
+                'hostname',
+                'ip_address',
+                'vendor',
+                'product',
+            ]);
+
         return Inertia::render('OrganizationStructure/Index', [
             'summary' => [
                 'organizations' => Organization::query()->active()->count(),
@@ -41,6 +60,7 @@ final class OrganizationStructureController extends Controller
                 'departments' => Department::query()->active()->count(),
             ],
             'organizations' => $organizations,
+            'systems' => $systems,
         ]);
     }
 }

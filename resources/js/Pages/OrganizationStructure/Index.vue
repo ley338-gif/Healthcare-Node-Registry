@@ -15,7 +15,7 @@ import {
     Search,
     UsersRound,
 } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 
 type DepartmentItem = {
@@ -52,6 +52,21 @@ type OrganizationItem = {
     sites: SiteItem[];
 };
 
+type SystemItem = {
+    public_id: string;
+    organization_id: number;
+    site_id: number | null;
+    department_id: number | null;
+    name: string;
+    system_type: string;
+    status: string;
+    hostname: string | null;
+    ip_address: string | null;
+    vendor: string | null;
+    product: string | null;
+    dicom_nodes_count: number;
+};
+
 type SelectedUnit =
     | { type: 'organization'; organization: OrganizationItem }
     | { type: 'site'; organization: OrganizationItem; site: SiteItem }
@@ -71,6 +86,7 @@ const props = defineProps<{
         departments: number;
     };
     organizations: OrganizationItem[];
+    systems: SystemItem[];
 }>();
 
 const search = ref('');
@@ -78,6 +94,9 @@ const activeTab = ref<WorkspaceTab>('overview');
 const selected = ref<SelectedUnit | null>(
     props.organizations[0] ? { type: 'organization', organization: props.organizations[0] } : null,
 );
+watch(selected, () => {
+    activeTab.value = 'overview';
+});
 const expandedOrganizations = ref(new Set(props.organizations.map((item) => item.public_id)));
 const expandedSites = ref(
     new Set(props.organizations.flatMap((organization) => organization.sites.map((site) => site.public_id))),
@@ -214,6 +233,52 @@ const parentLabel = computed(() => {
     if (selected.value.type === 'site') return selected.value.organization.name;
     return selected.value.site.name;
 });
+
+const scopedSystems = computed(() => {
+    const selection = selected.value;
+
+    if (selection === null) {
+        return [];
+    }
+
+    if (selection.type === 'organization') {
+        return props.systems.filter((system) => system.organization_id === selection.organization.id);
+    }
+
+    if (selection.type === 'site') {
+        return props.systems.filter((system) => system.site_id === selection.site.id);
+    }
+
+    return props.systems.filter((system) => system.department_id === selection.department.id);
+});
+
+const scopedDicomNodeCount = computed(() =>
+    scopedSystems.value.reduce((total, system) => total + system.dicom_nodes_count, 0),
+);
+
+const systemStatusLabel = (status: string): string => {
+    const labels: Record<string, string> = {
+        active: 'Aktiv',
+        inactive: 'Inaktiv',
+        maintenance: 'Wartung',
+        degraded: 'Beeinträchtigt',
+        planned: 'Geplant',
+    };
+
+    return labels[status] ?? status;
+};
+
+const systemStatusClass = (status: string): string => {
+    const classes: Record<string, string> = {
+        active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+        inactive: 'bg-slate-100 text-slate-600 ring-slate-200',
+        maintenance: 'bg-amber-50 text-amber-700 ring-amber-200',
+        degraded: 'bg-red-50 text-red-700 ring-red-200',
+        planned: 'bg-blue-50 text-blue-700 ring-blue-200',
+    };
+
+    return classes[status] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
+};
 
 const childrenTitle = computed(() => {
     if (selected.value?.type === 'organization') return 'Standorte';
@@ -550,8 +615,8 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                     <p class="text-sm font-medium text-slate-500">Systeme</p>
                                     <MonitorCog :size="18" class="text-blue-600" />
                                 </div>
-                                <p class="mt-4 text-3xl font-semibold text-slate-950">—</p>
-                                <p class="mt-1 text-xs text-slate-500">Zuordnung folgt</p>
+                                <p class="mt-4 text-3xl font-semibold text-slate-950">{{ scopedSystems.length }}</p>
+                                <p class="mt-1 text-xs text-slate-500">Im aktuellen Kontext</p>
                             </div>
 
                             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -559,8 +624,8 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                     <p class="text-sm font-medium text-slate-500">DICOM-Knoten</p>
                                     <Layers3 :size="18" class="text-blue-600" />
                                 </div>
-                                <p class="mt-4 text-3xl font-semibold text-slate-950">—</p>
-                                <p class="mt-1 text-xs text-slate-500">Zuordnung folgt</p>
+                                <p class="mt-4 text-3xl font-semibold text-slate-950">{{ scopedDicomNodeCount }}</p>
+                                <p class="mt-1 text-xs text-slate-500">Über zugeordnete Systeme</p>
                             </div>
                         </div>
 
@@ -705,6 +770,118 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                 </div>
                             </div>
                         </section>
+                    </div>
+
+                    <div v-else-if="activeTab === 'systems'" class="space-y-5 p-5 lg:p-7">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-950">Zugeordnete Systeme</h3>
+                                <p class="mt-1 text-sm text-slate-500">
+                                    Systeme im Kontext der ausgewählten {{ typeLabel.toLowerCase() }}.
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                                    {{ scopedSystems.length }} Systeme
+                                </span>
+                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                                    {{ scopedDicomNodeCount }} DICOM-Knoten
+                                </span>
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="scopedSystems.length === 0"
+                            class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-14 text-center"
+                        >
+                            <MonitorCog :size="30" class="mx-auto text-slate-400" />
+                            <h4 class="mt-4 font-semibold text-slate-900">Keine Systeme zugeordnet</h4>
+                            <p class="mt-2 text-sm text-slate-500">
+                                Dieser Einheit sind derzeit keine aktiven Systeme zugeordnet.
+                            </p>
+                            <Link
+                                href="/systems"
+                                class="mt-5 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                            >
+                                Systeme verwalten
+                                <ArrowRight :size="14" />
+                            </Link>
+                        </div>
+
+                        <div v-else class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <div class="overflow-x-auto">
+                                <table class="w-full min-w-[920px] text-left">
+                                    <thead class="bg-slate-50 text-xs text-slate-500">
+                                        <tr>
+                                            <th class="px-4 py-3 font-semibold">System</th>
+                                            <th class="px-4 py-3 font-semibold">Typ</th>
+                                            <th class="px-4 py-3 font-semibold">Hersteller / Produkt</th>
+                                            <th class="px-4 py-3 font-semibold">Netzwerk</th>
+                                            <th class="px-4 py-3 font-semibold">DICOM-Knoten</th>
+                                            <th class="px-4 py-3 font-semibold">Status</th>
+                                            <th class="px-4 py-3" />
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <tr
+                                            v-for="system in scopedSystems"
+                                            :key="system.public_id"
+                                            class="transition hover:bg-slate-50"
+                                        >
+                                            <td class="px-4 py-3">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="rounded-xl bg-blue-50 p-2 text-blue-700">
+                                                        <MonitorCog :size="16" />
+                                                    </div>
+                                                    <span class="text-sm font-semibold text-slate-900">
+                                                        {{ system.name }}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-slate-600">
+                                                {{ system.system_type }}
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-slate-600">
+                                                {{ [system.vendor, system.product].filter(Boolean).join(' · ') || '—' }}
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <div class="text-sm text-slate-700">
+                                                    {{ system.hostname || system.ip_address || '—' }}
+                                                </div>
+                                                <div
+                                                    v-if="system.hostname && system.ip_address"
+                                                    class="mt-0.5 font-mono text-xs text-slate-400"
+                                                >
+                                                    {{ system.ip_address }}
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3 text-sm font-semibold text-slate-700">
+                                                {{ system.dicom_nodes_count }}
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <span
+                                                    :class="[
+                                                        'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
+                                                        systemStatusClass(system.status),
+                                                    ]"
+                                                >
+                                                    {{ systemStatusLabel(system.status) }}
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-3 text-right">
+                                                <Link
+                                                    :href="`/systems/${system.public_id}`"
+                                                    class="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 transition hover:text-blue-900"
+                                                >
+                                                    Öffnen
+                                                    <ArrowRight :size="14" />
+                                                </Link>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
                     <div v-else-if="activeTab === 'general'" class="p-5 lg:p-7">
