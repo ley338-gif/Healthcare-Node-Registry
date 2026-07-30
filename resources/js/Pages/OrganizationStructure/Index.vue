@@ -229,14 +229,16 @@ const childrenDescription = computed(() => {
 
 const children = computed(() => {
     if (selected.value?.type === 'organization') {
-        return selected.value.organization.sites.map((site) => ({
+        const organizationSelection = selected.value;
+
+        return organizationSelection.organization.sites.map((site) => ({
             id: site.public_id,
             name: site.name,
             type: 'Standort' as const,
             code: site.code,
             detail: site.city,
             count: site.departments.length,
-            organization: selected.value!.organization,
+            organization: organizationSelection.organization,
             site,
         }));
     }
@@ -277,12 +279,12 @@ const selectChild = (row: (typeof children.value)[number]): void => {
         return;
     }
 
-    selected.value = {
+    selectUnit({
         type: 'department',
         organization: row.organization,
         site: row.site,
         department: row.department,
-    };
+    });
 
     expandedOrganizations.value = new Set([...expandedOrganizations.value, row.organization.public_id]);
     expandedSites.value = new Set([...expandedSites.value, row.site.public_id]);
@@ -315,22 +317,14 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                     </p>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                    <Link
-                        href="/organizations"
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:text-blue-700"
-                    >
-                        <Building2 :size="16" />
-                        Organisation verwalten
-                    </Link>
-                    <Link
-                        href="/sites"
-                        class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                    >
-                        <MapPin :size="16" />
-                        Standort verwalten
-                    </Link>
-                </div>
+                <Link
+                    v-if="selected"
+                    :href="editHref"
+                    class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                >
+                    <Pencil :size="16" />
+                    {{ typeLabel }} bearbeiten
+                </Link>
             </header>
 
             <div class="grid min-h-[720px] gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
@@ -506,7 +500,7 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                 class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
                             >
                                 <Pencil :size="16" />
-                                Öffnen
+                                Bearbeiten
                             </Link>
                         </div>
                     </div>
