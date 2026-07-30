@@ -63,11 +63,13 @@ const props = withDefaults(
         focusSystemPublicId?: string | null;
         compact?: boolean;
         detailsEnabled?: boolean;
+        layoutMode?: 'wide' | 'balanced';
     }>(),
     {
         focusSystemPublicId: null,
         compact: false,
         detailsEnabled: true,
+        layoutMode: 'wide',
     },
 );
 
@@ -151,6 +153,28 @@ const visibleNodeIds = computed(() => {
 
 const visibleNodes = computed(() => props.nodes.filter((node) => visibleNodeIds.value.has(node.id)));
 
+const focusedNodeIds = computed(() => {
+    if (selectedNode.value === null) {
+        return new Set<number>();
+    }
+
+    const ids = new Set<number>([selectedNode.value.id]);
+
+    for (const connection of visibleConnections.value) {
+        if (connection.source_node_id === selectedNode.value.id) {
+            ids.add(connection.target_node_id);
+        }
+
+        if (connection.target_node_id === selectedNode.value.id) {
+            ids.add(connection.source_node_id);
+        }
+    }
+
+    return ids;
+});
+
+const hasNodeFocus = computed(() => selectedNode.value !== null && nodeDetailsOpen.value);
+
 const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
     const grouped = new Map<string, NetworkNode[]>();
 
@@ -165,14 +189,16 @@ const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
     const systems = Array.from(grouped.entries());
     const columns = props.compact
         ? Math.min(Math.max(systems.length, 1), 2)
-        : Math.max(1, Math.ceil(Math.sqrt(systems.length)));
+        : props.layoutMode === 'wide' && systems.length <= 6
+          ? Math.max(systems.length, 1)
+          : Math.max(1, Math.ceil(Math.sqrt(systems.length)));
 
-    const groupWidth = 330;
-    const nodeHeight = 205;
-    const groupHeaderHeight = 96;
-    const groupPadding = 26;
-    const groupGapX = props.compact ? 70 : 110;
-    const groupGapY = props.compact ? 60 : 90;
+    const groupWidth = props.compact ? 330 : 310;
+    const nodeHeight = props.compact ? 205 : 188;
+    const groupHeaderHeight = props.compact ? 96 : 84;
+    const groupPadding = props.compact ? 26 : 22;
+    const groupGapX = props.compact ? 70 : props.layoutMode === 'wide' ? 62 : 92;
+    const groupGapY = props.compact ? 60 : 72;
 
     systems.forEach(([systemPublicId, systemNodes], systemIndex) => {
         const column = systemIndex % columns;
@@ -211,6 +237,9 @@ const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
             style: {
                 width: `${groupWidth}px`,
                 height: `${groupHeight}px`,
+                opacity:
+                    hasNodeFocus.value && !systemNodes.some((node) => focusedNodeIds.value.has(node.id)) ? 0.32 : 1,
+                transition: 'opacity 180ms ease',
             },
             draggable: !props.compact,
             selectable: false,
@@ -244,7 +273,11 @@ const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
                 },
                 draggable: !props.compact,
                 selectable: props.detailsEnabled,
-                zIndex: 1,
+                zIndex: focusedNodeIds.value.has(node.id) ? 12 : 1,
+                style: {
+                    opacity: hasNodeFocus.value && !focusedNodeIds.value.has(node.id) ? 0.24 : 1,
+                    transition: 'opacity 180ms ease',
+                },
             });
         });
     });
@@ -255,6 +288,11 @@ const flowNodes = computed<Node<TopologyNodeData>[]>(() => {
 const flowEdges = computed<Edge[]>(() =>
     visibleConnections.value.map((connection) => {
         const selected = selectedConnection.value?.public_id === connection.public_id;
+        const connectedToFocusedNode =
+            selectedNode.value !== null &&
+            (connection.source_node_id === selectedNode.value.id ||
+                connection.target_node_id === selectedNode.value.id);
+        const dimmedByNodeFocus = hasNodeFocus.value && !connectedToFocusedNode;
 
         const color = serviceStroke[connection.service] ?? '#64748b';
 
@@ -264,15 +302,21 @@ const flowEdges = computed<Edge[]>(() =>
             target: String(connection.target_node_id),
             label: serviceLabels[connection.service] ?? connection.service.toUpperCase(),
             type: 'smoothstep',
-            animated: connection.status === 'active' && !selected && !props.compact,
+            animated:
+                connection.status === 'active' &&
+                !selected &&
+                !props.compact &&
+                (!hasNodeFocus.value || connectedToFocusedNode),
             markerEnd: {
                 type: MarkerType.ArrowClosed,
                 color,
             },
             style: {
                 stroke: color,
-                strokeWidth: selected ? 4 : 2.5,
-                filter: selected ? 'drop-shadow(0 0 4px rgba(37, 99, 235, 0.45))' : undefined,
+                strokeWidth: selected || connectedToFocusedNode ? 4 : 2.5,
+                opacity: dimmedByNodeFocus ? 0.14 : 1,
+                filter: selected || connectedToFocusedNode ? 'drop-shadow(0 0 4px rgba(37, 99, 235, 0.35))' : undefined,
+                transition: 'opacity 180ms ease',
             },
             labelStyle: {
                 fill: selected ? '#1d4ed8' : '#334155',
@@ -296,9 +340,9 @@ const fitMap = async (): Promise<void> => {
     await nextTick();
 
     fitView({
-        padding: props.compact ? 0.16 : 0.12,
+        padding: props.compact ? 0.16 : 0.045,
         duration: 350,
-        maxZoom: props.compact ? 0.82 : 1.05,
+        maxZoom: props.compact ? 0.82 : 1.28,
     });
 };
 
@@ -340,18 +384,18 @@ const closeConnectionDetails = (): void => {
 
 onMounted(fitMap);
 
-watch(() => [props.nodes, props.connections, props.focusSystemPublicId], fitMap, { deep: true });
+watch(() => [props.nodes, props.connections, props.focusSystemPublicId, props.layoutMode], fitMap, { deep: true });
 </script>
 
 <template>
-    <div class="relative overflow-hidden rounded-2xl" :class="compact ? 'h-[390px]' : 'h-[720px]'">
+    <div class="relative overflow-hidden" :class="compact ? 'h-[390px]' : 'h-[720px]'">
         <VueFlow
             :nodes="flowNodes"
             :edges="flowEdges"
             :min-zoom="0.15"
             :max-zoom="1.8"
             :default-viewport="{ x: 0, y: 0, zoom: 0.75 }"
-            class="bg-slate-50"
+            class="bg-slate-100/70"
             fit-view-on-init
             elevate-edges-on-select
             :nodes-draggable="!compact"
@@ -379,11 +423,11 @@ watch(() => [props.nodes, props.connections, props.focusSystemPublicId], fitMap,
 
         <button
             type="button"
-            class="absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            class="absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
             @click="fitMap"
         >
             <Maximize2 :size="15" />
-            Einpassen
+            Ansicht einpassen
         </button>
     </div>
 
