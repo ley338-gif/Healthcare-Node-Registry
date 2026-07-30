@@ -65,6 +65,9 @@ type SystemItem = {
     vendor: string | null;
     product: string | null;
     dicom_nodes_count: number;
+    connection_count: number;
+    verified_nodes_count: number;
+    latest_verified_at: string | null;
 };
 
 type SelectedUnit =
@@ -278,6 +281,15 @@ const systemStatusClass = (status: string): string => {
     };
 
     return classes[status] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
+};
+
+const formatDateTime = (value: string | null): string => {
+    if (value === null) return 'Noch nicht geprüft';
+
+    return new Intl.DateTimeFormat('de-DE', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(value));
 };
 
 const childrenTitle = computed(() => {
@@ -817,7 +829,9 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                             <th class="px-4 py-3 font-semibold">Typ</th>
                                             <th class="px-4 py-3 font-semibold">Hersteller / Produkt</th>
                                             <th class="px-4 py-3 font-semibold">Netzwerk</th>
-                                            <th class="px-4 py-3 font-semibold">DICOM-Knoten</th>
+                                            <th class="px-4 py-3 font-semibold">DICOM</th>
+                                            <th class="px-4 py-3 font-semibold">Verbindungen</th>
+                                            <th class="px-4 py-3 font-semibold">Letzte Prüfung</th>
                                             <th class="px-4 py-3 font-semibold">Status</th>
                                             <th class="px-4 py-3" />
                                         </tr>
@@ -855,8 +869,19 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                                     {{ system.ip_address }}
                                                 </div>
                                             </td>
+                                            <td class="px-4 py-3">
+                                                <div class="text-sm font-semibold text-slate-800">
+                                                    {{ system.dicom_nodes_count }} Knoten
+                                                </div>
+                                                <div class="mt-0.5 text-xs text-slate-400">
+                                                    {{ system.verified_nodes_count }} geprüft
+                                                </div>
+                                            </td>
                                             <td class="px-4 py-3 text-sm font-semibold text-slate-700">
-                                                {{ system.dicom_nodes_count }}
+                                                {{ system.connection_count }}
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-slate-600">
+                                                {{ formatDateTime(system.latest_verified_at) }}
                                             </td>
                                             <td class="px-4 py-3">
                                                 <span
