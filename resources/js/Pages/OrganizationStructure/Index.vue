@@ -5,6 +5,8 @@ import {
     Building2,
     ChevronDown,
     ChevronRight,
+    Cable,
+    CheckCircle2,
     FileText,
     History,
     Hospital,
@@ -449,20 +451,13 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                         Organisationen, Standorte und Abteilungen zentral verwalten und im Zusammenhang betrachten.
                     </p>
                 </div>
-
-                <Link
-                    v-if="selected"
-                    :href="editHref"
-                    class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                >
-                    <Pencil :size="16" />
-                    {{ typeLabel }} bearbeiten
-                </Link>
             </header>
 
             <div class="grid min-h-[720px] gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
-                <aside class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    <div class="border-b border-slate-200 px-4 py-4">
+                <aside
+                    class="overflow-hidden rounded-2xl border border-slate-300 bg-slate-50 shadow-sm xl:border-r-2 xl:border-r-slate-300"
+                >
+                    <div class="border-b border-slate-300 bg-white px-4 py-4">
                         <div class="flex items-start justify-between gap-3">
                             <div>
                                 <h2 class="font-semibold text-slate-950">Hierarchie</h2>
@@ -485,7 +480,7 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                         </div>
                     </div>
 
-                    <div class="max-h-[650px] overflow-y-auto p-3">
+                    <div class="max-h-[650px] overflow-y-auto bg-slate-50/80 p-3">
                         <div
                             v-if="filteredOrganizations.length === 0"
                             class="px-4 py-12 text-center text-sm text-slate-500"
@@ -858,25 +853,57 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                         </div>
 
                         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                                <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Systeme</p>
-                                <p class="mt-2 text-2xl font-semibold text-slate-950">{{ scopedSystems.length }}</p>
-                                <p class="mt-1 text-xs text-slate-500">Im aktuellen Kontext</p>
+                            <div
+                                class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+                            >
+                                <div class="rounded-lg bg-slate-100 p-2 text-slate-600">
+                                    <MonitorCog :size="18" />
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Systeme</p>
+                                    <p class="mt-0.5 text-xl font-semibold text-slate-950">
+                                        {{ scopedSystems.length }}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                                <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">DICOM-Knoten</p>
-                                <p class="mt-2 text-2xl font-semibold text-slate-950">{{ scopedDicomNodeCount }}</p>
-                                <p class="mt-1 text-xs text-slate-500">Über alle Systeme</p>
+                            <div
+                                class="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/60 px-4 py-3 shadow-sm"
+                            >
+                                <div class="rounded-lg bg-blue-100 p-2 text-blue-700">
+                                    <Layers3 :size="18" />
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold tracking-wide text-blue-700 uppercase">
+                                        DICOM-Knoten
+                                    </p>
+                                    <p class="mt-0.5 text-xl font-semibold text-blue-950">{{ scopedDicomNodeCount }}</p>
+                                </div>
                             </div>
-                            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                                <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Verbindungen</p>
-                                <p class="mt-2 text-2xl font-semibold text-slate-950">{{ scopedConnectionCount }}</p>
-                                <p class="mt-1 text-xs text-slate-500">Ein- und ausgehend</p>
+                            <div
+                                class="flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50/60 px-4 py-3 shadow-sm"
+                            >
+                                <div class="rounded-lg bg-violet-100 p-2 text-violet-700">
+                                    <Cable :size="18" />
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold tracking-wide text-violet-700 uppercase">
+                                        Verbindungen
+                                    </p>
+                                    <p class="mt-0.5 text-xl font-semibold text-violet-950">
+                                        {{ scopedConnectionCount }}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                                <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Hinweise</p>
-                                <p class="mt-2 text-2xl font-semibold text-slate-950">{{ scopedWarningCount }}</p>
-                                <p class="mt-1 text-xs text-slate-500">Nicht aktiv oder geplant</p>
+                            <div
+                                class="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3 shadow-sm"
+                            >
+                                <div class="rounded-lg bg-amber-100 p-2 text-amber-700">
+                                    <History :size="18" />
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold tracking-wide text-amber-700 uppercase">Hinweise</p>
+                                    <p class="mt-0.5 text-xl font-semibold text-amber-950">{{ scopedWarningCount }}</p>
+                                </div>
                             </div>
                         </div>
 
@@ -974,7 +1001,7 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                             </button>
                         </div>
 
-                        <div v-else class="grid gap-4 xl:grid-cols-2">
+                        <div v-else class="grid gap-4 xl:grid-cols-3 2xl:grid-cols-4">
                             <article
                                 v-for="system in filteredScopedSystems"
                                 :key="system.public_id"
@@ -1005,14 +1032,14 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                     </span>
                                 </div>
 
-                                <div class="mt-5 grid gap-3 sm:grid-cols-2">
-                                    <div class="rounded-xl bg-slate-50 px-3 py-3">
+                                <div class="mt-4 grid gap-2 sm:grid-cols-2">
+                                    <div class="rounded-lg bg-slate-50 px-3 py-2.5">
                                         <p class="text-xs font-medium text-slate-500">Systemtyp</p>
                                         <p class="mt-1 text-sm font-semibold text-slate-800">
                                             {{ system.system_type }}
                                         </p>
                                     </div>
-                                    <div class="rounded-xl bg-slate-50 px-3 py-3">
+                                    <div class="rounded-lg bg-slate-50 px-3 py-2.5">
                                         <p class="text-xs font-medium text-slate-500">Netzwerk</p>
                                         <p class="mt-1 truncate font-mono text-xs font-semibold text-slate-800">
                                             {{ system.hostname || system.ip_address || 'Nicht hinterlegt' }}
@@ -1026,26 +1053,33 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                     </div>
                                 </div>
 
-                                <dl
-                                    class="mt-4 grid grid-cols-3 divide-x divide-slate-200 rounded-xl border border-slate-200"
-                                >
-                                    <div class="px-3 py-3 text-center">
-                                        <dt class="text-xs text-slate-500">DICOM</dt>
-                                        <dd class="mt-1 text-sm font-semibold text-slate-950">
+                                <dl class="mt-4 grid grid-cols-3 gap-2">
+                                    <div class="rounded-xl border border-blue-200 bg-blue-50 px-2 py-3 text-center">
+                                        <Layers3 :size="16" class="mx-auto text-blue-600" />
+                                        <dd class="mt-1 text-xl font-bold text-blue-950">
                                             {{ system.dicom_nodes_count }}
                                         </dd>
+                                        <dt class="mt-0.5 text-[11px] font-semibold text-blue-700 uppercase">DICOM</dt>
                                     </div>
-                                    <div class="px-3 py-3 text-center">
-                                        <dt class="text-xs text-slate-500">Verbindungen</dt>
-                                        <dd class="mt-1 text-sm font-semibold text-slate-950">
+                                    <div class="rounded-xl border border-violet-200 bg-violet-50 px-2 py-3 text-center">
+                                        <Cable :size="16" class="mx-auto text-violet-600" />
+                                        <dd class="mt-1 text-xl font-bold text-violet-950">
                                             {{ system.connection_count }}
                                         </dd>
+                                        <dt class="mt-0.5 text-[11px] font-semibold text-violet-700 uppercase">
+                                            Verbindungen
+                                        </dt>
                                     </div>
-                                    <div class="px-3 py-3 text-center">
-                                        <dt class="text-xs text-slate-500">Geprüft</dt>
-                                        <dd class="mt-1 text-sm font-semibold text-slate-950">
+                                    <div
+                                        class="rounded-xl border border-emerald-200 bg-emerald-50 px-2 py-3 text-center"
+                                    >
+                                        <CheckCircle2 :size="16" class="mx-auto text-emerald-600" />
+                                        <dd class="mt-1 text-xl font-bold text-emerald-950">
                                             {{ system.verified_nodes_count }}
                                         </dd>
+                                        <dt class="mt-0.5 text-[11px] font-semibold text-emerald-700 uppercase">
+                                            Geprüft
+                                        </dt>
                                     </div>
                                 </dl>
 
@@ -1064,7 +1098,7 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                             class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
                                         >
                                             <Network :size="15" />
-                                            Netzwerk
+                                            Topologie
                                         </Link>
                                         <Link
                                             :href="`/systems/${system.public_id}`"
