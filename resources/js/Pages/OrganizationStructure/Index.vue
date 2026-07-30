@@ -11,6 +11,7 @@ import {
     Layers3,
     MapPin,
     MonitorCog,
+    Network,
     Pencil,
     Search,
     UsersRound,
@@ -93,6 +94,10 @@ const props = defineProps<{
 }>();
 
 const search = ref('');
+const systemSearch = ref('');
+const systemStatusFilter = ref('');
+const systemTypeFilter = ref('');
+const systemSort = ref<'name' | 'type' | 'status'>('name');
 const activeTab = ref<WorkspaceTab>('overview');
 const selected = ref<SelectedUnit | null>(
     props.organizations[0] ? { type: 'organization', organization: props.organizations[0] } : null,
@@ -258,6 +263,57 @@ const scopedSystems = computed(() => {
 const scopedDicomNodeCount = computed(() =>
     scopedSystems.value.reduce((total, system) => total + system.dicom_nodes_count, 0),
 );
+
+const scopedConnectionCount = computed(() =>
+    scopedSystems.value.reduce((total, system) => total + system.connection_count, 0),
+);
+
+const scopedWarningCount = computed(
+    () => scopedSystems.value.filter((system) => !['active', 'planned'].includes(system.status)).length,
+);
+
+const systemTypeOptions = computed(() =>
+    [...new Set(scopedSystems.value.map((system) => system.system_type))].sort((left, right) =>
+        left.localeCompare(right, 'de'),
+    ),
+);
+
+const filteredScopedSystems = computed(() => {
+    const term = systemSearch.value.trim().toLowerCase();
+
+    return scopedSystems.value
+        .filter((system) => {
+            const matchesSearch =
+                term === '' ||
+                [system.name, system.hostname, system.ip_address, system.vendor, system.product, system.system_type]
+                    .filter(Boolean)
+                    .some((value) => String(value).toLowerCase().includes(term));
+            const matchesStatus = systemStatusFilter.value === '' || system.status === systemStatusFilter.value;
+            const matchesType = systemTypeFilter.value === '' || system.system_type === systemTypeFilter.value;
+
+            return matchesSearch && matchesStatus && matchesType;
+        })
+        .sort((left, right) => {
+            if (systemSort.value === 'type') {
+                return (
+                    left.system_type.localeCompare(right.system_type, 'de') || left.name.localeCompare(right.name, 'de')
+                );
+            }
+
+            if (systemSort.value === 'status') {
+                return left.status.localeCompare(right.status, 'de') || left.name.localeCompare(right.name, 'de');
+            }
+
+            return left.name.localeCompare(right.name, 'de');
+        });
+});
+
+const resetSystemFilters = (): void => {
+    systemSearch.value = '';
+    systemStatusFilter.value = '';
+    systemTypeFilter.value = '';
+    systemSort.value = 'name';
+};
 
 const systemStatusLabel = (status: string): string => {
     const labels: Record<string, string> = {
@@ -784,128 +840,242 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                         </section>
                     </div>
 
-                    <div v-else-if="activeTab === 'systems'" class="space-y-5 p-5 lg:p-7">
+                    <div v-else-if="activeTab === 'systems'" class="space-y-6 p-5 lg:p-7">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                             <div>
                                 <h3 class="text-lg font-semibold text-slate-950">Zugeordnete Systeme</h3>
                                 <p class="mt-1 text-sm text-slate-500">
-                                    Systeme im Kontext der ausgewählten {{ typeLabel.toLowerCase() }}.
+                                    Operative Übersicht für die ausgewählte {{ typeLabel.toLowerCase() }}.
                                 </p>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                                    {{ scopedSystems.length }} Systeme
-                                </span>
-                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                                    {{ scopedDicomNodeCount }} DICOM-Knoten
-                                </span>
-                            </div>
-                        </div>
-
-                        <div
-                            v-if="scopedSystems.length === 0"
-                            class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-14 text-center"
-                        >
-                            <MonitorCog :size="30" class="mx-auto text-slate-400" />
-                            <h4 class="mt-4 font-semibold text-slate-900">Keine Systeme zugeordnet</h4>
-                            <p class="mt-2 text-sm text-slate-500">
-                                Dieser Einheit sind derzeit keine aktiven Systeme zugeordnet.
-                            </p>
                             <Link
                                 href="/systems"
-                                class="mt-5 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                                class="inline-flex items-center gap-2 self-start rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
                             >
                                 Systeme verwalten
                                 <ArrowRight :size="14" />
                             </Link>
                         </div>
 
-                        <div v-else class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                            <div class="overflow-x-auto">
-                                <table class="w-full min-w-[920px] text-left">
-                                    <thead class="bg-slate-50 text-xs text-slate-500">
-                                        <tr>
-                                            <th class="px-4 py-3 font-semibold">System</th>
-                                            <th class="px-4 py-3 font-semibold">Typ</th>
-                                            <th class="px-4 py-3 font-semibold">Hersteller / Produkt</th>
-                                            <th class="px-4 py-3 font-semibold">Netzwerk</th>
-                                            <th class="px-4 py-3 font-semibold">DICOM</th>
-                                            <th class="px-4 py-3 font-semibold">Verbindungen</th>
-                                            <th class="px-4 py-3 font-semibold">Letzte Prüfung</th>
-                                            <th class="px-4 py-3 font-semibold">Status</th>
-                                            <th class="px-4 py-3" />
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100">
-                                        <tr
-                                            v-for="system in scopedSystems"
-                                            :key="system.public_id"
-                                            class="transition hover:bg-slate-50"
-                                        >
-                                            <td class="px-4 py-3">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="rounded-xl bg-blue-50 p-2 text-blue-700">
-                                                        <MonitorCog :size="16" />
-                                                    </div>
-                                                    <span class="text-sm font-semibold text-slate-900">
-                                                        {{ system.name }}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td class="px-4 py-3 text-sm text-slate-600">
-                                                {{ system.system_type }}
-                                            </td>
-                                            <td class="px-4 py-3 text-sm text-slate-600">
-                                                {{ [system.vendor, system.product].filter(Boolean).join(' · ') || '—' }}
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                <div class="text-sm text-slate-700">
-                                                    {{ system.hostname || system.ip_address || '—' }}
-                                                </div>
-                                                <div
-                                                    v-if="system.hostname && system.ip_address"
-                                                    class="mt-0.5 font-mono text-xs text-slate-400"
-                                                >
-                                                    {{ system.ip_address }}
-                                                </div>
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                <div class="text-sm font-semibold text-slate-800">
-                                                    {{ system.dicom_nodes_count }} Knoten
-                                                </div>
-                                                <div class="mt-0.5 text-xs text-slate-400">
-                                                    {{ system.verified_nodes_count }} geprüft
-                                                </div>
-                                            </td>
-                                            <td class="px-4 py-3 text-sm font-semibold text-slate-700">
-                                                {{ system.connection_count }}
-                                            </td>
-                                            <td class="px-4 py-3 text-sm text-slate-600">
-                                                {{ formatDateTime(system.latest_verified_at) }}
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                <span
-                                                    :class="[
-                                                        'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
-                                                        systemStatusClass(system.status),
-                                                    ]"
-                                                >
-                                                    {{ systemStatusLabel(system.status) }}
-                                                </span>
-                                            </td>
-                                            <td class="px-4 py-3 text-right">
-                                                <Link
-                                                    :href="`/systems/${system.public_id}`"
-                                                    class="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 transition hover:text-blue-900"
-                                                >
-                                                    Öffnen
-                                                    <ArrowRight :size="14" />
-                                                </Link>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Systeme</p>
+                                <p class="mt-2 text-2xl font-semibold text-slate-950">{{ scopedSystems.length }}</p>
+                                <p class="mt-1 text-xs text-slate-500">Im aktuellen Kontext</p>
                             </div>
+                            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">DICOM-Knoten</p>
+                                <p class="mt-2 text-2xl font-semibold text-slate-950">{{ scopedDicomNodeCount }}</p>
+                                <p class="mt-1 text-xs text-slate-500">Über alle Systeme</p>
+                            </div>
+                            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Verbindungen</p>
+                                <p class="mt-2 text-2xl font-semibold text-slate-950">{{ scopedConnectionCount }}</p>
+                                <p class="mt-1 text-xs text-slate-500">Ein- und ausgehend</p>
+                            </div>
+                            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Hinweise</p>
+                                <p class="mt-2 text-2xl font-semibold text-slate-950">{{ scopedWarningCount }}</p>
+                                <p class="mt-1 text-xs text-slate-500">Nicht aktiv oder geplant</p>
+                            </div>
+                        </div>
+
+                        <section class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <div class="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_180px_180px_170px_auto]">
+                                <label class="relative block">
+                                    <Search
+                                        :size="17"
+                                        class="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400"
+                                    />
+                                    <input
+                                        v-model="systemSearch"
+                                        type="search"
+                                        placeholder="Systeme durchsuchen"
+                                        class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pr-3 pl-10 text-sm text-slate-900 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                    />
+                                </label>
+
+                                <select
+                                    v-model="systemStatusFilter"
+                                    class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                >
+                                    <option value="">Alle Status</option>
+                                    <option value="active">Aktiv</option>
+                                    <option value="planned">Geplant</option>
+                                    <option value="maintenance">Wartung</option>
+                                    <option value="inactive">Inaktiv</option>
+                                    <option value="degraded">Beeinträchtigt</option>
+                                </select>
+
+                                <select
+                                    v-model="systemTypeFilter"
+                                    class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                >
+                                    <option value="">Alle Typen</option>
+                                    <option
+                                        v-for="systemType in systemTypeOptions"
+                                        :key="systemType"
+                                        :value="systemType"
+                                    >
+                                        {{ systemType }}
+                                    </option>
+                                </select>
+
+                                <select
+                                    v-model="systemSort"
+                                    class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                >
+                                    <option value="name">Name sortieren</option>
+                                    <option value="type">Typ sortieren</option>
+                                    <option value="status">Status sortieren</option>
+                                </select>
+
+                                <button
+                                    type="button"
+                                    class="rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950"
+                                    @click="resetSystemFilters"
+                                >
+                                    Zurücksetzen
+                                </button>
+                            </div>
+                        </section>
+
+                        <div
+                            v-if="scopedSystems.length === 0"
+                            class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-14 text-center"
+                        >
+                            <MonitorCog :size="32" class="mx-auto text-slate-400" />
+                            <h4 class="mt-4 font-semibold text-slate-900">Noch keine Systeme zugeordnet</h4>
+                            <p class="mt-2 text-sm text-slate-500">
+                                Dieser Einheit sind derzeit keine aktiven Systeme zugeordnet.
+                            </p>
+                            <Link
+                                href="/systems"
+                                class="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                            >
+                                System anlegen
+                                <ArrowRight :size="14" />
+                            </Link>
+                        </div>
+
+                        <div
+                            v-else-if="filteredScopedSystems.length === 0"
+                            class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center"
+                        >
+                            <Search :size="30" class="mx-auto text-slate-400" />
+                            <h4 class="mt-4 font-semibold text-slate-900">Keine passenden Systeme</h4>
+                            <p class="mt-2 text-sm text-slate-500">Passe Suche oder Filter an.</p>
+                            <button
+                                type="button"
+                                class="mt-4 text-sm font-semibold text-blue-700 hover:text-blue-900"
+                                @click="resetSystemFilters"
+                            >
+                                Filter zurücksetzen
+                            </button>
+                        </div>
+
+                        <div v-else class="grid gap-4 xl:grid-cols-2">
+                            <article
+                                v-for="system in filteredScopedSystems"
+                                :key="system.public_id"
+                                class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md"
+                            >
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="flex min-w-0 items-start gap-3">
+                                        <div class="shrink-0 rounded-xl bg-blue-50 p-2.5 text-blue-700">
+                                            <MonitorCog :size="19" />
+                                        </div>
+                                        <div class="min-w-0">
+                                            <h4 class="truncate font-semibold text-slate-950">{{ system.name }}</h4>
+                                            <p class="mt-1 truncate text-sm text-slate-500">
+                                                {{
+                                                    [system.vendor, system.product].filter(Boolean).join(' · ') ||
+                                                    system.system_type
+                                                }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span
+                                        :class="[
+                                            'inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
+                                            systemStatusClass(system.status),
+                                        ]"
+                                    >
+                                        {{ systemStatusLabel(system.status) }}
+                                    </span>
+                                </div>
+
+                                <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                                    <div class="rounded-xl bg-slate-50 px-3 py-3">
+                                        <p class="text-xs font-medium text-slate-500">Systemtyp</p>
+                                        <p class="mt-1 text-sm font-semibold text-slate-800">
+                                            {{ system.system_type }}
+                                        </p>
+                                    </div>
+                                    <div class="rounded-xl bg-slate-50 px-3 py-3">
+                                        <p class="text-xs font-medium text-slate-500">Netzwerk</p>
+                                        <p class="mt-1 truncate font-mono text-xs font-semibold text-slate-800">
+                                            {{ system.hostname || system.ip_address || 'Nicht hinterlegt' }}
+                                        </p>
+                                        <p
+                                            v-if="system.hostname && system.ip_address"
+                                            class="mt-1 font-mono text-xs text-slate-400"
+                                        >
+                                            {{ system.ip_address }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <dl
+                                    class="mt-4 grid grid-cols-3 divide-x divide-slate-200 rounded-xl border border-slate-200"
+                                >
+                                    <div class="px-3 py-3 text-center">
+                                        <dt class="text-xs text-slate-500">DICOM</dt>
+                                        <dd class="mt-1 text-sm font-semibold text-slate-950">
+                                            {{ system.dicom_nodes_count }}
+                                        </dd>
+                                    </div>
+                                    <div class="px-3 py-3 text-center">
+                                        <dt class="text-xs text-slate-500">Verbindungen</dt>
+                                        <dd class="mt-1 text-sm font-semibold text-slate-950">
+                                            {{ system.connection_count }}
+                                        </dd>
+                                    </div>
+                                    <div class="px-3 py-3 text-center">
+                                        <dt class="text-xs text-slate-500">Geprüft</dt>
+                                        <dd class="mt-1 text-sm font-semibold text-slate-950">
+                                            {{ system.verified_nodes_count }}
+                                        </dd>
+                                    </div>
+                                </dl>
+
+                                <div
+                                    class="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4"
+                                >
+                                    <div>
+                                        <p class="text-xs text-slate-400">Letzte DICOM-Prüfung</p>
+                                        <p class="mt-1 text-xs font-medium text-slate-600">
+                                            {{ formatDateTime(system.latest_verified_at) }}
+                                        </p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <Link
+                                            href="/network"
+                                            class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+                                        >
+                                            <Network :size="15" />
+                                            Netzwerk
+                                        </Link>
+                                        <Link
+                                            :href="`/systems/${system.public_id}`"
+                                            class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                        >
+                                            Öffnen
+                                            <ArrowRight :size="14" />
+                                        </Link>
+                                    </div>
+                                </div>
+                            </article>
                         </div>
                     </div>
 
