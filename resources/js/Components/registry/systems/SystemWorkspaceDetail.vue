@@ -6,7 +6,6 @@ import {
     CircleCheck,
     CircleHelp,
     Database,
-    FileText,
     MapPin,
     Network,
     Pencil,
@@ -22,6 +21,8 @@ import DicomNodeManager, { type DicomNode } from '../dicom/DicomNodeManager.vue'
 import DicomNetworkMap, { type NetworkConnection, type NetworkNode } from '../../network/DicomNetworkMap.vue';
 import ContentCard from '../../ui/ContentCard.vue';
 import AuditHistoryPanel, { type AuditEvent } from '../../audit/AuditHistoryPanel.vue';
+import DocumentationPanel, { type RegistryDocumentationItem } from '../../documentation/DocumentationPanel.vue';
+import { systemDocumentationSections } from '../../documentation/systemDocumentationSections';
 
 export type SelectOption = {
     value: string;
@@ -108,6 +109,7 @@ const props = withDefaults(
         historyFilters?: Record<string, string | undefined>;
         historyEventTypes?: string[];
         historyUsers?: Array<{ public_id: string; name: string }>;
+        documentation?: RegistryDocumentationItem[];
     }>(),
     {
         topologyNodes: () => [],
@@ -117,6 +119,7 @@ const props = withDefaults(
         historyFilters: () => ({}),
         historyEventTypes: () => [],
         historyUsers: () => [],
+        documentation: () => [],
     },
 );
 
@@ -147,6 +150,18 @@ const productDescription = computed(
         [props.system.vendor, props.system.product, props.system.version].filter(Boolean).join(' · ') ||
         'Technisches oder fachliches System',
 );
+
+const documentationMasterData = computed(() => [
+    { label: 'Hersteller', value: props.system.vendor },
+    { label: 'Produkt', value: props.system.product },
+    { label: 'Version', value: props.system.version },
+    { label: 'DNS-Name', value: props.system.fqdn ?? props.system.hostname },
+    { label: 'IP-Adresse', value: props.system.ip_address },
+    {
+        label: 'Betriebssystem',
+        value: [props.system.operating_system, props.system.operating_system_version].filter(Boolean).join(' ') || null,
+    },
+]);
 
 const successfulDicomNodes = computed(
     () => props.dicomNodes.filter((node) => node.last_verification_status === 'success').length,
@@ -521,10 +536,14 @@ const statusClass = (value: string): string => {
                 title="Dokumentation"
                 description="Betriebs-, Hersteller- und interne Dokumentation."
             >
-                <div class="py-10 text-center">
-                    <FileText :size="32" class="mx-auto text-slate-300" />
-                    <p class="mt-4 font-medium text-slate-900">Noch keine Dokumente</p>
-                </div>
+                <DocumentationPanel
+                    documentable-type="systems"
+                    :documentable-id="system.public_id"
+                    :sections="systemDocumentationSections"
+                    :documentation="documentation"
+                    :can-manage="canManage"
+                    :master-data="documentationMasterData"
+                />
             </ContentCard>
 
             <ContentCard v-else title="Historie" description="Änderungen und sicherheitsrelevante Ereignisse.">

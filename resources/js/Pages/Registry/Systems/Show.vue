@@ -14,6 +14,7 @@ import SystemWorkspaceDetail, {
 import AppLayout from '../../../Layouts/AppLayout.vue';
 import { ref } from 'vue';
 import type { AuditEvent } from '../../../Components/audit/AuditHistoryPanel.vue';
+import type { RegistryDocumentationItem } from '../../../Components/documentation/DocumentationPanel.vue';
 
 defineProps<{
     system: SystemDetail;
@@ -37,6 +38,7 @@ defineProps<{
     historyFilters: Record<string, string | undefined>;
     historyEventTypes: string[];
     historyUsers: Array<{ public_id: string; name: string }>;
+    documentation: RegistryDocumentationItem[];
 }>();
 
 const editPanelOpen = ref(false);
@@ -69,6 +71,7 @@ const editPanelOpen = ref(false);
             :history-filters="historyFilters"
             :history-event-types="historyEventTypes"
             :history-users="historyUsers"
+            :documentation="documentation"
             @edit="editPanelOpen = true"
         />
 

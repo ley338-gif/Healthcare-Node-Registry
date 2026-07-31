@@ -13,6 +13,7 @@ import type { NetworkConnection, NetworkNode } from '../../../Components/network
 import EmptyState from '../../../Components/ui/EmptyState.vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
+import type { RegistryDocumentationItem } from '../../../Components/documentation/DocumentationPanel.vue';
 
 type SelectOption = {
     value: string;
@@ -89,6 +90,7 @@ const props = withDefaults(
         dicomNodes: DicomNode[];
         dicomConnections: DicomConnection[];
         dicomNodeOptions: DicomNodeOption[];
+        documentation: RegistryDocumentationItem[];
         topologyNodes?: NetworkNode[];
         topologyConnections?: NetworkConnection[];
         canManage: boolean;
@@ -236,6 +238,7 @@ const selectSystem = (system: SystemItem): void => {
                 'dicomNodes',
                 'dicomConnections',
                 'dicomNodeOptions',
+                'documentation',
                 'topologyNodes',
                 'topologyConnections',
                 'canManageSelected',
@@ -448,6 +451,7 @@ const closeEditPanel = (): void => {
                 :can-manage="canManageSelected"
                 :can-manage-dicom-nodes="canManageDicomNodes"
                 :can-manage-dicom-connections="canManageDicomConnections"
+                :documentation="documentation"
                 @edit="openEditPanel"
             />
         </div>

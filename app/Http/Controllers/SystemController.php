@@ -212,14 +212,19 @@ final class SystemController extends Controller
                 'organization:id,public_id,name',
                 'site:id,public_id,name',
                 'department:id,public_id,name',
+                'documentation' => fn ($query) => $query
+                    ->with('updatedByUser:id,public_id,name')
+                    ->orderBy('section'),
             ])
             ->first();
 
         $selectedDicomNodes = collect();
         $selectedDicomConnections = collect();
+        $selectedDocumentation = collect();
 
         if ($selectedSystem !== null) {
             Gate::authorize('view', $selectedSystem);
+            $selectedDocumentation = $selectedSystem->documentation;
 
             $selectedDicomNodes = $selectedSystem
                 ->dicomNodes()
@@ -269,6 +274,7 @@ final class SystemController extends Controller
             'selectedSystem' => $selectedSystem,
             'dicomNodes' => $selectedDicomNodes,
             'dicomConnections' => $selectedDicomConnections,
+            'documentation' => $selectedDocumentation,
             'dicomNodeOptions' => DicomNode::query()
                 ->active()
                 ->whereHas(
@@ -368,6 +374,9 @@ final class SystemController extends Controller
             'organization:id,public_id,name',
             'site:id,public_id,name',
             'department:id,public_id,name',
+            'documentation' => fn ($query) => $query
+                ->with('updatedByUser:id,public_id,name')
+                ->orderBy('section'),
         ]);
 
         $user = $request->user();
@@ -402,6 +411,7 @@ final class SystemController extends Controller
 
         return Inertia::render('Registry/Systems/Show', [
             'system' => $system,
+            'documentation' => $system->documentation,
             'history' => $historyQuery->paginate(15, ['*'], 'history_page')->withQueryString()->through(
                 fn ($event): array => [
                     'event_id' => $event->event_id,

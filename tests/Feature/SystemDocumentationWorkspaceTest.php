@@ -1,0 +1,109 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\RegistryDocumentation;
+use App\Models\Role;
+use App\Models\SecurityEvent;
+use App\Models\System;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+final class SystemDocumentationWorkspaceTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_system_documentation_is_available_in_detail_and_selected_workspace(): void
+    {
+        $this->withoutVite();
+        $this->seed();
+        $user = $this->administrator();
+        $system = System::factory()->create([
+            'vendor' => 'Acme Medical',
+            'product' => 'Clinical Archive',
+            'version' => '4.2',
+        ]);
+
+        $this->actingAs($user)->post("/registry-documentation/systems/{$system->public_id}", [
+            'documentation_type' => 'operations',
+            'section' => 'operations',
+            'title' => 'Betrieb',
+            'content' => null,
+            'structured_data' => [
+                'operational_status' => 'Produktiv',
+                'operating_hours' => '24/7',
+                'maintenance_window' => 'Sonntag 02:00–04:00',
+            ],
+            'visibility' => 'internal',
+        ])->assertSessionHasNoErrors();
+
+        $this->actingAs($user)->get("/systems/{$system->public_id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('documentation', 1)
+                ->where('documentation.0.section', 'operations')
+                ->where('documentation.0.structured_data.operating_hours', '24/7'));
+
+        $this->actingAs($user)->get("/systems?selected={$system->public_id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('documentation', 1)
+                ->where('documentation.0.section', 'operations'));
+    }
+
+    public function test_system_master_data_is_not_duplicated_in_documentation(): void
+    {
+        $this->seed();
+        $user = $this->administrator();
+        $system = System::factory()->create(['vendor' => 'Vendor AG', 'hostname' => 'pacs.internal']);
+
+        $this->actingAs($user)->post("/registry-documentation/systems/{$system->public_id}", [
+            'documentation_type' => 'operations',
+            'section' => 'product_support',
+            'title' => 'Produkt und Hersteller',
+            'content' => null,
+            'structured_data' => ['support_contact' => 'support@example.test'],
+            'visibility' => 'internal',
+        ]);
+
+        $data = RegistryDocumentation::query()->firstOrFail()->structured_data;
+        $this->assertArrayNotHasKey('vendor', $data);
+        $this->assertArrayNotHasKey('hostname', $data);
+        $this->assertSame('Vendor AG', $system->fresh()?->vendor);
+    }
+
+    public function test_system_documentation_change_appears_in_shared_history(): void
+    {
+        $this->withoutVite();
+        $this->seed();
+        $user = $this->administrator();
+        $system = System::factory()->create();
+        $this->actingAs($user)->post("/registry-documentation/systems/{$system->public_id}", [
+            'documentation_type' => 'operations',
+            'section' => 'monitoring',
+            'title' => 'Monitoring',
+            'content' => null,
+            'structured_data' => ['monitoring_present' => true, 'monitoring_system' => 'Zabbix'],
+            'visibility' => 'internal',
+        ]);
+
+        $this->assertDatabaseHas('security_events', [
+            'event_type' => 'documentation.updated',
+            'subject_public_id' => $system->public_id,
+        ]);
+        $this->actingAs($user)->get("/systems/{$system->public_id}?history_type=documentation.updated")
+            ->assertInertia(fn ($page) => $page
+                ->has('history.data', 1)
+                ->where('history.data.0.event_type', 'documentation.updated'));
+        $this->assertSame(1, SecurityEvent::query()->where('event_type', 'documentation.updated')->count());
+    }
+
+    private function administrator(): User
+    {
+        $user = User::factory()->create();
+        $user->roles()->attach(Role::query()->where('name', 'system-administrator')->firstOrFail());
+
+        return $user;
+    }
+}
