@@ -20,6 +20,8 @@ Konkrete Kommunikationsendpunkte. Generische Basisdaten werden durch protokollsp
 
 DICOM Application Entities, Dienste, Rollen, Called/Calling AE und fachliche Validierung.
 
+Der Diagnosebereich führt kontrollierte Netzwerk-, C-ECHO-, C-FIND-, C-STORE- und Association-Tests ausschließlich gegen registrierte Endpunkte aus. Gemeinsame Ergebnis-DTOs, persistierte Testläufe und Runner-Interfaces liegen unter `App\Services\Diagnostics`. Details: [Diagnostic Test Workspace](../Healthcare/DiagnosticTestWorkspace.md).
+
 ## Connections
 
 Gerichtete Beziehungen zwischen konkreten Endpoints mit Dienst, Zweck, Informationsquelle, Dokumentationsstatus und Soll-Nutzung.

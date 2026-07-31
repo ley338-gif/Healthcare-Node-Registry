@@ -25,3 +25,5 @@
 ## Diagnose
 
 Diagnosefunktionen dürfen keine Secrets oder Dokumentinhalte offenlegen. Support-Bundles benötigen explizite Auswahl, Redaction und Auditierung.
+
+Der App-Container benötigt DCMTK sowie ausgehenden TCP-Zugriff auf die freigegebenen Ports registrierter DICOM-Knoten. Produktive Firewalls sollten Egress auf konkrete Zieladressen und Ports begrenzen. Calling AE `NODE_REGISTRY` muss in Zielsystemen autorisiert werden. C-STORE kann ein dauerhaftes synthetisches Objekt erzeugen und erfordert einen abgestimmten Bereinigungsprozess im Zielsystem. Details: [Diagnostic Test Workspace](../Healthcare/DiagnosticTestWorkspace.md).

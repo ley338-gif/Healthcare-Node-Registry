@@ -15,6 +15,8 @@ RBAC mit serverseitiger Durchsetzung, Default Deny und optionalen Ressourcen-Sco
 | Dokumente herunterladen | ja | ja | nach Recht | ja | nach Recht | eingeschränkt |
 | Topologie anzeigen | ja | ja | ja | ja | ja | eingeschränkt |
 | Export ausführen | ja | gesondert | nein | nein | gesondert | nein |
+| DICOM Storage-Test | ja | gesondert | nein | nein | nein | nein |
+| DICOM-Datei analysieren | ja | gesondert | nein | nein | nein | nein |
 | Audit anzeigen | ja | ja | nein | nein | ja | nein |
 | Benutzer verwalten | ja | nein | nein | nein | nein | nein |
 | Rollen verwalten | ja | nein | nein | nein | nein | nein |
@@ -36,5 +38,6 @@ Echte technische Tenant-Isolation ist nicht Bestandteil des MVP.
 - Rollenänderungen werden auditiert
 - letzter aktiver Systemadministrator darf nicht unkontrolliert entfernt werden
 - sensible Exporte und Downloads werden gesondert berechtigt
+- datenverändernde DICOM-Tests verwenden strengere Rechte als reine Lese-/Verbindungstests
 - External Support ist standardmäßig read-only, zeitlich begrenzbar und ohne Export
 - regelmäßiger Access Review ist Organisationsprozess

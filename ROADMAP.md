@@ -20,4 +20,19 @@ Abgeschlossen.
 
 ## Nächster Sprint
 
-DICOM Nodes und zugehörige Stammdaten.
+DICOM Nodes, Diagnose-Workspace und zugehörige Stammdaten sind umgesetzt.
+
+## Diagnose – nächste Ausbaustufe
+
+- [x] Netzwerk und C-ECHO
+- [x] Modality Worklist C-FIND
+- [x] PACS Study Root C-FIND
+- [x] kontrollierter Secondary-Capture-C-STORE
+- [x] Capability-Matrix per Association Negotiation
+- [x] Testprofile, Verlauf, Export und Dashboard
+- [x] serverseitige DICOM-Dateianalyse
+- [ ] granulare Einzelrechte für Netzwerk, Echo, Worklist und PACS Query
+- [ ] konfigurierbare CIDR-Allowlist, Timeouts und Parallelitätsgrenzen
+- [ ] DICOM-TLS für Diagnose-Runner
+- [ ] weitere synthetische Storage-SOP-Classes
+- [ ] C-MOVE/C-GET nach separatem Sicherheitsdesign

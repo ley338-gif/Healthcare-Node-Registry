@@ -17,11 +17,13 @@ Technisches Grundgerüst der On-Premise-Registry für Healthcare-IT-Systeme und 
 - strukturierte Logs
 - GitHub Actions für Backend, Frontend und Container
 - Dashboard-Basislayout gemäß Enterprise-Admin-Richtung
+- Diagnose-Workspace für Netzwerk, C-ECHO, Worklist, PACS Query und kontrollierten C-STORE
+- Diagnoseverlauf, Testprofile, Capability-Matrix, DICOM-Dateianalyse und Ergebnisexport
 
 ## Noch nicht enthalten
 
 - produktive Registry-Fachmodule
-- DICOM- oder HL7-Kommunikation
+- HL7-Kommunikation
 - Monitoring und Discovery
 - Dokumenten-Uploads
 - vollständige Benutzerverwaltung
@@ -64,7 +66,11 @@ docker compose run --rm node npm run dev -- --host 0.0.0.0
 ```bash
 docker compose run --rm app composer test
 docker compose run --rm node npm run check
+docker compose --profile test run --rm app-test composer quality
+docker compose run --rm node npm run build
 ```
+
+Die DICOM-Diagnosefunktionen sowie ihre Sicherheits- und Firewallvoraussetzungen sind im [Diagnostic Test Workspace](docs/Healthcare/DiagnosticTestWorkspace.md) dokumentiert.
 
 ## Modulstruktur
 

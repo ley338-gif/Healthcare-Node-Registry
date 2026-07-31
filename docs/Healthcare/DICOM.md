@@ -42,4 +42,4 @@ Jeder fachlich kritische Wert sollte eine Herkunft besitzen:
 
 ## Datenschutz
 
-Die Registry benötigt keine DICOM-Objekte und keine Patientendaten. Testfälle verwenden synthetische Identitäten und DICOM-Metadaten.
+Die Registry speichert keine hochgeladenen DICOM-Dateien und benötigt keine echten Patientendaten. Der kontrollierte Storage-Test erzeugt kurzzeitig ein synthetisches Secondary-Capture-Objekt und kann dieses nach ausdrücklicher Bestätigung an ein Zielsystem senden. Dateianalysen und lokale Testartefakte werden nach Verarbeitung gelöscht. Details: [Diagnostic Test Workspace](DiagnosticTestWorkspace.md).
