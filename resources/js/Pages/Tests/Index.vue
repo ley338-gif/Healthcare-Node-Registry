@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import {
     Activity,
     Cable,
@@ -82,6 +82,20 @@ type HistoryFilters = {
     history_user?: string;
 };
 
+type WorklistItem = {
+    patientName: string | null;
+    patientId: string | null;
+    patientBirthDate: string | null;
+    accessionNumber: string | null;
+    modality: string | null;
+    scheduledStationAeTitle: string | null;
+    scheduledDate: string | null;
+    scheduledTime: string | null;
+    scheduledDescription: string | null;
+    requestedProcedureId: string | null;
+    scheduledProcedureStepId: string | null;
+};
+
 type TestNode = {
     public_id: string;
     name: string;
@@ -115,6 +129,7 @@ const props = defineProps<{
     nodes: TestNode[];
     canRunEcho: boolean;
     canRunNetwork: boolean;
+    canRunWorklist: boolean;
     latestResult: DiagnosticResult | null;
     history: {
         data: HistoryRun[];
@@ -131,12 +146,25 @@ const echoProcessing = ref(false);
 const networkProcessing = ref(false);
 const resultExpanded = ref(true);
 const selectedHistoryRun = ref<HistoryRun | null>(null);
+const worklistDialogOpen = ref(false);
 const historyFrom = ref(props.historyFilters.history_from ?? '');
 const historyTo = ref(props.historyFilters.history_to ?? '');
 const historyNode = ref(props.historyFilters.history_node ?? '');
 const historyType = ref(props.historyFilters.history_type ?? '');
 const historyStatus = ref(props.historyFilters.history_status ?? '');
 const historyUser = ref(props.historyFilters.history_user ?? '');
+const today = new Intl.DateTimeFormat('en-CA').format(new Date());
+const worklistForm = useForm({
+    calling_ae_title: 'NODE_REGISTRY',
+    called_ae_title: '',
+    scheduled_station_ae_title: '',
+    examination_date: today,
+    examination_date_to: '',
+    modality: '',
+    patient_name: '',
+    patient_id: '',
+    accession_number: '',
+});
 
 const selectedNode = computed(() => props.nodes.find((node) => node.public_id === selectedNodeId.value) ?? null);
 
@@ -202,6 +230,14 @@ const displayedDiagnosticResult = computed(() => {
     return props.latestResult;
 });
 
+const worklistResults = computed<WorklistItem[]>(() => {
+    if (displayedDiagnosticResult.value?.testType !== 'worklist') return [];
+
+    const results = displayedDiagnosticResult.value.details.results;
+
+    return Array.isArray(results) ? (results as WorklistItem[]) : [];
+});
+
 watch(filteredNodes, (nodes) => {
     if (nodes.length === 0) return;
 
@@ -244,6 +280,36 @@ const runNetworkTest = (): void => {
     );
 };
 
+const openWorklistTest = (): void => {
+    if (selectedNode.value === null || !props.canRunWorklist || !selectedNode.value.supports_worklist) return;
+
+    worklistForm.called_ae_title = selectedNode.value.ae_title;
+    worklistDialogOpen.value = true;
+};
+
+const resetWorklistFilters = (): void => {
+    worklistForm.scheduled_station_ae_title = '';
+    worklistForm.examination_date = today;
+    worklistForm.examination_date_to = '';
+    worklistForm.modality = '';
+    worklistForm.patient_name = '';
+    worklistForm.patient_id = '';
+    worklistForm.accession_number = '';
+    worklistForm.clearErrors();
+};
+
+const runWorklistTest = (): void => {
+    if (selectedNode.value === null) return;
+
+    worklistForm.post(`/tests/worklist/${selectedNode.value.public_id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            worklistDialogOpen.value = false;
+            resultExpanded.value = true;
+        },
+    });
+};
+
 const formatDate = (value: string | null): string => {
     if (value === null) return 'Noch nicht ausgeführt';
 
@@ -252,6 +318,9 @@ const formatDate = (value: string | null): string => {
         timeStyle: 'short',
     }).format(new Date(value));
 };
+
+const testTypeLabel = (type: string): string =>
+    ({ network: 'Netzwerk', dicom_echo: 'C-ECHO', worklist: 'Worklist' })[type] ?? type;
 
 const applyHistoryFilters = (): void => {
     router.get(
@@ -497,7 +566,7 @@ const prepareRerun = (run: HistoryRun): void => {
                         </article>
 
                         <article
-                            class="flex min-h-[220px] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                            class="flex min-h-[220px] flex-col rounded-2xl border border-violet-200 bg-white p-5 shadow-sm"
                         >
                             <div class="self-start rounded-xl bg-violet-50 p-2.5 text-violet-700">
                                 <FlaskConical :size="20" />
@@ -507,10 +576,14 @@ const prepareRerun = (run: HistoryRun): void => {
                                 C-FIND-Abfrage mit Datum, Modalität, Station AE und Patientenkriterien.
                             </p>
                             <button
-                                disabled
-                                class="mt-5 rounded-xl border px-4 py-2.5 text-sm font-semibold text-slate-500 opacity-50"
+                                type="button"
+                                :disabled="
+                                    !canRunWorklist || !selectedNode.supports_worklist || worklistForm.processing
+                                "
+                                class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                                @click="openWorklistTest"
                             >
-                                Geplant
+                                <FlaskConical :size="16" />Worklist abfragen
                             </button>
                         </article>
 
@@ -572,7 +645,7 @@ const prepareRerun = (run: HistoryRun): void => {
                                     {{ displayedDiagnosticResult.summary }}
                                 </p>
                                 <p class="mt-1 text-xs text-slate-500">
-                                    {{ displayedDiagnosticResult.testType === 'network' ? 'Netzwerk' : 'C-ECHO' }} ·
+                                    {{ testTypeLabel(displayedDiagnosticResult.testType) }} ·
                                     {{ displayedDiagnosticResult.durationMilliseconds }} ms
                                 </p>
                             </div>
@@ -598,6 +671,44 @@ const prepareRerun = (run: HistoryRun): void => {
                                     </details>
                                 </li>
                             </ol>
+                            <div
+                                v-if="worklistResults.length"
+                                class="overflow-x-auto rounded-xl border border-slate-200"
+                            >
+                                <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+                                    <thead class="bg-slate-50 text-slate-500 uppercase">
+                                        <tr>
+                                            <th class="px-3 py-2">Patient</th>
+                                            <th class="px-3 py-2">Patient-ID</th>
+                                            <th class="px-3 py-2">Accession</th>
+                                            <th class="px-3 py-2">Modalität</th>
+                                            <th class="px-3 py-2">Station AE</th>
+                                            <th class="px-3 py-2">Datum / Zeit</th>
+                                            <th class="px-3 py-2">Beschreibung</th>
+                                            <th class="px-3 py-2">Requested Procedure</th>
+                                            <th class="px-3 py-2">SPS ID</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <tr
+                                            v-for="(item, index) in worklistResults"
+                                            :key="`${item.scheduledProcedureStepId}-${index}`"
+                                        >
+                                            <td class="px-3 py-2 font-semibold">{{ item.patientName || '—' }}</td>
+                                            <td class="px-3 py-2">{{ item.patientId || '—' }}</td>
+                                            <td class="px-3 py-2">{{ item.accessionNumber || '—' }}</td>
+                                            <td class="px-3 py-2">{{ item.modality || '—' }}</td>
+                                            <td class="px-3 py-2">{{ item.scheduledStationAeTitle || '—' }}</td>
+                                            <td class="px-3 py-2">
+                                                {{ item.scheduledDate || '—' }} {{ item.scheduledTime || '' }}
+                                            </td>
+                                            <td class="px-3 py-2">{{ item.scheduledDescription || '—' }}</td>
+                                            <td class="px-3 py-2">{{ item.requestedProcedureId || '—' }}</td>
+                                            <td class="px-3 py-2">{{ item.scheduledProcedureStepId || '—' }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         <div v-else-if="selectedNode.last_verified_at" class="grid gap-4 lg:grid-cols-[1fr_280px]">
                             <div>
@@ -744,7 +855,7 @@ const prepareRerun = (run: HistoryRun): void => {
                                         <p class="font-semibold text-slate-900">{{ run.dicom_node.name }}</p>
                                         <p class="text-xs text-slate-500">{{ run.system.name }}</p>
                                     </td>
-                                    <td class="px-4 py-3">{{ run.test_type === 'network' ? 'Netzwerk' : 'C-ECHO' }}</td>
+                                    <td class="px-4 py-3">{{ testTypeLabel(run.test_type) }}</td>
                                     <td class="px-4 py-3">
                                         <span
                                             class="rounded-full px-2 py-1 text-xs font-semibold"
@@ -848,6 +959,113 @@ const prepareRerun = (run: HistoryRun): void => {
                         <Download :size="16" />JSON-Export geplant
                     </button>
                 </div>
+            </aside>
+        </div>
+
+        <div v-if="worklistDialogOpen && selectedNode" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
+            <button
+                class="absolute inset-0 bg-slate-950/40"
+                aria-label="Worklist-Dialog schließen"
+                @click="worklistDialogOpen = false"
+            />
+            <aside class="absolute inset-y-0 right-0 w-full max-w-2xl overflow-y-auto bg-white p-6 shadow-2xl">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold text-violet-600 uppercase">Modality Worklist</p>
+                        <h2 class="mt-2 text-xl font-semibold text-slate-950">{{ selectedNode.name }}</h2>
+                        <p class="mt-1 font-mono text-sm text-slate-500">
+                            {{ selectedNode.ae_title }} · {{ selectedNode.host }}:{{ selectedNode.port }}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        class="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                        @click="worklistDialogOpen = false"
+                    >
+                        <X :size="20" />
+                    </button>
+                </div>
+                <form class="mt-6 space-y-5" @submit.prevent="runWorklistTest">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <label class="text-sm font-medium text-slate-700"
+                            >Calling AE Title<input
+                                v-model="worklistForm.calling_ae_title"
+                                maxlength="16"
+                                required
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm" /></label
+                        ><label class="text-sm font-medium text-slate-700"
+                            >Called AE Title<input
+                                v-model="worklistForm.called_ae_title"
+                                maxlength="16"
+                                required
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm" /></label
+                        ><label class="text-sm font-medium text-slate-700"
+                            >Station AE<input
+                                v-model="worklistForm.scheduled_station_ae_title"
+                                maxlength="16"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm" /></label
+                        ><label class="text-sm font-medium text-slate-700"
+                            >Modalität<input
+                                v-model="worklistForm.modality"
+                                maxlength="16"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
+                        ><label class="text-sm font-medium text-slate-700"
+                            >Untersuchungsdatum<input
+                                v-model="worklistForm.examination_date"
+                                type="date"
+                                required
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
+                        ><label class="text-sm font-medium text-slate-700"
+                            >Bis einschließlich<input
+                                v-model="worklistForm.examination_date_to"
+                                type="date"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
+                        ><label class="text-sm font-medium text-slate-700"
+                            >Patientenname<input
+                                v-model="worklistForm.patient_name"
+                                maxlength="128"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
+                        ><label class="text-sm font-medium text-slate-700"
+                            >Patient-ID<input
+                                v-model="worklistForm.patient_id"
+                                maxlength="64"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
+                        ><label class="text-sm font-medium text-slate-700 sm:col-span-2"
+                            >Accession Number<input
+                                v-model="worklistForm.accession_number"
+                                maxlength="64"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                        /></label>
+                    </div>
+                    <div
+                        v-if="Object.keys(worklistForm.errors).length"
+                        class="rounded-xl bg-red-50 p-3 text-sm text-red-700"
+                    >
+                        <p v-for="message in worklistForm.errors" :key="message">{{ message }}</p>
+                    </div>
+                    <p class="text-xs leading-5 text-slate-500">
+                        Die Abfrage wird ausschließlich im Backend gegen diesen registrierten Knoten ausgeführt.
+                        Temporäre Filter verändern den Knoten nicht.
+                    </p>
+                    <div class="flex justify-end gap-2">
+                        <button
+                            type="button"
+                            class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-600"
+                            @click="resetWorklistFilters"
+                        >
+                            Filter zurücksetzen</button
+                        ><button
+                            type="submit"
+                            :disabled="worklistForm.processing"
+                            class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                        >
+                            <LoaderCircle v-if="worklistForm.processing" :size="16" class="animate-spin" /><FlaskConical
+                                v-else
+                                :size="16"
+                            />{{ worklistForm.processing ? 'Abfrage läuft' : 'C-FIND starten' }}
+                        </button>
+                    </div>
+                </form>
             </aside>
         </div>
     </AppLayout>

@@ -52,7 +52,7 @@ final class DiagnosticTestRecorder
         $sanitized = [];
 
         foreach ($values as $key => $value) {
-            if (preg_match('/password|passwd|secret|token|authorization/i', $key) === 1) {
+            if (preg_match('/password|passwd|secret|token|authorization|patientname|patientid|patientbirthdate|accessionnumber/i', $key) === 1) {
                 $sanitized[$key] = '[REDACTED]';
 
                 continue;

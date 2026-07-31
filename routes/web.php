@@ -12,6 +12,7 @@ use App\Http\Controllers\OrganizationStructureController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\TestWorkspaceController;
+use App\Http\Controllers\WorklistDiagnosticController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -84,4 +85,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::post('/tests/network/{dicomNode}', NetworkDiagnosticController::class)
         ->name('tests.network.run');
+
+    Route::post('/tests/worklist/{dicomNode}', WorklistDiagnosticController::class)
+        ->name('tests.worklist.run');
 });
