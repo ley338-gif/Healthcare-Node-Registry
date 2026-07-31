@@ -20,6 +20,7 @@ import {
     Radio,
     RotateCcw,
     Search,
+    Send,
     Settings2,
     Stethoscope,
     X,
@@ -146,6 +147,7 @@ const props = defineProps<{
     canRunNetwork: boolean;
     canRunWorklist: boolean;
     canRunPacsQuery: boolean;
+    canRunStorage: boolean;
     latestResult: DiagnosticResult | null;
     history: {
         data: HistoryRun[];
@@ -167,6 +169,7 @@ const selectedHistoryRun = ref<HistoryRun | null>(null);
 const worklistDialogOpen = ref(false);
 const pacsDialogOpen = ref(false);
 const profileDialogOpen = ref(false);
+const storageDialogOpen = ref(false);
 const editingProfileId = ref<string | null>(null);
 const historyFrom = ref(props.historyFilters.history_from ?? '');
 const historyTo = ref(props.historyFilters.history_to ?? '');
@@ -208,6 +211,7 @@ const profileForm = useForm({
     timeout_seconds: 15,
     enabled: true,
 });
+const storageForm = useForm({ confirmed: false, calling_ae_title: 'NODE_REGISTRY', called_ae_title: '' });
 
 const selectedNode = computed(() => props.nodes.find((node) => node.public_id === selectedNodeId.value) ?? null);
 
@@ -422,6 +426,24 @@ const archiveProfile = (profile: TestProfile): void => {
         router.post(`/tests/profiles/${profile.public_id}/archive`, {}, { preserveScroll: true });
 };
 
+const openStorageTest = (): void => {
+    if (!selectedNode.value?.supports_store || !props.canRunStorage) return;
+    storageForm.reset();
+    storageForm.called_ae_title = selectedNode.value.ae_title;
+    storageDialogOpen.value = true;
+};
+
+const runStorageTest = (): void => {
+    if (selectedNode.value === null) return;
+    storageForm.post(`/tests/storage/${selectedNode.value.public_id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            storageDialogOpen.value = false;
+            resultExpanded.value = true;
+        },
+    });
+};
+
 const formatDate = (value: string | null): string => {
     if (value === null) return 'Noch nicht ausgeführt';
 
@@ -432,7 +454,13 @@ const formatDate = (value: string | null): string => {
 };
 
 const testTypeLabel = (type: string): string =>
-    ({ network: 'Netzwerk', dicom_echo: 'C-ECHO', worklist: 'Worklist', pacs_query: 'PACS Query' })[type] ?? type;
+    ({
+        network: 'Netzwerk',
+        dicom_echo: 'C-ECHO',
+        worklist: 'Worklist',
+        pacs_query: 'PACS Query',
+        dicom_storage: 'DICOM Storage',
+    })[type] ?? type;
 
 const applyHistoryFilters = (): void => {
     router.get(
@@ -681,7 +709,7 @@ const prepareRerun = (run: HistoryRun): void => {
                         <p class="mt-1 text-sm text-slate-500">Geeignete Prüfungen für den ausgewählten Knoten.</p>
                     </div>
 
-                    <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+                    <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-5">
                         <article
                             class="flex min-h-[220px] flex-col rounded-2xl border border-cyan-200 bg-white p-5 shadow-sm"
                         >
@@ -699,6 +727,24 @@ const prepareRerun = (run: HistoryRun): void => {
                                 <LoaderCircle v-if="networkProcessing" :size="16" class="animate-spin" />
                                 <Cable v-else :size="16" />
                                 {{ networkProcessing ? 'TCP-Verbindung wird geprüft' : 'Verbindung testen' }}
+                            </button>
+                        </article>
+
+                        <article
+                            class="flex min-h-[220px] flex-col rounded-2xl border border-rose-200 bg-white p-5 shadow-sm"
+                        >
+                            <div class="self-start rounded-xl bg-rose-50 p-2.5 text-rose-700"><Send :size="20" /></div>
+                            <h3 class="mt-5 font-semibold text-slate-950">DICOM Storage</h3>
+                            <p class="mt-2 flex-1 text-sm leading-6 text-slate-500">
+                                Synthetisches Secondary-Capture-Testobjekt kontrolliert per C-STORE senden.
+                            </p>
+                            <button
+                                type="button"
+                                :disabled="!canRunStorage || !selectedNode.supports_store || storageForm.processing"
+                                class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                                @click="openStorageTest"
+                            >
+                                <Send :size="16" />Testobjekt senden
                             </button>
                         </article>
 
@@ -1389,6 +1435,72 @@ const prepareRerun = (run: HistoryRun): void => {
                             class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                         >
                             {{ profileForm.processing ? 'Speichern …' : 'Profil speichern' }}
+                        </button>
+                    </div>
+                </form>
+            </aside>
+        </div>
+
+        <div v-if="storageDialogOpen && selectedNode" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
+            <button
+                class="absolute inset-0 bg-slate-950/50"
+                aria-label="Storage-Dialog schließen"
+                @click="storageDialogOpen = false"
+            />
+            <aside class="absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto bg-white p-6 shadow-2xl">
+                <div class="flex justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold text-rose-600 uppercase">Kontrollierter DICOM Storage-Test</p>
+                        <h2 class="mt-2 text-xl font-semibold">{{ selectedNode.name }}</h2>
+                    </div>
+                    <button type="button" @click="storageDialogOpen = false"><X :size="20" /></button>
+                </div>
+                <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                    <p class="font-semibold">Achtung: Im Zielsystem kann ein dauerhaftes Objekt entstehen.</p>
+                    <p class="mt-1">
+                        Es werden ausschließlich synthetische Daten verwendet: PatientName DICOMNODE^TEST und eine
+                        temporäre TEST-Patient-ID.
+                    </p>
+                </div>
+                <form class="mt-6 space-y-4" @submit.prevent="runStorageTest">
+                    <label class="block text-sm font-medium"
+                        >Calling AE Title<input
+                            v-model="storageForm.calling_ae_title"
+                            maxlength="16"
+                            required
+                            class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono" /></label
+                    ><label class="block text-sm font-medium"
+                        >Called AE Title<input
+                            v-model="storageForm.called_ae_title"
+                            maxlength="16"
+                            required
+                            class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono" /></label
+                    ><label class="flex items-start gap-3 rounded-xl border border-rose-200 p-4 text-sm"
+                        ><input
+                            v-model="storageForm.confirmed"
+                            type="checkbox"
+                            class="mt-1 rounded border-slate-300"
+                        /><span
+                            >Ich bestätige ausdrücklich, dass ein gekennzeichnetes synthetisches Testobjekt im
+                            ausgewählten Zielsystem gespeichert werden darf.</span
+                        ></label
+                    >
+                    <div
+                        v-if="Object.keys(storageForm.errors).length"
+                        class="rounded-xl bg-red-50 p-3 text-sm text-red-700"
+                    >
+                        <p v-for="message in storageForm.errors" :key="message">{{ message }}</p>
+                    </div>
+                    <div class="flex justify-end">
+                        <button
+                            type="submit"
+                            :disabled="!storageForm.confirmed || storageForm.processing"
+                            class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                        >
+                            <LoaderCircle v-if="storageForm.processing" :size="16" class="animate-spin" /><Send
+                                v-else
+                                :size="16"
+                            />{{ storageForm.processing ? 'C-STORE läuft' : 'Verbindlich senden' }}
                         </button>
                     </div>
                 </form>

@@ -13,6 +13,7 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
 use App\Http\Controllers\PacsQueryDiagnosticController;
 use App\Http\Controllers\SiteController;
+use App\Http\Controllers\StorageDiagnosticController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\TestWorkspaceController;
 use App\Http\Controllers\WorklistDiagnosticController;
@@ -94,6 +95,8 @@ Route::middleware('auth')->group(function (): void {
 
     Route::post('/tests/pacs-query/{dicomNode}', PacsQueryDiagnosticController::class)
         ->name('tests.pacs-query.run');
+    Route::post('/tests/storage/{dicomNode}', StorageDiagnosticController::class)
+        ->name('tests.storage.run');
 
     Route::post('/tests/profiles', [DiagnosticTestProfileController::class, 'store'])
         ->name('tests.profiles.store');
