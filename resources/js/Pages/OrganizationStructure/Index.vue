@@ -21,6 +21,14 @@ import {
 import { computed, ref, watch } from 'vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 import AuditHistoryPanel, { type AuditEvent } from '../../Components/audit/AuditHistoryPanel.vue';
+import DocumentationPanel, {
+    type RegistryDocumentationItem,
+} from '../../Components/documentation/DocumentationPanel.vue';
+import {
+    departmentDocumentationSections,
+    organizationDocumentationSections,
+    siteDocumentationSections,
+} from '../../Components/documentation/organizationStructureDocumentationSections';
 
 type DepartmentItem = {
     id: number;
@@ -104,6 +112,8 @@ const props = defineProps<{
     historyFilters: Record<string, string | undefined>;
     historyEventTypes: string[];
     historyUsers: Array<{ public_id: string; name: string }>;
+    documentation: RegistryDocumentationItem[];
+    canManageDocumentation: boolean;
 }>();
 
 const search = ref('');
@@ -146,9 +156,50 @@ const tabs: Array<{ id: WorkspaceTab; label: string; icon: typeof Building2 }> =
     { id: 'overview', label: 'Übersicht', icon: Layers3 },
     { id: 'general', label: 'Allgemein', icon: Building2 },
     { id: 'systems', label: 'Systeme', icon: MonitorCog },
-    { id: 'documents', label: 'Dokumente', icon: FileText },
+    { id: 'documents', label: 'Dokumentation', icon: FileText },
     { id: 'history', label: 'Historie', icon: History },
 ];
+
+const documentationSections = computed(() => {
+    if (selected.value?.type === 'site') return siteDocumentationSections;
+    if (selected.value?.type === 'department') return departmentDocumentationSections;
+    return organizationDocumentationSections;
+});
+const documentationType = computed<'organizations' | 'sites' | 'departments'>(() => {
+    if (selected.value?.type === 'site') return 'sites';
+    if (selected.value?.type === 'department') return 'departments';
+    return 'organizations';
+});
+const documentationMasterData = computed<Array<{ label: string; value: string | null }>>(() => {
+    const unit = selected.value;
+    if (unit?.type === 'organization') {
+        return [
+            { label: 'Name', value: unit.organization.name },
+            { label: 'Kurzname', value: unit.organization.short_name },
+            { label: 'Beschreibung', value: unit.organization.description },
+        ];
+    }
+    if (unit?.type === 'site') {
+        return [
+            { label: 'Name', value: unit.site.name },
+            { label: 'Code', value: unit.site.code },
+            {
+                label: 'Adresse',
+                value: [unit.site.street, unit.site.postal_code, unit.site.city].filter(Boolean).join(', ') || null,
+            },
+            { label: 'Zeitzone', value: unit.site.timezone },
+        ];
+    }
+    if (unit?.type === 'department') {
+        return [
+            { label: 'Name', value: unit.department.name },
+            { label: 'Code', value: unit.department.code },
+            { label: 'Fachrichtung', value: unit.department.specialty },
+            { label: 'Standort', value: unit.site.name },
+        ];
+    }
+    return [];
+});
 
 const filteredOrganizations = computed(() => {
     const term = search.value.trim().toLowerCase();
@@ -1158,6 +1209,18 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                 vorbereitet.
                             </p>
                         </section>
+                    </div>
+
+                    <div v-else-if="activeTab === 'documents'" class="p-5 lg:p-7">
+                        <DocumentationPanel
+                            v-if="selectedContext"
+                            :documentable-type="documentationType"
+                            :documentable-id="selectedContext.public_id"
+                            :sections="documentationSections"
+                            :documentation="documentation"
+                            :can-manage="canManageDocumentation"
+                            :master-data="documentationMasterData"
+                        />
                     </div>
 
                     <div v-else-if="activeTab === 'history'" class="p-5 lg:p-7">

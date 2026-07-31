@@ -106,12 +106,22 @@ final class OrganizationStructureController extends Controller
         $historyStats = ['total' => 0, 'today' => 0, 'last7Days' => 0, 'last30Days' => 0];
         $historyEventTypes = collect();
         $historyUsers = collect();
+        $documentation = collect();
+        $canManageDocumentation = false;
         $includeDescendants = $request->query('history_scope', 'descendants') !== 'direct';
         $user = $request->user();
 
         $mayLoadDefaultHistory = $selectedContext instanceof Model
             && $user instanceof User
             && Gate::forUser($user)->allows('view', $selectedContext);
+
+        if ($selectedContext instanceof Model && $user instanceof User && $mayLoadDefaultHistory) {
+            $documentation = $selectedContext->documentation()
+                ->with('updatedByUser:id,public_id,name')
+                ->orderBy('section')
+                ->get();
+            $canManageDocumentation = Gate::forUser($user)->allows('update', $selectedContext);
+        }
 
         if (
             $selectedContext instanceof Model
@@ -193,11 +203,16 @@ final class OrganizationStructureController extends Controller
             ]),
             'historyEventTypes' => $historyEventTypes,
             'historyUsers' => $historyUsers,
+            'documentation' => $documentation,
+            'canManageDocumentation' => $canManageDocumentation,
         ]);
     }
 
-    private function resolveContext(string $type, string $publicId, ?Organization $fallback): ?Model
-    {
+    private function resolveContext(
+        string $type,
+        string $publicId,
+        ?Organization $fallback,
+    ): Organization|Site|Department|null {
         if ($publicId === '') {
             return $fallback;
         }
