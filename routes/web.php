@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DiagnosticProfileExecutionController;
+use App\Http\Controllers\DiagnosticTestProfileController;
 use App\Http\Controllers\DicomConnectionController;
 use App\Http\Controllers\DicomNetworkMapController;
 use App\Http\Controllers\DicomNodeController;
@@ -92,4 +94,13 @@ Route::middleware('auth')->group(function (): void {
 
     Route::post('/tests/pacs-query/{dicomNode}', PacsQueryDiagnosticController::class)
         ->name('tests.pacs-query.run');
+
+    Route::post('/tests/profiles', [DiagnosticTestProfileController::class, 'store'])
+        ->name('tests.profiles.store');
+    Route::put('/tests/profiles/{profile}', [DiagnosticTestProfileController::class, 'update'])
+        ->name('tests.profiles.update');
+    Route::post('/tests/profiles/{profile}/archive', [DiagnosticTestProfileController::class, 'archive'])
+        ->name('tests.profiles.archive');
+    Route::post('/tests/profiles/{profile}/execute', DiagnosticProfileExecutionController::class)
+        ->name('tests.profiles.execute');
 });

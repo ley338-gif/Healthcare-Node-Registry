@@ -2,6 +2,7 @@
 import { Head, router, useForm } from '@inertiajs/vue3';
 import {
     Activity,
+    Archive,
     Cable,
     CheckCircle2,
     ChevronDown,
@@ -13,7 +14,9 @@ import {
     FlaskConical,
     LoaderCircle,
     Network,
+    Pencil,
     Play,
+    Plus,
     Radio,
     RotateCcw,
     Search,
@@ -96,6 +99,18 @@ type WorklistItem = {
     scheduledProcedureStepId: string | null;
 };
 
+type TestProfile = {
+    public_id: string;
+    name: string;
+    description: string | null;
+    test_type: string;
+    calling_ae_title: string | null;
+    configuration: Record<string, string | null>;
+    timeout_seconds: number;
+    enabled: boolean;
+    dicom_node: NamedContext;
+};
+
 type TestNode = {
     public_id: string;
     name: string;
@@ -139,6 +154,8 @@ const props = defineProps<{
     };
     historyFilters: HistoryFilters;
     historyUsers: NamedContext[];
+    profiles: TestProfile[];
+    canManageProfiles: boolean;
 }>();
 
 const search = ref('');
@@ -149,6 +166,8 @@ const resultExpanded = ref(true);
 const selectedHistoryRun = ref<HistoryRun | null>(null);
 const worklistDialogOpen = ref(false);
 const pacsDialogOpen = ref(false);
+const profileDialogOpen = ref(false);
+const editingProfileId = ref<string | null>(null);
 const historyFrom = ref(props.historyFilters.history_from ?? '');
 const historyTo = ref(props.historyFilters.history_to ?? '');
 const historyNode = ref(props.historyFilters.history_node ?? '');
@@ -178,6 +197,16 @@ const pacsForm = useForm({
     study_date: '',
     study_date_to: '',
     study_description: '',
+});
+const profileForm = useForm({
+    name: '',
+    description: '',
+    test_type: 'network',
+    dicom_node_public_id: '',
+    calling_ae_title: 'NODE_REGISTRY',
+    configuration: {} as Record<string, string>,
+    timeout_seconds: 15,
+    enabled: true,
 });
 
 const selectedNode = computed(() => props.nodes.find((node) => node.public_id === selectedNodeId.value) ?? null);
@@ -341,6 +370,58 @@ const runPacsQuery = (): void => {
     });
 };
 
+const profileConfiguration = (type: string): Record<string, string> => {
+    if (type === 'worklist') return { ...worklistForm.data(), called_ae_title: worklistForm.called_ae_title };
+    if (type === 'pacs_query') return { ...pacsForm.data(), called_ae_title: pacsForm.called_ae_title };
+    return {};
+};
+
+const openNewProfile = (): void => {
+    if (selectedNode.value === null) return;
+    editingProfileId.value = null;
+    profileForm.reset();
+    profileForm.dicom_node_public_id = selectedNode.value.public_id;
+    profileDialogOpen.value = true;
+};
+
+const editProfile = (profile: TestProfile): void => {
+    editingProfileId.value = profile.public_id;
+    profileForm.name = profile.name;
+    profileForm.description = profile.description ?? '';
+    profileForm.test_type = profile.test_type;
+    profileForm.dicom_node_public_id = profile.dicom_node.public_id;
+    profileForm.calling_ae_title = profile.calling_ae_title ?? 'NODE_REGISTRY';
+    profileForm.configuration = Object.fromEntries(
+        Object.entries(profile.configuration).map(([key, value]) => [key, value ?? '']),
+    );
+    profileForm.timeout_seconds = profile.timeout_seconds;
+    profileForm.enabled = profile.enabled;
+    profileDialogOpen.value = true;
+};
+
+const saveProfile = (): void => {
+    if (editingProfileId.value === null) profileForm.configuration = profileConfiguration(profileForm.test_type);
+    const options = {
+        preserveScroll: true,
+        onSuccess: () => {
+            profileDialogOpen.value = false;
+        },
+    };
+    if (editingProfileId.value) profileForm.put(`/tests/profiles/${editingProfileId.value}`, options);
+    else profileForm.post('/tests/profiles', options);
+};
+
+const executeProfile = (profile: TestProfile): void => {
+    if (!profile.enabled) return;
+    selectedNodeId.value = profile.dicom_node.public_id;
+    router.post(`/tests/profiles/${profile.public_id}/execute`, {}, { preserveScroll: true });
+};
+
+const archiveProfile = (profile: TestProfile): void => {
+    if (window.confirm(`Testprofil „${profile.name}“ archivieren?`))
+        router.post(`/tests/profiles/${profile.public_id}/archive`, {}, { preserveScroll: true });
+};
+
 const formatDate = (value: string | null): string => {
     if (value === null) return 'Noch nicht ausgeführt';
 
@@ -351,7 +432,7 @@ const formatDate = (value: string | null): string => {
 };
 
 const testTypeLabel = (type: string): string =>
-    ({ network: 'Netzwerk', dicom_echo: 'C-ECHO', worklist: 'Worklist' })[type] ?? type;
+    ({ network: 'Netzwerk', dicom_echo: 'C-ECHO', worklist: 'Worklist', pacs_query: 'PACS Query' })[type] ?? type;
 
 const applyHistoryFilters = (): void => {
     router.get(
@@ -408,6 +489,58 @@ const prepareRerun = (run: HistoryRun): void => {
 
         <div class="mt-6 grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70 shadow-sm">
+                <div class="border-b border-slate-200 bg-slate-950 p-4 text-white">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-sm font-semibold">Testprofile</h2>
+                            <p class="mt-0.5 text-xs text-slate-400">{{ profiles.length }} aktive Profile</p>
+                        </div>
+                        <button
+                            v-if="canManageProfiles"
+                            type="button"
+                            class="rounded-lg bg-blue-600 p-2 hover:bg-blue-500"
+                            title="Profil anlegen"
+                            @click="openNewProfile"
+                        >
+                            <Plus :size="16" />
+                        </button>
+                    </div>
+                    <div v-if="profiles.length" class="mt-3 space-y-2">
+                        <div v-for="profile in profiles" :key="profile.public_id" class="rounded-xl bg-slate-900 p-3">
+                            <div class="flex items-start justify-between gap-2">
+                                <button
+                                    type="button"
+                                    :disabled="!profile.enabled"
+                                    class="min-w-0 flex-1 text-left disabled:opacity-40"
+                                    @click="executeProfile(profile)"
+                                >
+                                    <p class="truncate text-sm font-semibold">{{ profile.name }}</p>
+                                    <p class="mt-1 truncate text-xs text-slate-400">
+                                        {{ testTypeLabel(profile.test_type) }} · {{ profile.dicom_node.name }}
+                                    </p>
+                                </button>
+                                <div v-if="canManageProfiles" class="flex">
+                                    <button
+                                        type="button"
+                                        class="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+                                        title="Bearbeiten"
+                                        @click="editProfile(profile)"
+                                    >
+                                        <Pencil :size="14" /></button
+                                    ><button
+                                        type="button"
+                                        class="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-red-300"
+                                        title="Archivieren"
+                                        @click="archiveProfile(profile)"
+                                    >
+                                        <Archive :size="14" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p v-else class="mt-3 text-xs text-slate-400">Noch keine Profile angelegt.</p>
+                </div>
                 <header class="border-b border-slate-200 bg-white p-4">
                     <h2 class="font-semibold text-slate-950">DICOM-Knoten auswählen</h2>
                     <p class="mt-1 text-xs text-slate-500">Tests werden ausschließlich durch das Backend ausgeführt.</p>
@@ -1163,6 +1296,99 @@ const prepareRerun = (run: HistoryRun): void => {
                             class="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                         >
                             {{ pacsForm.processing ? 'Abfrage läuft' : 'C-FIND starten' }}
+                        </button>
+                    </div>
+                </form>
+            </aside>
+        </div>
+
+        <div v-if="profileDialogOpen" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
+            <button
+                class="absolute inset-0 bg-slate-950/40"
+                aria-label="Profil-Dialog schließen"
+                @click="profileDialogOpen = false"
+            />
+            <aside class="absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto bg-white p-6 shadow-2xl">
+                <div class="flex justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold text-blue-600 uppercase">Testprofil</p>
+                        <h2 class="mt-2 text-xl font-semibold">
+                            {{ editingProfileId ? 'Profil bearbeiten' : 'Profil anlegen' }}
+                        </h2>
+                    </div>
+                    <button type="button" @click="profileDialogOpen = false"><X :size="20" /></button>
+                </div>
+                <form class="mt-6 space-y-4" @submit.prevent="saveProfile">
+                    <label class="block text-sm font-medium"
+                        >Name<input
+                            v-model="profileForm.name"
+                            required
+                            maxlength="160"
+                            class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label
+                    ><label class="block text-sm font-medium"
+                        >Beschreibung<textarea
+                            v-model="profileForm.description"
+                            rows="3"
+                            maxlength="2000"
+                            class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                        />
+                    </label>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <label class="text-sm font-medium"
+                            >Testtyp<select
+                                v-model="profileForm.test_type"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                            >
+                                <option value="network">Netzwerk</option>
+                                <option value="dicom_echo">C-ECHO</option>
+                                <option value="worklist">Worklist</option>
+                                <option value="pacs_query">PACS Query</option>
+                            </select></label
+                        ><label class="text-sm font-medium"
+                            >DICOM-Knoten<select
+                                v-model="profileForm.dicom_node_public_id"
+                                required
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                            >
+                                <option v-for="node in nodes" :key="node.public_id" :value="node.public_id">
+                                    {{ node.name }}
+                                </option>
+                            </select></label
+                        ><label class="text-sm font-medium"
+                            >Calling AE Title<input
+                                v-model="profileForm.calling_ae_title"
+                                maxlength="16"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono" /></label
+                        ><label class="text-sm font-medium"
+                            >Timeout (Sekunden)<input
+                                v-model.number="profileForm.timeout_seconds"
+                                type="number"
+                                min="1"
+                                max="60"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                        /></label>
+                    </div>
+                    <label class="flex items-center gap-2 text-sm"
+                        ><input v-model="profileForm.enabled" type="checkbox" class="rounded border-slate-300" />Profil
+                        aktiviert</label
+                    >
+                    <p class="text-xs leading-5 text-slate-500">
+                        Bei neuen Worklist- und PACS-Profilen werden die aktuell im jeweiligen Testformular gesetzten
+                        Filter übernommen.
+                    </p>
+                    <div
+                        v-if="Object.keys(profileForm.errors).length"
+                        class="rounded-xl bg-red-50 p-3 text-sm text-red-700"
+                    >
+                        <p v-for="message in profileForm.errors" :key="message">{{ message }}</p>
+                    </div>
+                    <div class="flex justify-end">
+                        <button
+                            type="submit"
+                            :disabled="profileForm.processing"
+                            class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                        >
+                            {{ profileForm.processing ? 'Speichern …' : 'Profil speichern' }}
                         </button>
                     </div>
                 </form>

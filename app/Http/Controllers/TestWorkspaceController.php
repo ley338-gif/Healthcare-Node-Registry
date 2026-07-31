@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DiagnosticTestProfile;
 use App\Models\DiagnosticTestRun;
 use App\Models\DicomNode;
 use App\Models\User;
@@ -16,6 +17,7 @@ final class TestWorkspaceController extends Controller
     {
         Gate::authorize('viewAny', DicomNode::class);
         Gate::authorize('viewAny', DiagnosticTestRun::class);
+        Gate::authorize('viewAny', DiagnosticTestProfile::class);
 
         $filters = $request->validate([
             'history_from' => ['nullable', 'date_format:Y-m-d'],
@@ -189,6 +191,26 @@ final class TestWorkspaceController extends Controller
             'historyUsers' => $canViewUsers
                 ? User::query()->orderBy('name')->get(['public_id', 'name'])
                 : [],
+            'profiles' => DiagnosticTestProfile::query()
+                ->whereNull('archived_at')
+                ->with('dicomNode:id,public_id,name')
+                ->orderBy('name')
+                ->get()
+                ->map(static fn (DiagnosticTestProfile $profile): array => [
+                    'public_id' => $profile->public_id,
+                    'name' => $profile->name,
+                    'description' => $profile->description,
+                    'test_type' => $profile->test_type,
+                    'calling_ae_title' => $profile->calling_ae_title,
+                    'configuration' => $profile->configuration,
+                    'timeout_seconds' => $profile->timeout_seconds,
+                    'enabled' => $profile->enabled,
+                    'dicom_node' => [
+                        'public_id' => $profile->dicomNode->public_id,
+                        'name' => $profile->dicomNode->name,
+                    ],
+                ]),
+            'canManageProfiles' => $request->user()?->hasPermission('registry.manage') ?? false,
         ]);
     }
 }
