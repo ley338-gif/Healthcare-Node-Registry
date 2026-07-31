@@ -572,7 +572,8 @@ const prepareRerun = (run: HistoryRun): void => {
                                     {{ displayedDiagnosticResult.summary }}
                                 </p>
                                 <p class="mt-1 text-xs text-slate-500">
-                                    Netzwerk · {{ displayedDiagnosticResult.durationMilliseconds }} ms
+                                    {{ displayedDiagnosticResult.testType === 'network' ? 'Netzwerk' : 'C-ECHO' }} ·
+                                    {{ displayedDiagnosticResult.durationMilliseconds }} ms
                                 </p>
                             </div>
                             <ol class="space-y-2">

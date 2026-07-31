@@ -6,6 +6,7 @@ use App\Http\Requests\StoreDicomNodeRequest;
 use App\Http\Requests\UpdateDicomNodeRequest;
 use App\Models\DicomNode;
 use App\Models\System;
+use App\Services\Diagnostics\DiagnosticTestRecorder;
 use App\Services\Dicom\DicomEchoService;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
@@ -81,6 +82,7 @@ final class DicomNodeController extends Controller
         Request $request,
         DicomNode $dicomNode,
         DicomEchoService $echoService,
+        DiagnosticTestRecorder $recorder,
         RegistryAudit $audit,
     ): RedirectResponse {
         Gate::authorize('verify', $dicomNode);
@@ -106,8 +108,14 @@ final class DicomNodeController extends Controller
                 $request,
                 $dicomNode,
                 $result,
+                $recorder,
                 $audit,
             ): void {
+                $recorder->record(
+                    $result->diagnosticResult,
+                    $dicomNode,
+                    $request->user(),
+                );
                 $dicomNode->update([
                     'last_verified_at' => now(),
                     'last_verification_status' => $result->status,
@@ -140,22 +148,20 @@ final class DicomNodeController extends Controller
         );
 
         if ($result->successful) {
-            return back()->with(
-                'success',
-                sprintf(
+            return back()
+                ->with('diagnosticResult', $result->diagnosticResult->toArray())
+                ->with('success', sprintf(
                     'C-ECHO erfolgreich (%d ms).',
                     $result->durationMilliseconds,
-                ),
-            );
+                ));
         }
 
-        return back()->with(
-            'error',
-            sprintf(
+        return back()
+            ->with('diagnosticResult', $result->diagnosticResult->toArray())
+            ->with('error', sprintf(
                 'C-ECHO fehlgeschlagen: %s',
                 $result->message,
-            ),
-        );
+            ));
     }
 
     public function archive(

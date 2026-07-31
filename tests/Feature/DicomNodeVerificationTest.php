@@ -88,6 +88,12 @@ final class DicomNodeVerificationTest extends TestCase
             'duration_ms' => 32,
             'exit_code' => 0,
         ]);
+        $this->assertDatabaseHas('diagnostic_test_runs', [
+            'user_id' => $user->id,
+            'dicom_node_id' => $dicomNode->id,
+            'test_type' => 'dicom_echo',
+            'status' => 'success',
+        ]);
 
     }
 
@@ -152,6 +158,12 @@ final class DicomNodeVerificationTest extends TestCase
             'successful' => false,
             'duration_ms' => 5000,
             'exit_code' => 1,
+        ]);
+        $this->assertDatabaseHas('diagnostic_test_runs', [
+            'user_id' => $user->id,
+            'dicom_node_id' => $dicomNode->id,
+            'test_type' => 'dicom_echo',
+            'status' => 'timeout',
         ]);
     }
 

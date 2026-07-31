@@ -6,116 +6,44 @@ use App\Models\DicomNode;
 use App\Services\Diagnostics\DiagnosticTarget;
 use App\Services\Diagnostics\DiagnosticTestResult;
 use App\Services\Diagnostics\DiagnosticTestStatus;
+use App\Services\Diagnostics\DiagnosticTestStep;
 use DateTimeImmutable;
 use Illuminate\Support\Str;
-use Symfony\Component\Process\Process;
-use Throwable;
 
 class DicomEchoService
 {
-    public function test(DicomNode $dicomNode): DicomEchoResult
+    private readonly DicomEchoCommandRunner $runner;
+
+    public function __construct(?DicomEchoCommandRunner $runner = null)
     {
-        $startedAt = hrtime(true);
-        $startedAtDate = new DateTimeImmutable;
-
-        try {
-            $process = new Process([
-                '/usr/bin/echoscu',
-                '-v',
-                '-aet',
-                'NODE_REGISTRY',
-                '-aec',
-                $dicomNode->ae_title,
-                '-to',
-                '5',
-                '-ta',
-                '5',
-                '-td',
-                '5',
-                $dicomNode->host,
-                (string) $dicomNode->port,
-            ]);
-
-            $process->setTimeout(15);
-            $process->run();
-
-            $durationMilliseconds = (int) round(
-                (hrtime(true) - $startedAt) / 1_000_000,
-            );
-
-            $output = trim(
-                implode("\n", array_filter([
-                    $process->getOutput(),
-                    $process->getErrorOutput(),
-                ])),
-            );
-
-            if ($process->isSuccessful()) {
-                return $this->result(
-                    dicomNode: $dicomNode,
-                    startedAt: $startedAtDate,
-                    successful: true,
-                    status: 'success',
-                    durationMilliseconds: $durationMilliseconds,
-                    message: $output !== ''
-                        ? $output
-                        : 'C-ECHO erfolgreich.',
-                    exitCode: $process->getExitCode() ?? 0,
-                );
-            }
-
-            return $this->result(
-                dicomNode: $dicomNode,
-                startedAt: $startedAtDate,
-                successful: false,
-                status: $this->detectFailureStatus($output),
-                durationMilliseconds: $durationMilliseconds,
-                message: $output !== ''
-                    ? $output
-                    : 'C-ECHO fehlgeschlagen.',
-                exitCode: $process->getExitCode() ?? 1,
-            );
-        } catch (Throwable $exception) {
-            $durationMilliseconds = (int) round(
-                (hrtime(true) - $startedAt) / 1_000_000,
-            );
-
-            return $this->result(
-                dicomNode: $dicomNode,
-                startedAt: $startedAtDate,
-                successful: false,
-                status: 'error',
-                durationMilliseconds: $durationMilliseconds,
-                message: $exception->getMessage(),
-                exitCode: 1,
-            );
-        }
+        $this->runner = $runner ?? new NativeDicomEchoCommandRunner;
     }
 
-    private function result(
-        DicomNode $dicomNode,
-        DateTimeImmutable $startedAt,
-        bool $successful,
-        string $status,
-        int $durationMilliseconds,
-        string $message,
-        int $exitCode,
-    ): DicomEchoResult {
-        $finishedAt = new DateTimeImmutable;
-        $diagnosticStatus = match ($status) {
-            'success' => DiagnosticTestStatus::Success,
-            'timeout' => DiagnosticTestStatus::Timeout,
-            default => DiagnosticTestStatus::Failed,
-        };
+    public function test(DicomNode $dicomNode): DicomEchoResult
+    {
+        $startedAt = new DateTimeImmutable;
+        $startedAtNanoseconds = hrtime(true);
+        $command = $this->runner->run($dicomNode);
+        $duration = (int) round((hrtime(true) - $startedAtNanoseconds) / 1_000_000);
+        $output = $this->sanitizeOutput($command->output);
+        $failureType = $this->failureType($command, $output);
+        $status = $command->successful
+            ? DiagnosticTestStatus::Success
+            : ($failureType === 'timeout' ? DiagnosticTestStatus::Timeout : DiagnosticTestStatus::Failed);
+        $summary = $command->successful
+            ? 'C-ECHO erfolgreich.'
+            : $this->failureSummary($failureType);
+        $steps = $this->steps($status, $failureType, $duration, $output);
+        $dimseStatus = $this->dimseStatus($output);
 
         $diagnosticResult = new DiagnosticTestResult(
             testId: (string) Str::uuid7(),
             testType: 'dicom_echo',
-            status: $diagnosticStatus,
+            status: $status,
             startedAt: $startedAt,
-            finishedAt: $finishedAt,
-            durationMilliseconds: $durationMilliseconds,
-            summary: $message,
+            finishedAt: new DateTimeImmutable,
+            durationMilliseconds: $duration,
+            summary: $summary,
             target: new DiagnosticTarget(
                 host: $dicomNode->host,
                 port: $dicomNode->port,
@@ -124,38 +52,119 @@ class DicomEchoService
                 dicomNodePublicId: $dicomNode->public_id,
                 systemPublicId: $dicomNode->system->public_id,
             ),
-            details: ['exitCode' => $exitCode],
-            errors: $successful ? [] : [$message],
+            steps: $steps,
+            details: [
+                'exitCode' => $command->exitCode,
+                'dimseStatus' => $dimseStatus,
+                'failureType' => $failureType,
+                'dcmtkOutput' => $output,
+            ],
+            errors: $command->successful ? [] : [$summary],
         );
 
         return new DicomEchoResult(
-            successful: $successful,
-            status: $status,
-            durationMilliseconds: $durationMilliseconds,
-            message: $message,
-            exitCode: $exitCode,
+            successful: $command->successful,
+            status: $status->value,
+            durationMilliseconds: $duration,
+            message: $output !== '' ? $output : $summary,
+            exitCode: $command->exitCode,
             diagnosticResult: $diagnosticResult,
         );
     }
 
-    private function detectFailureStatus(string $output): string
+    private function failureType(DicomEchoCommandResult $command, string $output): ?string
     {
         $normalized = strtolower($output);
 
-        if (
-            str_contains($normalized, 'timeout')
-            || str_contains($normalized, 'timed out')
-        ) {
-            return 'timeout';
-        }
+        return match (true) {
+            $command->timedOut,
+            str_contains($normalized, 'timeout'),
+            str_contains($normalized, 'timed out') => 'timeout',
+            str_contains($normalized, 'connection refused') => 'connection_refused',
+            str_contains($normalized, 'called ae') && str_contains($normalized, 'unknown') => 'called_ae_unknown',
+            str_contains($normalized, 'calling ae') && str_contains($normalized, 'not authorized') => 'calling_ae_unauthorized',
+            str_contains($normalized, 'association rejected') => 'association_rejected',
+            $command->processError => 'process_error',
+            $command->successful => null,
+            default => 'dicom_failure',
+        };
+    }
 
-        if (
-            str_contains($normalized, 'connection refused')
-            || str_contains($normalized, 'association rejected')
-        ) {
-            return 'unreachable';
-        }
+    private function failureSummary(?string $failureType): string
+    {
+        return match ($failureType) {
+            'timeout' => 'Zeitüberschreitung beim C-ECHO.',
+            'connection_refused' => 'TCP-Verbindung wurde vom Ziel abgelehnt.',
+            'association_rejected' => 'DICOM Association wurde abgelehnt.',
+            'called_ae_unknown' => 'Called AE Title ist dem Ziel nicht bekannt.',
+            'calling_ae_unauthorized' => 'Calling AE Title ist am Ziel nicht autorisiert.',
+            'process_error' => 'DCMTK-Prozess konnte nicht ausgeführt werden.',
+            default => 'C-ECHO fehlgeschlagen.',
+        };
+    }
 
-        return 'failed';
+    /** @return list<DiagnosticTestStep> */
+    private function steps(
+        DiagnosticTestStatus $status,
+        ?string $failureType,
+        int $duration,
+        string $output,
+    ): array {
+        $failedAtTcp = in_array($failureType, ['timeout', 'connection_refused'], true);
+        $failedAtAssociation = in_array(
+            $failureType,
+            ['association_rejected', 'called_ae_unknown', 'calling_ae_unauthorized'],
+            true,
+        );
+
+        return [
+            new DiagnosticTestStep(
+                'tcp_connection',
+                'TCP-Verbindung',
+                $failedAtTcp ? $status : DiagnosticTestStatus::Success,
+                $failedAtTcp ? $duration : 0,
+                $failedAtTcp ? $this->failureSummary($failureType) : 'TCP-Verbindung hergestellt.',
+            ),
+            new DiagnosticTestStep(
+                'dicom_association',
+                'DICOM Association',
+                $failedAtTcp ? DiagnosticTestStatus::Cancelled : ($failedAtAssociation ? $status : DiagnosticTestStatus::Success),
+                $failedAtAssociation ? $duration : 0,
+                $failedAtTcp ? 'Nicht ausgeführt.' : ($failedAtAssociation ? $this->failureSummary($failureType) : 'Association akzeptiert.'),
+            ),
+            new DiagnosticTestStep(
+                'verification_sop_class',
+                'Verification SOP Class',
+                $status === DiagnosticTestStatus::Success ? $status : DiagnosticTestStatus::Cancelled,
+                0,
+                $status === DiagnosticTestStatus::Success ? 'Verification SOP Class ausgeführt.' : 'Nicht ausgeführt.',
+            ),
+            new DiagnosticTestStep(
+                'dimse_response',
+                'DIMSE Response',
+                $status === DiagnosticTestStatus::Success ? $status : DiagnosticTestStatus::Cancelled,
+                $status === DiagnosticTestStatus::Success ? $duration : 0,
+                $status === DiagnosticTestStatus::Success ? 'Erfolgreiche C-ECHO-Antwort empfangen.' : 'Keine erfolgreiche Antwort empfangen.',
+                $output === '' ? [] : ['outputAvailable' => true],
+            ),
+        ];
+    }
+
+    private function dimseStatus(string $output): ?string
+    {
+        preg_match('/(?:DIMSE|status)[^0-9a-f]*(0x[0-9a-f]{4})/i', $output, $matches);
+
+        return $matches[1] ?? null;
+    }
+
+    private function sanitizeOutput(string $output): string
+    {
+        $output = preg_replace(
+            '~(?:[A-Z]:\\\\(?:[^\\\\\s]+\\\\)*[^\\\\\s]+)|(?:/(?:[^/\s]+/)+[^/\s]+)~i',
+            '[INTERNAL_PATH]',
+            $output,
+        ) ?? $output;
+
+        return mb_substr(trim($output), 0, 4000);
     }
 }
