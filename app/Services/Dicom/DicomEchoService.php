@@ -3,6 +3,11 @@
 namespace App\Services\Dicom;
 
 use App\Models\DicomNode;
+use App\Services\Diagnostics\DiagnosticTarget;
+use App\Services\Diagnostics\DiagnosticTestResult;
+use App\Services\Diagnostics\DiagnosticTestStatus;
+use DateTimeImmutable;
+use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 use Throwable;
 
@@ -11,6 +16,7 @@ class DicomEchoService
     public function test(DicomNode $dicomNode): DicomEchoResult
     {
         $startedAt = hrtime(true);
+        $startedAtDate = new DateTimeImmutable;
 
         try {
             $process = new Process([
@@ -45,7 +51,9 @@ class DicomEchoService
             );
 
             if ($process->isSuccessful()) {
-                return new DicomEchoResult(
+                return $this->result(
+                    dicomNode: $dicomNode,
+                    startedAt: $startedAtDate,
                     successful: true,
                     status: 'success',
                     durationMilliseconds: $durationMilliseconds,
@@ -56,7 +64,9 @@ class DicomEchoService
                 );
             }
 
-            return new DicomEchoResult(
+            return $this->result(
+                dicomNode: $dicomNode,
+                startedAt: $startedAtDate,
                 successful: false,
                 status: $this->detectFailureStatus($output),
                 durationMilliseconds: $durationMilliseconds,
@@ -70,7 +80,9 @@ class DicomEchoService
                 (hrtime(true) - $startedAt) / 1_000_000,
             );
 
-            return new DicomEchoResult(
+            return $this->result(
+                dicomNode: $dicomNode,
+                startedAt: $startedAtDate,
                 successful: false,
                 status: 'error',
                 durationMilliseconds: $durationMilliseconds,
@@ -78,6 +90,52 @@ class DicomEchoService
                 exitCode: 1,
             );
         }
+    }
+
+    private function result(
+        DicomNode $dicomNode,
+        DateTimeImmutable $startedAt,
+        bool $successful,
+        string $status,
+        int $durationMilliseconds,
+        string $message,
+        int $exitCode,
+    ): DicomEchoResult {
+        $finishedAt = new DateTimeImmutable;
+        $diagnosticStatus = match ($status) {
+            'success' => DiagnosticTestStatus::Success,
+            'timeout' => DiagnosticTestStatus::Timeout,
+            default => DiagnosticTestStatus::Failed,
+        };
+
+        $diagnosticResult = new DiagnosticTestResult(
+            testId: (string) Str::uuid7(),
+            testType: 'dicom_echo',
+            status: $diagnosticStatus,
+            startedAt: $startedAt,
+            finishedAt: $finishedAt,
+            durationMilliseconds: $durationMilliseconds,
+            summary: $message,
+            target: new DiagnosticTarget(
+                host: $dicomNode->host,
+                port: $dicomNode->port,
+                calledAeTitle: $dicomNode->ae_title,
+                callingAeTitle: 'NODE_REGISTRY',
+                dicomNodePublicId: $dicomNode->public_id,
+                systemPublicId: $dicomNode->system->public_id,
+            ),
+            details: ['exitCode' => $exitCode],
+            errors: $successful ? [] : [$message],
+        );
+
+        return new DicomEchoResult(
+            successful: $successful,
+            status: $status,
+            durationMilliseconds: $durationMilliseconds,
+            message: $message,
+            exitCode: $exitCode,
+            diagnosticResult: $diagnosticResult,
+        );
     }
 
     private function detectFailureStatus(string $output): string
