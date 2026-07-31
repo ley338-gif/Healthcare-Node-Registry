@@ -11,6 +11,7 @@ import {
     Database,
     Download,
     Eye,
+    FileSearch,
     FlaskConical,
     LoaderCircle,
     Network,
@@ -142,6 +143,14 @@ type TestNode = {
     };
 };
 
+type FileAnalysis = {
+    successful: boolean;
+    summary: Record<string, unknown>;
+    warnings: string[];
+    errors: string[];
+    dump: string;
+};
+
 const props = defineProps<{
     nodes: TestNode[];
     canRunEcho: boolean;
@@ -149,6 +158,8 @@ const props = defineProps<{
     canRunWorklist: boolean;
     canRunPacsQuery: boolean;
     canRunStorage: boolean;
+    canAnalyzeFile: boolean;
+    fileAnalysis: FileAnalysis | null;
     latestResult: DiagnosticResult | null;
     history: {
         data: HistoryRun[];
@@ -172,6 +183,7 @@ const pacsDialogOpen = ref(false);
 const profileDialogOpen = ref(false);
 const storageDialogOpen = ref(false);
 const capabilityDialogOpen = ref(false);
+const fileAnalysisDialogOpen = ref(false);
 const editingProfileId = ref<string | null>(null);
 const historyFrom = ref(props.historyFilters.history_from ?? '');
 const historyTo = ref(props.historyFilters.history_to ?? '');
@@ -215,6 +227,7 @@ const profileForm = useForm({
 });
 const storageForm = useForm({ confirmed: false, calling_ae_title: 'NODE_REGISTRY', called_ae_title: '' });
 const capabilityForm = useForm({ calling_ae_title: 'NODE_REGISTRY', called_ae_title: '' });
+const fileAnalysisForm = useForm<{ dicom_file: File | null }>({ dicom_file: null });
 
 const selectedNode = computed(() => props.nodes.find((node) => node.public_id === selectedNodeId.value) ?? null);
 
@@ -328,6 +341,18 @@ const exportCapabilityMatrix = (): void => {
     link.download = `dicom-capabilities-${selectedNode.value?.public_id ?? 'result'}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+};
+
+const selectDicomFile = (event: Event): void => {
+    fileAnalysisForm.dicom_file = (event.target as HTMLInputElement).files?.[0] ?? null;
+};
+
+const analyzeDicomFile = (): void => {
+    fileAnalysisForm.post('/tests/dicom-file-analysis', {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => fileAnalysisForm.reset(),
+    });
 };
 
 watch(filteredNodes, (nodes) => {
@@ -569,14 +594,23 @@ const prepareRerun = (run: HistoryRun): void => {
                 <p class="mt-1 text-sm text-slate-500">Netzwerk-, DICOM- und Worklist-Verbindungen zentral prüfen.</p>
             </div>
 
-            <button
-                type="button"
-                disabled
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white opacity-50"
-            >
-                <Play :size="16" />
-                Alle Schnelltests
-            </button>
+            <div class="flex flex-wrap gap-2">
+                <button
+                    type="button"
+                    :disabled="!canAnalyzeFile"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-40"
+                    @click="fileAnalysisDialogOpen = true"
+                >
+                    <FileSearch :size="16" />DICOM-Datei analysieren
+                </button>
+                <button
+                    type="button"
+                    disabled
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white opacity-50"
+                >
+                    <Play :size="16" />Alle Schnelltests
+                </button>
+            </div>
         </div>
 
         <div class="mt-6 grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
@@ -1582,6 +1616,85 @@ const prepareRerun = (run: HistoryRun): void => {
                     </div>
                 </form>
             </aside>
+        </div>
+
+        <div v-if="fileAnalysisDialogOpen" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
+            <button
+                type="button"
+                class="absolute inset-0 bg-slate-950/40"
+                aria-label="Dateianalyse schließen"
+                @click="fileAnalysisDialogOpen = false"
+            />
+            <section class="absolute inset-y-0 right-0 w-full max-w-2xl overflow-y-auto bg-white p-6 shadow-2xl">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold text-blue-600 uppercase">Serverseitige Analyse</p>
+                        <h2 class="mt-2 text-xl font-semibold text-slate-950">DICOM-Datei analysieren</h2>
+                        <p class="mt-2 text-sm text-slate-500">
+                            Maximal 20 MiB. Die Datei wird nicht versendet und nach der Analyse gelöscht.
+                        </p>
+                    </div>
+                    <button type="button" @click="fileAnalysisDialogOpen = false"><X :size="20" /></button>
+                </div>
+                <form class="mt-6 space-y-4" @submit.prevent="analyzeDicomFile">
+                    <label
+                        class="block rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600"
+                        ><FileSearch :size="28" class="mx-auto mb-3 text-blue-600" /><input
+                            type="file"
+                            class="block w-full text-sm"
+                            @change="selectDicomFile"
+                    /></label>
+                    <p v-if="fileAnalysisForm.errors.dicom_file" class="text-sm text-red-600">
+                        {{ fileAnalysisForm.errors.dicom_file }}
+                    </p>
+                    <button
+                        type="submit"
+                        :disabled="fileAnalysisForm.processing || !fileAnalysisForm.dicom_file"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                    >
+                        <LoaderCircle v-if="fileAnalysisForm.processing" :size="16" class="animate-spin" /><FileSearch
+                            v-else
+                            :size="16"
+                        />Datei analysieren
+                    </button>
+                </form>
+                <div v-if="fileAnalysis" class="mt-8 space-y-4">
+                    <div
+                        class="rounded-xl p-4"
+                        :class="fileAnalysis.successful ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'"
+                    >
+                        <p class="font-semibold">
+                            {{
+                                fileAnalysis.successful
+                                    ? 'DICOM-Datei erfolgreich analysiert'
+                                    : 'Analyse fehlgeschlagen'
+                            }}
+                        </p>
+                        <p v-for="error in fileAnalysis.errors" :key="error" class="mt-1 text-sm">{{ error }}</p>
+                    </div>
+                    <dl v-if="Object.keys(fileAnalysis.summary).length" class="grid gap-3 sm:grid-cols-2">
+                        <div
+                            v-for="(value, key) in fileAnalysis.summary"
+                            :key="key"
+                            class="rounded-xl border border-slate-200 p-3"
+                        >
+                            <dt class="text-xs text-slate-500">{{ key }}</dt>
+                            <dd class="mt-1 text-sm font-medium break-all text-slate-900">{{ value ?? '—' }}</dd>
+                        </div>
+                    </dl>
+                    <div v-if="fileAnalysis.warnings.length" class="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+                        <p v-for="warning in fileAnalysis.warnings" :key="warning">{{ warning }}</p>
+                    </div>
+                    <details v-if="fileAnalysis.dump" class="rounded-xl border border-slate-200 p-4">
+                        <summary class="cursor-pointer text-sm font-semibold text-slate-700">
+                            Vollständiger bereinigter DICOM-Dump
+                        </summary>
+                        <pre class="mt-3 max-h-96 overflow-auto rounded-lg bg-slate-950 p-3 text-xs text-slate-100">{{
+                            fileAnalysis.dump
+                        }}</pre>
+                    </details>
+                </div>
+            </section>
         </div>
 
         <div v-if="capabilityDialogOpen && selectedNode" class="fixed inset-0 z-50" role="dialog" aria-modal="true">

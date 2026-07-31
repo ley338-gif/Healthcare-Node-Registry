@@ -12,6 +12,7 @@ final class RbacBootstrapper
         'audit.view' => 'Audit anzeigen', 'users.manage' => 'Benutzer verwalten', 'roles.manage' => 'Rollen verwalten',
         'settings.manage' => 'Einstellungen verwalten', 'registry.view' => 'Registry anzeigen', 'registry.manage' => 'Registry verwalten',
         'tests.run.storage' => 'DICOM-Storage-Test ausführen',
+        'tests.analyze_file' => 'DICOM-Dateien analysieren',
     ];
 
     public function ensureSystemAdministratorRole(): Role

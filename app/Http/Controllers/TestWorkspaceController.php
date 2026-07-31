@@ -186,6 +186,8 @@ final class TestWorkspaceController extends Controller
             'canRunWorklist' => $request->user()?->hasPermission('registry.manage') ?? false,
             'canRunPacsQuery' => $request->user()?->hasPermission('registry.manage') ?? false,
             'canRunStorage' => $request->user()?->hasPermission('tests.run.storage') ?? false,
+            'canAnalyzeFile' => $request->user()?->hasPermission('tests.analyze_file') ?? false,
+            'fileAnalysis' => $request->session()->get('dicomFileAnalysis'),
             'latestResult' => $request->session()->get('diagnosticResult'),
             'history' => $history,
             'historyFilters' => $filters,

@@ -7,6 +7,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DiagnosticProfileExecutionController;
 use App\Http\Controllers\DiagnosticTestProfileController;
 use App\Http\Controllers\DicomConnectionController;
+use App\Http\Controllers\DicomFileAnalysisController;
 use App\Http\Controllers\DicomNetworkMapController;
 use App\Http\Controllers\DicomNodeController;
 use App\Http\Controllers\NetworkDiagnosticController;
@@ -100,6 +101,8 @@ Route::middleware('auth')->group(function (): void {
         ->name('tests.storage.run');
     Route::post('/tests/capabilities/{dicomNode}', CapabilityMatrixDiagnosticController::class)
         ->name('tests.capabilities.run');
+    Route::post('/tests/dicom-file-analysis', DicomFileAnalysisController::class)
+        ->name('tests.dicom-file-analysis.run');
 
     Route::post('/tests/profiles', [DiagnosticTestProfileController::class, 'store'])
         ->name('tests.profiles.store');
