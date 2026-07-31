@@ -22,6 +22,34 @@ import AppLayout from '../../Layouts/AppLayout.vue';
 
 type NamedContext = { public_id: string; name: string };
 
+type DiagnosticStep = {
+    name: string;
+    label: string;
+    status: string;
+    durationMilliseconds: number;
+    message: string;
+    details: Record<string, unknown>;
+};
+
+type DiagnosticResult = {
+    testId: string;
+    testType: string;
+    status: string;
+    startedAt: string;
+    finishedAt: string;
+    durationMilliseconds: number;
+    summary: string;
+    target: {
+        host: string;
+        port: number;
+        dicomNodePublicId: string | null;
+    };
+    steps: DiagnosticStep[];
+    details: Record<string, unknown>;
+    warnings: string[];
+    errors: string[];
+};
+
 type TestNode = {
     public_id: string;
     name: string;
@@ -51,11 +79,17 @@ type TestNode = {
     };
 };
 
-const props = defineProps<{ nodes: TestNode[]; canRunEcho: boolean }>();
+const props = defineProps<{
+    nodes: TestNode[];
+    canRunEcho: boolean;
+    canRunNetwork: boolean;
+    latestResult: DiagnosticResult | null;
+}>();
 
 const search = ref('');
 const selectedNodeId = ref<string | null>(props.nodes[0]?.public_id ?? null);
 const echoProcessing = ref(false);
+const networkProcessing = ref(false);
 const resultExpanded = ref(true);
 
 const selectedNode = computed(() => props.nodes.find((node) => node.public_id === selectedNodeId.value) ?? null);
@@ -114,6 +148,14 @@ const canStartEcho = computed(
     () => selectedNode.value !== null && selectedNode.value.supports_echo && props.canRunEcho && !echoProcessing.value,
 );
 
+const canStartNetwork = computed(() => selectedNode.value !== null && props.canRunNetwork && !networkProcessing.value);
+
+const displayedDiagnosticResult = computed(() => {
+    if (props.latestResult?.target.dicomNodePublicId !== selectedNode.value?.public_id) return null;
+
+    return props.latestResult;
+});
+
 watch(filteredNodes, (nodes) => {
     if (nodes.length === 0) return;
 
@@ -134,6 +176,23 @@ const runEcho = (): void => {
             preserveScroll: true,
             onFinish: () => {
                 echoProcessing.value = false;
+            },
+        },
+    );
+};
+
+const runNetworkTest = (): void => {
+    if (!canStartNetwork.value || selectedNode.value === null) return;
+
+    networkProcessing.value = true;
+
+    router.post(
+        `/tests/network/${selectedNode.value.public_id}`,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                networkProcessing.value = false;
             },
         },
     );
@@ -314,7 +373,7 @@ const formatDate = (value: string | null): string => {
 
                     <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
                         <article
-                            class="flex min-h-[220px] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                            class="flex min-h-[220px] flex-col rounded-2xl border border-cyan-200 bg-white p-5 shadow-sm"
                         >
                             <div class="self-start rounded-xl bg-cyan-50 p-2.5 text-cyan-700"><Cable :size="20" /></div>
                             <h3 class="mt-5 font-semibold text-slate-950">Netzwerkverbindung</h3>
@@ -322,10 +381,14 @@ const formatDate = (value: string | null): string => {
                                 DNS-Auflösung, TCP-Verbindung, Port und Antwortzeit prüfen.
                             </p>
                             <button
-                                disabled
-                                class="mt-5 rounded-xl border px-4 py-2.5 text-sm font-semibold text-slate-500 opacity-50"
+                                type="button"
+                                :disabled="!canStartNetwork"
+                                class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                                @click="runNetworkTest"
                             >
-                                Verbindung testen
+                                <LoaderCircle v-if="networkProcessing" :size="16" class="animate-spin" />
+                                <Cable v-else :size="16" />
+                                {{ networkProcessing ? 'TCP-Verbindung wird geprüft' : 'Verbindung testen' }}
                             </button>
                         </article>
 
@@ -407,7 +470,11 @@ const formatDate = (value: string | null): string => {
                             <div>
                                 <h2 class="font-semibold text-slate-950">Letztes Testergebnis</h2>
                                 <p class="mt-0.5 text-xs text-slate-500">
-                                    {{ formatDate(selectedNode.last_verified_at) }}
+                                    {{
+                                        formatDate(
+                                            displayedDiagnosticResult?.finishedAt ?? selectedNode.last_verified_at,
+                                        )
+                                    }}
                                 </p>
                             </div>
                         </div>
@@ -415,7 +482,46 @@ const formatDate = (value: string | null): string => {
                     </button>
 
                     <div v-if="resultExpanded" class="border-t border-slate-200 p-5">
-                        <div v-if="selectedNode.last_verified_at" class="grid gap-4 lg:grid-cols-[1fr_280px]">
+                        <div v-if="displayedDiagnosticResult" class="space-y-4">
+                            <div>
+                                <p
+                                    class="text-sm font-semibold"
+                                    :class="
+                                        displayedDiagnosticResult.status === 'success'
+                                            ? 'text-emerald-700'
+                                            : 'text-red-700'
+                                    "
+                                >
+                                    {{ displayedDiagnosticResult.summary }}
+                                </p>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    Netzwerk · {{ displayedDiagnosticResult.durationMilliseconds }} ms
+                                </p>
+                            </div>
+                            <ol class="space-y-2">
+                                <li
+                                    v-for="step in displayedDiagnosticResult.steps"
+                                    :key="step.name"
+                                    class="rounded-xl border border-slate-200 p-3"
+                                >
+                                    <div class="flex items-center justify-between gap-3">
+                                        <p class="text-sm font-semibold text-slate-900">{{ step.label }}</p>
+                                        <span class="text-xs text-slate-500">{{ step.durationMilliseconds }} ms</span>
+                                    </div>
+                                    <p class="mt-1 text-sm text-slate-600">{{ step.message }}</p>
+                                    <details
+                                        v-if="Object.keys(step.details).length"
+                                        class="mt-2 text-xs text-slate-500"
+                                    >
+                                        <summary class="cursor-pointer font-semibold">Technische Details</summary>
+                                        <pre class="mt-2 overflow-x-auto rounded-lg bg-slate-950 p-3 text-slate-100">{{
+                                            JSON.stringify(step.details, null, 2)
+                                        }}</pre>
+                                    </details>
+                                </li>
+                            </ol>
+                        </div>
+                        <div v-else-if="selectedNode.last_verified_at" class="grid gap-4 lg:grid-cols-[1fr_280px]">
                             <div>
                                 <p
                                     class="text-sm font-semibold"

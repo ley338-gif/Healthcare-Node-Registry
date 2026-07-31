@@ -6,6 +6,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DicomConnectionController;
 use App\Http\Controllers\DicomNetworkMapController;
 use App\Http\Controllers\DicomNodeController;
+use App\Http\Controllers\NetworkDiagnosticController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
 use App\Http\Controllers\SiteController;
@@ -80,4 +81,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/tests', TestWorkspaceController::class)
         ->name('tests.index');
+
+    Route::post('/tests/network/{dicomNode}', NetworkDiagnosticController::class)
+        ->name('tests.network.run');
 });

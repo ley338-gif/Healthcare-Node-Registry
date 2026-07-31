@@ -99,6 +99,8 @@ final class TestWorkspaceController extends Controller
         return Inertia::render('Tests/Index', [
             'nodes' => $nodes,
             'canRunEcho' => $request->user()?->hasPermission('registry.manage') ?? false,
+            'canRunNetwork' => $request->user()?->hasPermission('registry.manage') ?? false,
+            'latestResult' => $request->session()->get('diagnosticResult'),
         ]);
     }
 }
