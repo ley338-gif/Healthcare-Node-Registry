@@ -40,6 +40,15 @@ final class NetworkDiagnosticTest extends TestCase
             'subject_type' => DicomNode::class,
             'subject_public_id' => $node->public_id,
         ]);
+        $this->assertDatabaseHas('diagnostic_test_runs', [
+            'user_id' => $user->id,
+            'dicom_node_id' => $node->id,
+            'system_id' => $node->system_id,
+            'test_type' => 'network',
+            'status' => 'success',
+            'target_host' => 'pacs.example.test',
+            'target_port' => 104,
+        ]);
     }
 
     public function test_dns_failure_is_classified(): void

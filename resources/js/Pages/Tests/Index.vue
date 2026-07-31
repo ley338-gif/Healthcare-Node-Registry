@@ -8,16 +8,21 @@ import {
     CircleAlert,
     Clock3,
     Database,
+    Download,
+    Eye,
     FlaskConical,
     LoaderCircle,
     Network,
     Play,
     Radio,
+    RotateCcw,
     Search,
     Settings2,
     Stethoscope,
+    X,
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+import Pagination from '../../Components/Pagination.vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 
 type NamedContext = { public_id: string; name: string };
@@ -48,6 +53,33 @@ type DiagnosticResult = {
     details: Record<string, unknown>;
     warnings: string[];
     errors: string[];
+};
+
+type HistoryRun = {
+    public_id: string;
+    test_type: string;
+    status: string;
+    started_at: string;
+    finished_at: string;
+    duration_ms: number;
+    result_count: number | null;
+    summary: string;
+    steps: DiagnosticStep[];
+    details: Record<string, unknown>;
+    warnings: string[];
+    errors: string[];
+    dicom_node: NamedContext;
+    system: NamedContext;
+    user: NamedContext | null;
+};
+
+type HistoryFilters = {
+    history_from?: string;
+    history_to?: string;
+    history_node?: string;
+    history_type?: string;
+    history_status?: string;
+    history_user?: string;
 };
 
 type TestNode = {
@@ -84,6 +116,13 @@ const props = defineProps<{
     canRunEcho: boolean;
     canRunNetwork: boolean;
     latestResult: DiagnosticResult | null;
+    history: {
+        data: HistoryRun[];
+        total: number;
+        links: Array<{ url: string | null; label: string; active: boolean }>;
+    };
+    historyFilters: HistoryFilters;
+    historyUsers: NamedContext[];
 }>();
 
 const search = ref('');
@@ -91,6 +130,13 @@ const selectedNodeId = ref<string | null>(props.nodes[0]?.public_id ?? null);
 const echoProcessing = ref(false);
 const networkProcessing = ref(false);
 const resultExpanded = ref(true);
+const selectedHistoryRun = ref<HistoryRun | null>(null);
+const historyFrom = ref(props.historyFilters.history_from ?? '');
+const historyTo = ref(props.historyFilters.history_to ?? '');
+const historyNode = ref(props.historyFilters.history_node ?? '');
+const historyType = ref(props.historyFilters.history_type ?? '');
+const historyStatus = ref(props.historyFilters.history_status ?? '');
+const historyUser = ref(props.historyFilters.history_user ?? '');
 
 const selectedNode = computed(() => props.nodes.find((node) => node.public_id === selectedNodeId.value) ?? null);
 
@@ -205,6 +251,37 @@ const formatDate = (value: string | null): string => {
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(new Date(value));
+};
+
+const applyHistoryFilters = (): void => {
+    router.get(
+        '/tests',
+        {
+            history_from: historyFrom.value || undefined,
+            history_to: historyTo.value || undefined,
+            history_node: historyNode.value || undefined,
+            history_type: historyType.value || undefined,
+            history_status: historyStatus.value || undefined,
+            history_user: historyUser.value || undefined,
+        },
+        { preserveState: true, preserveScroll: true },
+    );
+};
+
+const resetHistoryFilters = (): void => {
+    historyFrom.value = '';
+    historyTo.value = '';
+    historyNode.value = '';
+    historyType.value = '';
+    historyStatus.value = '';
+    historyUser.value = '';
+    applyHistoryFilters();
+};
+
+const prepareRerun = (run: HistoryRun): void => {
+    selectedNodeId.value = run.dicom_node.public_id;
+    selectedHistoryRun.value = null;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 </script>
 
@@ -570,20 +647,207 @@ const formatDate = (value: string | null): string => {
                     </div>
                 </section>
 
-                <section class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6">
-                    <div class="flex items-start gap-4">
-                        <div class="rounded-xl bg-white p-2.5 text-slate-500 shadow-sm ring-1 ring-slate-200">
-                            <Network :size="20" />
+                <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <header class="border-b border-slate-200 p-5">
+                        <div class="flex items-start gap-3">
+                            <div class="rounded-xl bg-slate-100 p-2.5 text-slate-600"><Network :size="20" /></div>
+                            <div>
+                                <h2 class="font-semibold text-slate-950">Testverlauf</h2>
+                                <p class="mt-1 text-sm text-slate-500">{{ history.total }} gespeicherte Testläufe</p>
+                            </div>
                         </div>
-                        <div>
-                            <h2 class="font-semibold text-slate-900">Testverlauf</h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
-                                Der persistente Verlauf folgt mit der einheitlichen Test-Service-Schicht.
-                            </p>
-                        </div>
+
+                        <form
+                            class="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6"
+                            @submit.prevent="applyHistoryFilters"
+                        >
+                            <input
+                                v-model="historyFrom"
+                                type="date"
+                                class="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                            />
+                            <input
+                                v-model="historyTo"
+                                type="date"
+                                class="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                            />
+                            <select v-model="historyNode" class="rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                                <option value="">Alle Knoten</option>
+                                <option v-for="node in nodes" :key="node.public_id" :value="node.public_id">
+                                    {{ node.name }}
+                                </option>
+                            </select>
+                            <select v-model="historyType" class="rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                                <option value="">Alle Testtypen</option>
+                                <option value="network">Netzwerk</option>
+                                <option value="dicom_echo">C-ECHO</option>
+                            </select>
+                            <select
+                                v-model="historyStatus"
+                                class="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                            >
+                                <option value="">Alle Status</option>
+                                <option value="success">Erfolgreich</option>
+                                <option value="warning">Warnung</option>
+                                <option value="failed">Fehlgeschlagen</option>
+                                <option value="timeout">Timeout</option>
+                            </select>
+                            <select
+                                v-if="historyUsers.length"
+                                v-model="historyUser"
+                                class="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                            >
+                                <option value="">Alle Benutzer</option>
+                                <option v-for="user in historyUsers" :key="user.public_id" :value="user.public_id">
+                                    {{ user.name }}
+                                </option>
+                            </select>
+                            <div class="flex gap-2 md:col-span-3 xl:col-span-6">
+                                <button
+                                    type="submit"
+                                    class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                                >
+                                    Filter anwenden
+                                </button>
+                                <button
+                                    type="button"
+                                    class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600"
+                                    @click="resetHistoryFilters"
+                                >
+                                    Zurücksetzen
+                                </button>
+                            </div>
+                        </form>
+                    </header>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+                            <thead class="bg-slate-50 text-xs text-slate-500 uppercase">
+                                <tr>
+                                    <th class="px-4 py-3">Zeitpunkt</th>
+                                    <th class="px-4 py-3">Knoten / System</th>
+                                    <th class="px-4 py-3">Testtyp</th>
+                                    <th class="px-4 py-3">Status</th>
+                                    <th class="px-4 py-3">Dauer</th>
+                                    <th class="px-4 py-3">Treffer</th>
+                                    <th class="px-4 py-3">Benutzer</th>
+                                    <th class="px-4 py-3">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="run in history.data" :key="run.public_id">
+                                    <td class="px-4 py-3 whitespace-nowrap text-slate-600">
+                                        {{ formatDate(run.started_at) }}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <p class="font-semibold text-slate-900">{{ run.dicom_node.name }}</p>
+                                        <p class="text-xs text-slate-500">{{ run.system.name }}</p>
+                                    </td>
+                                    <td class="px-4 py-3">{{ run.test_type === 'network' ? 'Netzwerk' : 'C-ECHO' }}</td>
+                                    <td class="px-4 py-3">
+                                        <span
+                                            class="rounded-full px-2 py-1 text-xs font-semibold"
+                                            :class="
+                                                run.status === 'success'
+                                                    ? 'bg-emerald-50 text-emerald-700'
+                                                    : 'bg-red-50 text-red-700'
+                                            "
+                                            >{{ run.status }}</span
+                                        >
+                                    </td>
+                                    <td class="px-4 py-3">{{ run.duration_ms }} ms</td>
+                                    <td class="px-4 py-3">{{ run.result_count ?? '—' }}</td>
+                                    <td class="px-4 py-3">{{ run.user?.name ?? 'System' }}</td>
+                                    <td class="px-4 py-3">
+                                        <button
+                                            type="button"
+                                            class="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                                            title="Details"
+                                            @click="selectedHistoryRun = run"
+                                        >
+                                            <Eye :size="17" />
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="history.data.length === 0">
+                                    <td colspan="8" class="px-4 py-10 text-center text-slate-500">
+                                        Keine Testläufe für diese Filter.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div v-if="history.links.length > 3" class="border-t border-slate-200 p-4">
+                        <Pagination :links="history.links" />
                     </div>
                 </section>
             </div>
+        </div>
+
+        <div v-if="selectedHistoryRun" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
+            <button
+                class="absolute inset-0 bg-slate-950/40"
+                aria-label="Details schließen"
+                @click="selectedHistoryRun = null"
+            />
+            <aside class="absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto bg-white p-6 shadow-2xl">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold text-blue-600 uppercase">Testergebnis</p>
+                        <h2 class="mt-2 text-xl font-semibold text-slate-950">
+                            {{ selectedHistoryRun.dicom_node.name }}
+                        </h2>
+                        <p class="mt-1 text-sm text-slate-500">{{ formatDate(selectedHistoryRun.started_at) }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                        @click="selectedHistoryRun = null"
+                    >
+                        <X :size="20" />
+                    </button>
+                </div>
+                <div class="mt-6 rounded-xl bg-slate-50 p-4">
+                    <p class="font-semibold text-slate-900">{{ selectedHistoryRun.summary }}</p>
+                    <p class="mt-1 text-sm text-slate-500">
+                        {{ selectedHistoryRun.duration_ms }} ms · {{ selectedHistoryRun.status }}
+                    </p>
+                </div>
+                <ol class="mt-5 space-y-3">
+                    <li
+                        v-for="step in selectedHistoryRun.steps"
+                        :key="step.name"
+                        class="rounded-xl border border-slate-200 p-4"
+                    >
+                        <div class="flex justify-between gap-3">
+                            <p class="font-semibold text-slate-900">{{ step.label }}</p>
+                            <span class="text-xs text-slate-500">{{ step.durationMilliseconds }} ms</span>
+                        </div>
+                        <p class="mt-1 text-sm text-slate-600">{{ step.message }}</p>
+                    </li>
+                </ol>
+                <details v-if="Object.keys(selectedHistoryRun.details).length" class="mt-5">
+                    <summary class="cursor-pointer text-sm font-semibold text-slate-700">Technische Details</summary>
+                    <pre class="mt-3 overflow-x-auto rounded-xl bg-slate-950 p-4 text-xs text-slate-100">{{
+                        JSON.stringify(selectedHistoryRun.details, null, 2)
+                    }}</pre>
+                </details>
+                <div class="mt-6 flex gap-2">
+                    <button
+                        type="button"
+                        class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white"
+                        @click="prepareRerun(selectedHistoryRun)"
+                    >
+                        <RotateCcw :size="16" />Test erneut vorbereiten</button
+                    ><button
+                        type="button"
+                        disabled
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-500 opacity-50"
+                    >
+                        <Download :size="16" />JSON-Export geplant
+                    </button>
+                </div>
+            </aside>
         </div>
     </AppLayout>
 </template>

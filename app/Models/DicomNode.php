@@ -121,6 +121,14 @@ final class DicomNode extends Model
     }
 
     /**
+     * @return HasMany<DiagnosticTestRun, $this>
+     */
+    public function diagnosticTestRuns(): HasMany
+    {
+        return $this->hasMany(DiagnosticTestRun::class);
+    }
+
+    /**
      * @param  Builder<DicomNode>  $query
      */
     public function scopeActive(Builder $query): void

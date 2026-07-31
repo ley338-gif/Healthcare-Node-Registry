@@ -103,6 +103,12 @@ final class System extends Model
         return $this->hasMany(DicomNode::class);
     }
 
+    /** @return HasMany<DiagnosticTestRun, $this> */
+    public function diagnosticTestRuns(): HasMany
+    {
+        return $this->hasMany(DiagnosticTestRun::class);
+    }
+
     /**
      * @param  Builder<System>  $query
      */
