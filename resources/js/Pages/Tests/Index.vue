@@ -159,6 +159,7 @@ const props = defineProps<{
     canRunPacsQuery: boolean;
     canRunStorage: boolean;
     canAnalyzeFile: boolean;
+    canExport: boolean;
     fileAnalysis: FileAnalysis | null;
     latestResult: DiagnosticResult | null;
     history: {
@@ -580,6 +581,11 @@ const prepareRerun = (run: HistoryRun): void => {
     selectedNodeId.value = run.dicom_node.public_id;
     selectedHistoryRun.value = null;
     window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
+    if (!props.canExport) return;
+    window.location.href = `/tests/history/${run.public_id}/export/${format}`;
 };
 </script>
 
@@ -1342,10 +1348,19 @@ const prepareRerun = (run: HistoryRun): void => {
                         <RotateCcw :size="16" />Test erneut vorbereiten</button
                     ><button
                         type="button"
-                        disabled
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-500 opacity-50"
+                        :disabled="!canExport"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-40"
+                        @click="exportRun(selectedHistoryRun, 'json')"
                     >
-                        <Download :size="16" />JSON-Export geplant
+                        <Download :size="16" />JSON
+                    </button>
+                    <button
+                        type="button"
+                        :disabled="!canExport"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-40"
+                        @click="exportRun(selectedHistoryRun, 'csv')"
+                    >
+                        <Download :size="16" />CSV
                     </button>
                 </div>
             </aside>

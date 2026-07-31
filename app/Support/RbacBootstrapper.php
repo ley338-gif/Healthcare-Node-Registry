@@ -13,6 +13,7 @@ final class RbacBootstrapper
         'settings.manage' => 'Einstellungen verwalten', 'registry.view' => 'Registry anzeigen', 'registry.manage' => 'Registry verwalten',
         'tests.run.storage' => 'DICOM-Storage-Test ausführen',
         'tests.analyze_file' => 'DICOM-Dateien analysieren',
+        'tests.export' => 'Diagnoseergebnisse exportieren',
     ];
 
     public function ensureSystemAdministratorRole(): Role
