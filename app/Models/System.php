@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 /**
@@ -107,6 +108,12 @@ final class System extends Model
     public function diagnosticTestRuns(): HasMany
     {
         return $this->hasMany(DiagnosticTestRun::class);
+    }
+
+    /** @return MorphMany<RegistryDocumentation, $this> */
+    public function documentation(): MorphMany
+    {
+        return $this->morphMany(RegistryDocumentation::class, 'documentable');
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 final class Department extends Model
@@ -45,6 +46,12 @@ final class Department extends Model
     public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
+    }
+
+    /** @return MorphMany<RegistryDocumentation, $this> */
+    public function documentation(): MorphMany
+    {
+        return $this->morphMany(RegistryDocumentation::class, 'documentable');
     }
 
     /**

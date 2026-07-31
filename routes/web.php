@@ -15,6 +15,7 @@ use App\Http\Controllers\NetworkDiagnosticController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
 use App\Http\Controllers\PacsQueryDiagnosticController;
+use App\Http\Controllers\RegistryDocumentationController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\StorageDiagnosticController;
 use App\Http\Controllers\SystemController;
@@ -32,6 +33,15 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::get('/structure', OrganizationStructureController::class)->name('structure.index');
+
+    Route::get('/registry-documentation/{documentableType}/{documentable}', [RegistryDocumentationController::class, 'index'])
+        ->whereIn('documentableType', ['organizations', 'sites', 'departments', 'systems'])
+        ->name('registry-documentation.index');
+    Route::post('/registry-documentation/{documentableType}/{documentable}', [RegistryDocumentationController::class, 'store'])
+        ->whereIn('documentableType', ['organizations', 'sites', 'departments', 'systems'])
+        ->name('registry-documentation.store');
+    Route::put('/registry-documentation/{registryDocumentation}', [RegistryDocumentationController::class, 'update'])
+        ->name('registry-documentation.update');
 
     Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
     Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');

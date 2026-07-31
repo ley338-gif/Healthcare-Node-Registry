@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 final class Site extends Model
@@ -58,6 +59,12 @@ final class Site extends Model
     public function departments(): HasMany
     {
         return $this->hasMany(Department::class);
+    }
+
+    /** @return MorphMany<RegistryDocumentation, $this> */
+    public function documentation(): MorphMany
+    {
+        return $this->morphMany(RegistryDocumentation::class, 'documentable');
     }
 
     /**
