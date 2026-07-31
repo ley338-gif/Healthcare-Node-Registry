@@ -23,6 +23,8 @@ const props = defineProps<{
     filters: Filters;
     eventTypes: string[];
     users: Array<{ public_id: string; name: string }>;
+    queryContext?: Record<string, string>;
+    allowScopeSelection?: boolean;
 }>();
 
 const from = ref(props.filters.history_from ?? '');
@@ -31,18 +33,21 @@ const type = ref(props.filters.history_type ?? '');
 const user = ref(props.filters.history_user ?? '');
 const status = ref(props.filters.history_status ?? '');
 const search = ref(props.filters.history_search ?? '');
+const scope = ref(props.filters.history_scope ?? 'descendants');
 const selected = ref<AuditEvent | null>(null);
 
 const apply = (): void => {
     router.get(
         window.location.pathname,
         {
+            ...props.queryContext,
             history_from: from.value || undefined,
             history_to: to.value || undefined,
             history_type: type.value || undefined,
             history_user: user.value || undefined,
             history_status: status.value || undefined,
             history_search: search.value || undefined,
+            history_scope: props.allowScopeSelection ? scope.value : undefined,
         },
         { preserveState: true, preserveScroll: true },
     );
@@ -55,6 +60,7 @@ const reset = (): void => {
     user.value = '';
     status.value = '';
     search.value = '';
+    scope.value = 'descendants';
     apply();
 };
 
@@ -100,6 +106,14 @@ const display = (value: unknown): string =>
         </div>
 
         <div class="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-3 xl:grid-cols-6">
+            <select
+                v-if="allowScopeSelection"
+                v-model="scope"
+                class="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            >
+                <option value="direct">Nur direkte Änderungen</option>
+                <option value="descendants">Direkte und untergeordnete Änderungen</option>
+            </select>
             <input
                 v-model="from"
                 type="date"

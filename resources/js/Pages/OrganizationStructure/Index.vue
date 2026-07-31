@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     ArrowRight,
     Building2,
@@ -20,6 +20,7 @@ import {
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
+import AuditHistoryPanel, { type AuditEvent } from '../../Components/audit/AuditHistoryPanel.vue';
 
 type DepartmentItem = {
     id: number;
@@ -93,6 +94,16 @@ const props = defineProps<{
     };
     organizations: OrganizationItem[];
     systems: SystemItem[];
+    selectedContext: { type: 'organization' | 'site' | 'department'; public_id: string } | null;
+    history: {
+        data: AuditEvent[];
+        links: Array<{ url: string | null; label: string; active: boolean }>;
+        total: number;
+    } | null;
+    historyStats: { total: number; today: number; last7Days: number; last30Days: number };
+    historyFilters: Record<string, string | undefined>;
+    historyEventTypes: string[];
+    historyUsers: Array<{ public_id: string; name: string }>;
 }>();
 
 const search = ref('');
@@ -101,9 +112,28 @@ const systemStatusFilter = ref('');
 const systemTypeFilter = ref('');
 const systemSort = ref<'name' | 'type' | 'status'>('name');
 const activeTab = ref<WorkspaceTab>('overview');
-const selected = ref<SelectedUnit | null>(
-    props.organizations[0] ? { type: 'organization', organization: props.organizations[0] } : null,
-);
+const initialSelection = (): SelectedUnit | null => {
+    const context = props.selectedContext;
+    if (context === null) return null;
+
+    for (const organization of props.organizations) {
+        if (context.type === 'organization' && organization.public_id === context.public_id) {
+            return { type: 'organization', organization };
+        }
+        for (const site of organization.sites) {
+            if (context.type === 'site' && site.public_id === context.public_id) {
+                return { type: 'site', organization, site };
+            }
+            const department = site.departments.find((item) => item.public_id === context.public_id);
+            if (context.type === 'department' && department) {
+                return { type: 'department', organization, site, department };
+            }
+        }
+    }
+
+    return null;
+};
+const selected = ref<SelectedUnit | null>(initialSelection());
 watch(selected, () => {
     activeTab.value = 'overview';
 });
@@ -400,6 +430,13 @@ const children = computed(() => {
 const selectUnit = (unit: SelectedUnit): void => {
     selected.value = unit;
     activeTab.value = 'overview';
+    const publicId =
+        unit.type === 'organization'
+            ? unit.organization.public_id
+            : unit.type === 'site'
+              ? unit.site.public_id
+              : unit.department.public_id;
+    router.get('/structure', { selected_type: unit.type, selected_id: publicId }, { preserveScroll: true });
 };
 
 const selectChild = (row: (typeof children.value)[number]): void => {
@@ -1121,6 +1158,22 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                 vorbereitet.
                             </p>
                         </section>
+                    </div>
+
+                    <div v-else-if="activeTab === 'history'" class="p-5 lg:p-7">
+                        <AuditHistoryPanel
+                            v-if="history && selectedContext"
+                            :events="history"
+                            :stats="historyStats"
+                            :filters="historyFilters"
+                            :event-types="historyEventTypes"
+                            :users="historyUsers"
+                            :query-context="{
+                                selected_type: selectedContext.type,
+                                selected_id: selectedContext.public_id,
+                            }"
+                            allow-scope-selection
+                        />
                     </div>
 
                     <div v-else class="p-5 lg:p-7">
