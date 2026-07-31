@@ -182,6 +182,7 @@ final class TestWorkspaceController extends Controller
             'canRunEcho' => $request->user()?->hasPermission('registry.manage') ?? false,
             'canRunNetwork' => $request->user()?->hasPermission('registry.manage') ?? false,
             'canRunWorklist' => $request->user()?->hasPermission('registry.manage') ?? false,
+            'canRunPacsQuery' => $request->user()?->hasPermission('registry.manage') ?? false,
             'latestResult' => $request->session()->get('diagnosticResult'),
             'history' => $history,
             'historyFilters' => $filters,

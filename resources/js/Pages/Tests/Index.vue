@@ -130,6 +130,7 @@ const props = defineProps<{
     canRunEcho: boolean;
     canRunNetwork: boolean;
     canRunWorklist: boolean;
+    canRunPacsQuery: boolean;
     latestResult: DiagnosticResult | null;
     history: {
         data: HistoryRun[];
@@ -147,6 +148,7 @@ const networkProcessing = ref(false);
 const resultExpanded = ref(true);
 const selectedHistoryRun = ref<HistoryRun | null>(null);
 const worklistDialogOpen = ref(false);
+const pacsDialogOpen = ref(false);
 const historyFrom = ref(props.historyFilters.history_from ?? '');
 const historyTo = ref(props.historyFilters.history_to ?? '');
 const historyNode = ref(props.historyFilters.history_node ?? '');
@@ -164,6 +166,18 @@ const worklistForm = useForm({
     patient_name: '',
     patient_id: '',
     accession_number: '',
+});
+const pacsForm = useForm({
+    calling_ae_title: 'NODE_REGISTRY',
+    called_ae_title: '',
+    patient_name: '',
+    patient_id: '',
+    accession_number: '',
+    study_instance_uid: '',
+    modality: '',
+    study_date: '',
+    study_date_to: '',
+    study_description: '',
 });
 
 const selectedNode = computed(() => props.nodes.find((node) => node.public_id === selectedNodeId.value) ?? null);
@@ -305,6 +319,23 @@ const runWorklistTest = (): void => {
         preserveScroll: true,
         onSuccess: () => {
             worklistDialogOpen.value = false;
+            resultExpanded.value = true;
+        },
+    });
+};
+
+const openPacsQuery = (): void => {
+    if (!selectedNode.value?.supports_query || !props.canRunPacsQuery) return;
+    pacsForm.called_ae_title = selectedNode.value.ae_title;
+    pacsDialogOpen.value = true;
+};
+
+const runPacsQuery = (): void => {
+    if (selectedNode.value === null) return;
+    pacsForm.post(`/tests/pacs-query/${selectedNode.value.public_id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            pacsDialogOpen.value = false;
             resultExpanded.value = true;
         },
     });
@@ -588,7 +619,7 @@ const prepareRerun = (run: HistoryRun): void => {
                         </article>
 
                         <article
-                            class="flex min-h-[220px] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                            class="flex min-h-[220px] flex-col rounded-2xl border border-amber-200 bg-white p-5 shadow-sm"
                         >
                             <div class="self-start rounded-xl bg-amber-50 p-2.5 text-amber-700">
                                 <Database :size="20" />
@@ -598,10 +629,12 @@ const prepareRerun = (run: HistoryRun): void => {
                                 Study-Root-C-FIND nach Patient, Accession Number oder Study UID.
                             </p>
                             <button
-                                disabled
-                                class="mt-5 rounded-xl border px-4 py-2.5 text-sm font-semibold text-slate-500 opacity-50"
+                                type="button"
+                                :disabled="!canRunPacsQuery || !selectedNode.supports_query || pacsForm.processing"
+                                class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                                @click="openPacsQuery"
                             >
-                                Geplant
+                                <Database :size="16" />PACS abfragen
                             </button>
                         </article>
                     </div>
@@ -1063,6 +1096,73 @@ const prepareRerun = (run: HistoryRun): void => {
                                 v-else
                                 :size="16"
                             />{{ worklistForm.processing ? 'Abfrage läuft' : 'C-FIND starten' }}
+                        </button>
+                    </div>
+                </form>
+            </aside>
+        </div>
+
+        <div v-if="pacsDialogOpen && selectedNode" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
+            <button
+                class="absolute inset-0 bg-slate-950/40"
+                aria-label="PACS-Dialog schließen"
+                @click="pacsDialogOpen = false"
+            />
+            <aside class="absolute inset-y-0 right-0 w-full max-w-2xl overflow-y-auto bg-white p-6 shadow-2xl">
+                <div class="flex justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold text-amber-600 uppercase">PACS Study Query</p>
+                        <h2 class="mt-2 text-xl font-semibold">{{ selectedNode.name }}</h2>
+                    </div>
+                    <button type="button" @click="pacsDialogOpen = false"><X :size="20" /></button>
+                </div>
+                <form class="mt-6 space-y-5" @submit.prevent="runPacsQuery">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <label
+                            v-for="field in [
+                                { key: 'calling_ae_title', label: 'Calling AE Title' },
+                                { key: 'called_ae_title', label: 'Called AE Title' },
+                                { key: 'patient_name', label: 'Patientenname' },
+                                { key: 'patient_id', label: 'Patient-ID' },
+                                { key: 'accession_number', label: 'Accession Number' },
+                                { key: 'study_instance_uid', label: 'Study Instance UID' },
+                                { key: 'modality', label: 'Modalität' },
+                                { key: 'study_description', label: 'Study Description' },
+                            ]"
+                            :key="field.key"
+                            class="text-sm font-medium text-slate-700"
+                            >{{ field.label
+                            }}<input
+                                v-model="pacsForm[field.key as keyof typeof pacsForm]"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
+                        ><label class="text-sm font-medium"
+                            >Study Date<input
+                                v-model="pacsForm.study_date"
+                                type="date"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label
+                        ><label class="text-sm font-medium"
+                            >Bis einschließlich<input
+                                v-model="pacsForm.study_date_to"
+                                type="date"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                        /></label>
+                    </div>
+                    <div
+                        v-if="Object.keys(pacsForm.errors).length"
+                        class="rounded-xl bg-red-50 p-3 text-sm text-red-700"
+                    >
+                        <p v-for="message in pacsForm.errors" :key="message">{{ message }}</p>
+                    </div>
+                    <p class="text-xs text-slate-500">
+                        Nur Study-Root C-FIND. C-MOVE und C-GET werden nicht ausgeführt.
+                    </p>
+                    <div class="flex justify-end">
+                        <button
+                            type="submit"
+                            :disabled="pacsForm.processing"
+                            class="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                        >
+                            {{ pacsForm.processing ? 'Abfrage läuft' : 'C-FIND starten' }}
                         </button>
                     </div>
                 </form>

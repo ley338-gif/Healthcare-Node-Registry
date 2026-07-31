@@ -127,11 +127,11 @@ final class WorklistDiagnosticTest extends TestCase
             'port' => 1,
             'supports_worklist' => true,
         ]);
-        $before = glob(sys_get_temp_dir().DIRECTORY_SEPARATOR.'hnr-mwl-*') ?: [];
+        $before = glob(sys_get_temp_dir().DIRECTORY_SEPARATOR.'hnr-find-*') ?: [];
 
         (new NativeWorklistCommandRunner)->run($node, $this->parameters($node));
 
-        self::assertSame($before, glob(sys_get_temp_dir().DIRECTORY_SEPARATOR.'hnr-mwl-*') ?: []);
+        self::assertSame($before, glob(sys_get_temp_dir().DIRECTORY_SEPARATOR.'hnr-find-*') ?: []);
     }
 
     private function executeWorklist(WorklistCommandResult $command): DiagnosticTestResult
