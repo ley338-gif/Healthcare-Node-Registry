@@ -3,7 +3,6 @@ import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import {
     Archive,
     ArrowRight,
-    Building2,
     CircleAlert,
     CircleCheck,
     Clock3,

@@ -10,6 +10,7 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SystemController;
+use App\Http\Controllers\TestWorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -76,4 +77,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/network', DicomNetworkMapController::class)
         ->name('network.index');
+
+    Route::get('/tests', TestWorkspaceController::class)
+        ->name('tests.index');
 });

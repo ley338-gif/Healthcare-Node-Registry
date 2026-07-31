@@ -14,7 +14,7 @@ import SystemWorkspaceDetail, {
 import AppLayout from '../../../Layouts/AppLayout.vue';
 import { ref } from 'vue';
 
-const props = defineProps<{
+defineProps<{
     system: SystemDetail;
     systemTypes: SelectOption[];
     statuses: SelectOption[];
