@@ -1,27 +1,15 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
-import {
-    ArrowRight,
-    Building2,
-    CircleAlert,
-    CircleCheck,
-    FilterX,
-    Hospital,
-    MapPin,
-    Network,
-    Pencil,
-    Search,
-    Server,
-    UsersRound,
-} from '@lucide/vue';
+import { Head, router } from '@inertiajs/vue3';
+import { FilterX, Search, Server } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
-import SystemArchiveDialog from '../../../Components/registry/systems/SystemArchiveDialog.vue';
 import SystemCreateSlideOver from '../../../Components/registry/systems/SystemCreateSlideOver.vue';
 import SystemEditSlideOver from '../../../Components/registry/systems/SystemEditSlideOver.vue';
-import DicomNetworkMap, {
-    type NetworkConnection,
-    type NetworkNode,
-} from '../../../Components/network/DicomNetworkMap.vue';
+import type { DicomConnection, DicomNodeOption } from '../../../Components/registry/dicom/DicomConnectionManager.vue';
+import type { DicomNode } from '../../../Components/registry/dicom/DicomNodeManager.vue';
+import SystemWorkspaceDetail, {
+    type SystemDetail,
+} from '../../../Components/registry/systems/SystemWorkspaceDetail.vue';
+import type { NetworkConnection, NetworkNode } from '../../../Components/network/DicomNetworkMap.vue';
 import EmptyState from '../../../Components/ui/EmptyState.vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
@@ -90,15 +78,23 @@ const props = withDefaults(
             organization: number | null;
             site: number | null;
             department: number | null;
+            selected: string | null;
         };
         systemTypes: SelectOption[];
         statuses: SelectOption[];
         organizations: OrganizationOption[];
         sites: SiteOption[];
         departments: DepartmentOption[];
+        selectedSystem: SystemDetail | null;
+        dicomNodes: DicomNode[];
+        dicomConnections: DicomConnection[];
+        dicomNodeOptions: DicomNodeOption[];
         topologyNodes?: NetworkNode[];
         topologyConnections?: NetworkConnection[];
         canManage: boolean;
+        canManageSelected: boolean;
+        canManageDicomNodes: boolean;
+        canManageDicomConnections: boolean;
     }>(),
     {
         topologyNodes: () => [],
@@ -115,11 +111,11 @@ const department = ref<number | null>(props.filters.department);
 
 const createPanelOpen = ref(false);
 const editPanelOpen = ref(false);
-const archiveDialogOpen = ref(false);
-const archiveProcessing = ref(false);
 
-const focusedSystem = ref<SystemItem | null>(props.items.data[0] ?? null);
-const actionSystem = ref<SystemItem | null>(null);
+const focusedSystem = ref<SystemItem | null>(
+    props.items.data.find((item) => item.public_id === props.selectedSystem?.public_id) ?? props.items.data[0] ?? null,
+);
+const actionSystem = ref<SystemDetail | SystemItem | null>(null);
 
 const hasSystems = computed(() => props.items.data.length > 0);
 
@@ -143,16 +139,6 @@ const hasActiveFilters = computed(
         department.value !== null,
 );
 
-const currentProduct = computed(() => {
-    if (focusedSystem.value === null) {
-        return 'Keine Produktangaben';
-    }
-
-    return (
-        [focusedSystem.value.vendor, focusedSystem.value.product].filter(Boolean).join(' · ') || 'Keine Produktangaben'
-    );
-});
-
 watch(organization, () => {
     if (site.value !== null && !filteredSites.value.some((item) => item.id === site.value)) {
         site.value = null;
@@ -167,18 +153,14 @@ watch(site, () => {
 });
 
 watch(
-    () => props.items.data,
-    (systems) => {
+    () => [props.items.data, props.selectedSystem?.public_id] as const,
+    ([systems, selectedPublicId]) => {
         if (systems.length === 0) {
             focusedSystem.value = null;
             return;
         }
 
-        const currentStillExists = systems.some((system) => system.public_id === focusedSystem.value?.public_id);
-
-        if (!currentStillExists) {
-            focusedSystem.value = systems[0];
-        }
+        focusedSystem.value = systems.find((system) => system.public_id === selectedPublicId) ?? systems[0];
     },
 );
 
@@ -192,6 +174,7 @@ const applyFilters = (): void => {
             organization: organization.value ?? undefined,
             site: site.value ?? undefined,
             department: department.value ?? undefined,
+            selected: props.selectedSystem?.public_id ?? undefined,
         },
         {
             preserveState: true,
@@ -232,9 +215,38 @@ const statusClass = (value: string): string =>
 
 const selectSystem = (system: SystemItem): void => {
     focusedSystem.value = system;
+
+    router.get(
+        '/systems',
+        {
+            search: search.value || undefined,
+            type: type.value || undefined,
+            status: status.value || undefined,
+            organization: organization.value ?? undefined,
+            site: site.value ?? undefined,
+            department: department.value ?? undefined,
+            selected: system.public_id,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            only: [
+                'selectedSystem',
+                'dicomNodes',
+                'dicomConnections',
+                'dicomNodeOptions',
+                'topologyNodes',
+                'topologyConnections',
+                'canManageSelected',
+                'canManageDicomNodes',
+                'canManageDicomConnections',
+            ],
+        },
+    );
 };
 
-const openEditPanel = (system: SystemItem): void => {
+const openEditPanel = (system: SystemDetail | SystemItem): void => {
     actionSystem.value = system;
     editPanelOpen.value = true;
 };
@@ -242,35 +254,6 @@ const openEditPanel = (system: SystemItem): void => {
 const closeEditPanel = (): void => {
     editPanelOpen.value = false;
     actionSystem.value = null;
-};
-
-const closeArchiveDialog = (): void => {
-    if (archiveProcessing.value) {
-        return;
-    }
-
-    archiveDialogOpen.value = false;
-    actionSystem.value = null;
-};
-
-const archiveSystem = (): void => {
-    if (actionSystem.value === null) {
-        return;
-    }
-
-    archiveProcessing.value = true;
-
-    router.post(
-        `/systems/${actionSystem.value.public_id}/archive`,
-        {},
-        {
-            preserveScroll: true,
-            onSuccess: closeArchiveDialog,
-            onFinish: () => {
-                archiveProcessing.value = false;
-            },
-        },
-    );
 };
 </script>
 
@@ -379,7 +362,7 @@ const archiveSystem = (): void => {
             :icon="Server"
         />
 
-        <div v-else class="mt-6 grid min-h-[680px] gap-4 xl:grid-cols-[320px_minmax(420px,1fr)_minmax(340px,0.9fr)]">
+        <div v-else class="mt-6 grid min-h-[720px] gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
                     <div>
@@ -388,7 +371,7 @@ const archiveSystem = (): void => {
                     </div>
                 </header>
 
-                <div class="max-h-[620px] divide-y divide-slate-100 overflow-y-auto">
+                <div class="max-h-[760px] divide-y divide-slate-100 overflow-y-auto">
                     <button
                         v-for="system in items.data"
                         :key="system.public_id"
@@ -452,347 +435,21 @@ const archiveSystem = (): void => {
                 </div>
             </section>
 
-            <section
-                v-if="focusedSystem"
-                class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-            >
-                <header class="border-b border-slate-200 px-6 py-5">
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div class="min-w-0">
-                            <div class="flex flex-wrap gap-2">
-                                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
-                                    {{ labelFor(systemTypes, focusedSystem.system_type) }}
-                                </span>
-
-                                <span
-                                    class="rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset"
-                                    :class="statusClass(focusedSystem.status)"
-                                >
-                                    {{ labelFor(statuses, focusedSystem.status) }}
-                                </span>
-                            </div>
-
-                            <h2 class="mt-3 truncate text-2xl font-semibold text-slate-950">
-                                {{ focusedSystem.name }}
-                            </h2>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                {{ currentProduct }}
-                            </p>
-
-                            <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500">
-                                <span class="inline-flex items-center gap-1.5">
-                                    <Building2 :size="14" />
-                                    {{ focusedSystem.organization.name }}
-                                </span>
-
-                                <span v-if="focusedSystem.site" class="inline-flex items-center gap-1.5">
-                                    <Hospital :size="14" />
-                                    {{ focusedSystem.site.name }}
-                                </span>
-
-                                <span v-if="focusedSystem.department" class="inline-flex items-center gap-1.5">
-                                    <UsersRound :size="14" />
-                                    {{ focusedSystem.department.name }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="flex shrink-0 gap-2">
-                            <button
-                                v-if="canManage"
-                                type="button"
-                                class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                                @click="openEditPanel(focusedSystem)"
-                            >
-                                <Pencil :size="16" />
-                                Bearbeiten
-                            </button>
-
-                            <Link
-                                :href="`/systems/${focusedSystem.public_id}`"
-                                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-                            >
-                                System öffnen
-                                <ArrowRight :size="16" />
-                            </Link>
-                        </div>
-                    </div>
-                </header>
-
-                <div class="space-y-6 p-6">
-                    <!-- Systemstatus -->
-                    <section>
-                        <div class="mb-3 flex items-center justify-between">
-                            <div>
-                                <h3 class="font-semibold text-slate-950">Systemstatus</h3>
-                                <p class="mt-0.5 text-xs text-slate-500">Technischer Zustand und Netzwerkdaten</p>
-                            </div>
-
-                            <div
-                                class="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold"
-                                :class="
-                                    focusedSystem.failed_dicom_nodes_count > 0
-                                        ? 'bg-red-50 text-red-700'
-                                        : 'bg-emerald-50 text-emerald-700'
-                                "
-                            >
-                                <CircleAlert v-if="focusedSystem.failed_dicom_nodes_count > 0" :size="15" />
-
-                                <CircleCheck v-else :size="15" />
-
-                                {{
-                                    focusedSystem.failed_dicom_nodes_count > 0
-                                        ? 'Handlungsbedarf'
-                                        : 'Keine bekannten Fehler'
-                                }}
-                            </div>
-                        </div>
-
-                        <dl class="divide-y divide-slate-100 rounded-2xl border border-slate-200">
-                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
-                                <dt class="flex items-center gap-2 text-xs text-slate-500">
-                                    <Server :size="15" />
-                                    Hostname
-                                </dt>
-                                <dd class="font-mono text-sm font-medium text-slate-900">
-                                    {{ focusedSystem.hostname || 'Nicht hinterlegt' }}
-                                </dd>
-                            </div>
-
-                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
-                                <dt class="flex items-center gap-2 text-xs text-slate-500">
-                                    <Network :size="15" />
-                                    IP-Adresse
-                                </dt>
-                                <dd class="font-mono text-sm font-medium text-slate-900">
-                                    {{ focusedSystem.ip_address || 'Nicht hinterlegt' }}
-                                </dd>
-                            </div>
-
-                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
-                                <dt class="flex items-center gap-2 text-xs text-slate-500">
-                                    <Network :size="15" />
-                                    DICOM-Knoten
-                                </dt>
-                                <dd class="text-sm font-semibold text-slate-900">
-                                    {{ focusedSystem.dicom_nodes_count }}
-                                </dd>
-                            </div>
-
-                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
-                                <dt class="flex items-center gap-2 text-xs text-slate-500">
-                                    <CircleAlert :size="15" />
-                                    Auffällige Knoten
-                                </dt>
-                                <dd
-                                    class="text-sm font-semibold"
-                                    :class="
-                                        focusedSystem.failed_dicom_nodes_count > 0 ? 'text-red-700' : 'text-emerald-700'
-                                    "
-                                >
-                                    {{ focusedSystem.failed_dicom_nodes_count }}
-                                </dd>
-                            </div>
-                        </dl>
-                    </section>
-
-                    <!-- Warnung -->
-                    <section
-                        v-if="focusedSystem.failed_dicom_nodes_count > 0"
-                        class="rounded-2xl border border-red-200 bg-red-50"
-                    >
-                        <div class="flex items-start gap-3 px-4 py-4">
-                            <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-100 text-red-700">
-                                <CircleAlert :size="18" />
-                            </div>
-
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center justify-between gap-3">
-                                    <p class="text-sm font-semibold text-red-900">
-                                        DICOM-Prüfungen benötigen Aufmerksamkeit
-                                    </p>
-
-                                    <span
-                                        class="rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700"
-                                    >
-                                        {{ focusedSystem.failed_dicom_nodes_count }}
-                                    </span>
-                                </div>
-
-                                <p class="mt-1 text-sm text-red-700">
-                                    Mindestens ein DICOM-Knoten besitzt eine fehlgeschlagene letzte Prüfung.
-                                </p>
-
-                                <Link
-                                    :href="`/systems/${focusedSystem.public_id}`"
-                                    class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-red-800 hover:underline"
-                                >
-                                    DICOM-Knoten prüfen
-                                    <ArrowRight :size="14" />
-                                </Link>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section
-                        v-else
-                        class="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4"
-                    >
-                        <div
-                            class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700"
-                        >
-                            <CircleCheck :size="18" />
-                        </div>
-
-                        <div>
-                            <p class="text-sm font-semibold text-emerald-900">Keine bekannten DICOM-Fehler</p>
-                            <p class="mt-1 text-sm text-emerald-700">
-                                Für dieses System liegen aktuell keine fehlgeschlagenen letzten Prüfungen vor.
-                            </p>
-                        </div>
-                    </section>
-
-                    <!-- Stammdaten -->
-                    <section>
-                        <div class="mb-3">
-                            <h3 class="font-semibold text-slate-950">Stammdaten</h3>
-                            <p class="mt-0.5 text-xs text-slate-500">Organisatorische und produktbezogene Zuordnung</p>
-                        </div>
-
-                        <dl class="divide-y divide-slate-100 rounded-2xl border border-slate-200">
-                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
-                                <dt class="text-xs text-slate-500">Organisation</dt>
-                                <dd class="text-sm font-medium text-slate-900">
-                                    {{ focusedSystem.organization.name }}
-                                </dd>
-                            </div>
-
-                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
-                                <dt class="text-xs text-slate-500">Standort</dt>
-                                <dd class="text-sm font-medium text-slate-900">
-                                    {{ focusedSystem.site?.name || 'Nicht zugeordnet' }}
-                                </dd>
-                            </div>
-
-                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
-                                <dt class="text-xs text-slate-500">Abteilung</dt>
-                                <dd class="text-sm font-medium text-slate-900">
-                                    {{ focusedSystem.department?.name || 'Nicht zugeordnet' }}
-                                </dd>
-                            </div>
-
-                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
-                                <dt class="text-xs text-slate-500">Hersteller</dt>
-                                <dd class="text-sm font-medium text-slate-900">
-                                    {{ focusedSystem.vendor || 'Nicht hinterlegt' }}
-                                </dd>
-                            </div>
-
-                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
-                                <dt class="text-xs text-slate-500">Produkt</dt>
-                                <dd class="text-sm font-medium text-slate-900">
-                                    {{ focusedSystem.product || 'Nicht hinterlegt' }}
-                                </dd>
-                            </div>
-
-                            <div class="grid gap-1 px-4 py-3 sm:grid-cols-[180px_1fr]">
-                                <dt class="text-xs text-slate-500">FQDN</dt>
-                                <dd class="font-mono text-sm font-medium break-all text-slate-900">
-                                    {{ focusedSystem.fqdn || 'Nicht hinterlegt' }}
-                                </dd>
-                            </div>
-                        </dl>
-                    </section>
-                </div>
-            </section>
-
-            <section
-                v-if="focusedSystem"
-                class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-            >
-                <header class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
-                    <div>
-                        <h2 class="font-semibold text-slate-950">Netzwerkübersicht</h2>
-                    </div>
-
-                    <MapPin :size="18" class="text-blue-600" />
-                </header>
-
-                <div class="p-5">
-                    <DicomNetworkMap
-                        v-if="topologyNodes.length > 0"
-                        :nodes="topologyNodes"
-                        :connections="topologyConnections"
-                        :focus-system-public-id="focusedSystem.public_id"
-                        :details-enabled="false"
-                        compact
-                    />
-
-                    <div
-                        v-else
-                        class="grid min-h-[390px] place-items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6"
-                    >
-                        <div class="max-w-xs text-center">
-                            <div
-                                class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-blue-100 text-blue-700"
-                            >
-                                <Network :size="25" />
-                            </div>
-
-                            <h3 class="mt-4 font-semibold text-slate-950">Keine DICOM-Beziehungen vorhanden</h3>
-
-                            <p class="mt-2 text-sm leading-6 text-slate-500">
-                                Für dieses System wurden noch keine Knoten oder direkten Verbindungen dokumentiert.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 border-t border-slate-200 pt-4">
-                        <p class="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Legende</p>
-
-                        <div class="flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600">
-                            <span class="inline-flex items-center gap-2">
-                                <span class="h-0.5 w-5 rounded-full bg-blue-600" />
-                                C-STORE
-                            </span>
-
-                            <span class="inline-flex items-center gap-2">
-                                <span class="h-0.5 w-5 rounded-full bg-violet-600" />
-                                Worklist
-                            </span>
-
-                            <span class="inline-flex items-center gap-2">
-                                <span class="h-0.5 w-5 rounded-full bg-cyan-600" />
-                                Query
-                            </span>
-
-                            <span class="inline-flex items-center gap-2">
-                                <span class="h-0.5 w-5 rounded-full bg-amber-600" />
-                                C-MOVE
-                            </span>
-
-                            <span class="inline-flex items-center gap-2">
-                                <span class="h-0.5 w-5 rounded-full bg-emerald-600" />
-                                C-GET
-                            </span>
-
-                            <span class="inline-flex items-center gap-2">
-                                <span class="h-0.5 w-5 rounded-full bg-slate-500" />
-                                C-ECHO
-                            </span>
-                        </div>
-                    </div>
-
-                    <Link
-                        href="/network"
-                        class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                    >
-                        Gesamte Topologie öffnen
-                        <ArrowRight :size="15" />
-                    </Link>
-                </div>
-            </section>
+            <SystemWorkspaceDetail
+                v-if="selectedSystem"
+                :system="selectedSystem"
+                :system-types="systemTypes"
+                :statuses="statuses"
+                :dicom-nodes="dicomNodes"
+                :dicom-connections="dicomConnections"
+                :dicom-node-options="dicomNodeOptions"
+                :topology-nodes="topologyNodes"
+                :topology-connections="topologyConnections"
+                :can-manage="canManageSelected"
+                :can-manage-dicom-nodes="canManageDicomNodes"
+                :can-manage-dicom-connections="canManageDicomConnections"
+                @edit="openEditPanel"
+            />
         </div>
 
         <SystemCreateSlideOver
@@ -814,14 +471,6 @@ const archiveSystem = (): void => {
             :system-types="systemTypes"
             :statuses="statuses"
             @close="closeEditPanel"
-        />
-
-        <SystemArchiveDialog
-            :open="archiveDialogOpen"
-            :system-name="actionSystem?.name ?? ''"
-            :processing="archiveProcessing"
-            @close="closeArchiveDialog"
-            @confirm="archiveSystem"
         />
     </AppLayout>
 </template>

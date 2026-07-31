@@ -31,6 +31,7 @@ final class SystemController extends Controller
         $organizationId = $request->integer('organization');
         $siteId = $request->integer('site');
         $departmentId = $request->integer('department');
+        $selectedPublicId = trim((string) $request->query('selected', ''));
 
         $systems = System::query()
             ->with([
@@ -197,8 +198,91 @@ final class SystemController extends Controller
             ];
         }
 
+        $selectedSystem = System::query()
+            ->whereNull('archived_at')
+            ->when(
+                $selectedPublicId !== '',
+                fn ($query) => $query->where('public_id', $selectedPublicId),
+                fn ($query) => $query->whereIn('id', $visibleSystemIds)->orderBy('name'),
+            )
+            ->with([
+                'organization:id,public_id,name',
+                'site:id,public_id,name',
+                'department:id,public_id,name',
+            ])
+            ->first();
+
+        $selectedDicomNodes = collect();
+        $selectedDicomConnections = collect();
+
+        if ($selectedSystem !== null) {
+            Gate::authorize('view', $selectedSystem);
+
+            $selectedDicomNodes = $selectedSystem
+                ->dicomNodes()
+                ->active()
+                ->with([
+                    'verifications' => fn ($query) => $query
+                        ->with('triggeredByUser:id,name')
+                        ->latest('verified_at')
+                        ->limit(20),
+                ])
+                ->orderBy('name')
+                ->get();
+
+            $selectedDicomConnections = DicomConnection::query()
+                ->active()
+                ->where(function ($query) use ($selectedSystem): void {
+                    $query
+                        ->whereHas(
+                            'sourceNode',
+                            fn ($nodeQuery) => $nodeQuery->where(
+                                'system_id',
+                                $selectedSystem->id,
+                            ),
+                        )
+                        ->orWhereHas(
+                            'targetNode',
+                            fn ($nodeQuery) => $nodeQuery->where(
+                                'system_id',
+                                $selectedSystem->id,
+                            ),
+                        );
+                })
+                ->with([
+                    'sourceNode:id,public_id,system_id,name,ae_title,host,port',
+                    'sourceNode.system:id,public_id,name',
+                    'targetNode:id,public_id,system_id,name,ae_title,host,port',
+                    'targetNode.system:id,public_id,name',
+                    'destinationNode:id,public_id,system_id,name,ae_title,host,port',
+                    'destinationNode.system:id,public_id,name',
+                ])
+                ->orderBy('name')
+                ->get();
+        }
+
         return Inertia::render('Registry/Systems/Index', [
             'items' => $systems,
+            'selectedSystem' => $selectedSystem,
+            'dicomNodes' => $selectedDicomNodes,
+            'dicomConnections' => $selectedDicomConnections,
+            'dicomNodeOptions' => DicomNode::query()
+                ->active()
+                ->whereHas(
+                    'system',
+                    fn ($query) => $query->whereNull('archived_at'),
+                )
+                ->with('system:id,public_id,name')
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'public_id',
+                    'system_id',
+                    'name',
+                    'ae_title',
+                    'host',
+                    'port',
+                ]),
 
             'topologyNodes' => $topologyNodes,
             'topologyConnections' => $topologyConnections,
@@ -216,6 +300,7 @@ final class SystemController extends Controller
                 'department' => $departmentId > 0
                     ? $departmentId
                     : null,
+                'selected' => $selectedSystem?->public_id,
             ],
 
             'systemTypes' => [
@@ -261,6 +346,14 @@ final class SystemController extends Controller
             'canManage' => $request
                 ->user()
                 ?->can('create', System::class) ?? false,
+            'canManageSelected' => $selectedSystem !== null
+                && ($request->user()?->can('update', $selectedSystem) ?? false),
+            'canManageDicomConnections' => $request
+                ->user()
+                ?->can('create', DicomConnection::class) ?? false,
+            'canManageDicomNodes' => $request
+                ->user()
+                ?->can('create', DicomNode::class) ?? false,
         ]);
     }
 
