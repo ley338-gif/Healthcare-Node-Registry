@@ -10,7 +10,10 @@ use App\Models\DicomNode;
 use App\Models\Organization;
 use App\Models\Site;
 use App\Models\System;
+use App\Models\User;
+use App\Services\Audit\RegistryHistoryService;
 use App\Support\RegistryAudit;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -357,7 +360,7 @@ final class SystemController extends Controller
         ]);
     }
 
-    public function show(Request $request, System $system): Response
+    public function show(Request $request, System $system, RegistryHistoryService $historyService): Response
     {
         Gate::authorize('view', $system);
 
@@ -367,8 +370,63 @@ final class SystemController extends Controller
             'department:id,public_id,name',
         ]);
 
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+        $historyBase = $historyService->forContext($user, $system);
+        $historyQuery = clone $historyBase;
+        $historyFrom = trim((string) $request->query('history_from', ''));
+        $historyTo = trim((string) $request->query('history_to', ''));
+        $historyType = trim((string) $request->query('history_type', ''));
+        $historyUser = trim((string) $request->query('history_user', ''));
+        $historySearch = trim((string) $request->query('history_search', ''));
+        $historyStatus = trim((string) $request->query('history_status', ''));
+
+        $historyQuery
+            ->when($historyFrom !== '', fn ($query) => $query->whereDate('occurred_at', '>=', $historyFrom))
+            ->when($historyTo !== '', fn ($query) => $query->whereDate('occurred_at', '<=', $historyTo))
+            ->when($historyType !== '', fn ($query) => $query->where('event_type', $historyType))
+            ->when($historyUser !== '', fn ($query) => $query->where('metadata->actor_public_id', $historyUser))
+            ->when($historyStatus !== '', fn ($query) => $query->where('metadata->status', $historyStatus))
+            ->when($historySearch !== '', fn ($query) => $query->where(function ($searchQuery) use ($historySearch): void {
+                $searchQuery->where('event_type', 'ilike', "%{$historySearch}%")
+                    ->orWhere('subject_public_id', 'ilike', "%{$historySearch}%");
+            }));
+
+        $actorIds = (clone $historyBase)->get()->pluck('metadata')->map(
+            fn (mixed $metadata): ?string => is_array($metadata) && is_string($metadata['actor_public_id'] ?? null)
+                ? $metadata['actor_public_id']
+                : null,
+        )->filter()->unique()->values();
+        $actors = User::query()->whereIn('public_id', $actorIds)->pluck('name', 'public_id');
+        $now = CarbonImmutable::now();
+
         return Inertia::render('Registry/Systems/Show', [
             'system' => $system,
+            'history' => $historyQuery->paginate(15, ['*'], 'history_page')->withQueryString()->through(
+                fn ($event): array => [
+                    'event_id' => $event->event_id,
+                    'event_type' => $event->event_type,
+                    'subject_type' => class_basename((string) $event->subject_type),
+                    'subject_public_id' => $event->subject_public_id,
+                    'actor_name' => $actors->get($event->metadata['actor_public_id'] ?? '') ?? 'System',
+                    'metadata' => $event->metadata,
+                    'occurred_at' => $event->occurred_at->toIso8601String(),
+                ],
+            ),
+            'historyStats' => [
+                'total' => (clone $historyBase)->count(),
+                'today' => (clone $historyBase)->where('occurred_at', '>=', $now->startOfDay())->count(),
+                'last7Days' => (clone $historyBase)->where('occurred_at', '>=', $now->subDays(7))->count(),
+                'last30Days' => (clone $historyBase)->where('occurred_at', '>=', $now->subDays(30))->count(),
+            ],
+            'historyFilters' => $request->only([
+                'history_from', 'history_to', 'history_type', 'history_user', 'history_search', 'history_status',
+            ]),
+            'historyEventTypes' => (clone $historyBase)->reorder('event_type')->distinct()->pluck('event_type'),
+            'historyUsers' => $actors->map(fn (string $name, string $publicId): array => [
+                'public_id' => $publicId,
+                'name' => $name,
+            ])->values(),
 
             'systemTypes' => [
                 ['value' => 'pacs', 'label' => 'PACS'],

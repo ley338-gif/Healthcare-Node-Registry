@@ -13,6 +13,7 @@ import SystemWorkspaceDetail, {
 } from '../../../Components/registry/systems/SystemWorkspaceDetail.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
 import { ref } from 'vue';
+import type { AuditEvent } from '../../../Components/audit/AuditHistoryPanel.vue';
 
 defineProps<{
     system: SystemDetail;
@@ -27,6 +28,15 @@ defineProps<{
     canManage: boolean;
     canManageDicomNodes: boolean;
     canManageDicomConnections: boolean;
+    history: {
+        data: AuditEvent[];
+        links: Array<{ url: string | null; label: string; active: boolean }>;
+        total: number;
+    };
+    historyStats: { total: number; today: number; last7Days: number; last30Days: number };
+    historyFilters: Record<string, string | undefined>;
+    historyEventTypes: string[];
+    historyUsers: Array<{ public_id: string; name: string }>;
 }>();
 
 const editPanelOpen = ref(false);
@@ -54,6 +64,11 @@ const editPanelOpen = ref(false);
             :can-manage="canManage"
             :can-manage-dicom-nodes="canManageDicomNodes"
             :can-manage-dicom-connections="canManageDicomConnections"
+            :history="history"
+            :history-stats="historyStats"
+            :history-filters="historyFilters"
+            :history-event-types="historyEventTypes"
+            :history-users="historyUsers"
             @edit="editPanelOpen = true"
         />
 

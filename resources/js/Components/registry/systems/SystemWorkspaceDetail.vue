@@ -7,7 +7,6 @@ import {
     CircleHelp,
     Database,
     FileText,
-    History,
     MapPin,
     Network,
     Pencil,
@@ -22,6 +21,7 @@ import DicomConnectionManager, {
 import DicomNodeManager, { type DicomNode } from '../dicom/DicomNodeManager.vue';
 import DicomNetworkMap, { type NetworkConnection, type NetworkNode } from '../../network/DicomNetworkMap.vue';
 import ContentCard from '../../ui/ContentCard.vue';
+import AuditHistoryPanel, { type AuditEvent } from '../../audit/AuditHistoryPanel.vue';
 
 export type SelectOption = {
     value: string;
@@ -99,10 +99,24 @@ const props = withDefaults(
         canManage: boolean;
         canManageDicomNodes: boolean;
         canManageDicomConnections: boolean;
+        history?: {
+            data: AuditEvent[];
+            links: Array<{ url: string | null; label: string; active: boolean }>;
+            total: number;
+        };
+        historyStats?: { total: number; today: number; last7Days: number; last30Days: number };
+        historyFilters?: Record<string, string | undefined>;
+        historyEventTypes?: string[];
+        historyUsers?: Array<{ public_id: string; name: string }>;
     }>(),
     {
         topologyNodes: () => [],
         topologyConnections: () => [],
+        history: () => ({ data: [], links: [], total: 0 }),
+        historyStats: () => ({ total: 0, today: 0, last7Days: 0, last30Days: 0 }),
+        historyFilters: () => ({}),
+        historyEventTypes: () => [],
+        historyUsers: () => [],
     },
 );
 
@@ -514,10 +528,13 @@ const statusClass = (value: string): string => {
             </ContentCard>
 
             <ContentCard v-else title="Historie" description="Änderungen und sicherheitsrelevante Ereignisse.">
-                <div class="py-10 text-center">
-                    <History :size="32" class="mx-auto text-slate-300" />
-                    <p class="mt-4 font-medium text-slate-900">Audit-Historie wird vorbereitet</p>
-                </div>
+                <AuditHistoryPanel
+                    :events="history"
+                    :stats="historyStats"
+                    :filters="historyFilters"
+                    :event-types="historyEventTypes"
+                    :users="historyUsers"
+                />
             </ContentCard>
         </div>
     </section>
