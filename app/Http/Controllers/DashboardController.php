@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Models\DiagnosticTestRun;
 use App\Models\DicomConnection;
 use App\Models\DicomNode;
 use App\Models\Organization;
@@ -10,12 +11,13 @@ use App\Models\SecurityEvent;
 use App\Models\Site;
 use App\Models\System;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 final class DashboardController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response
     {
         $organizations = Organization::query()->active()->count();
         $sites = Site::query()->active()->count();
@@ -55,6 +57,37 @@ final class DashboardController extends Controller
             ->values()
             ->all();
 
+        $canViewDiagnostics = $request->user()?->hasPermission('registry.view')
+            || $request->user()?->hasPermission('registry.manage');
+        $diagnostics = null;
+        if ($canViewDiagnostics) {
+            $lastSuccessfulEcho = DiagnosticTestRun::query()
+                ->where('test_type', 'dicom_echo')
+                ->where('status', 'success')
+                ->latest('finished_at')
+                ->first();
+            $diagnostics = [
+                'failedTests' => DiagnosticTestRun::query()->whereIn('status', ['failed', 'timeout'])->count(),
+                'averageDurationMilliseconds' => (int) round((float) (DiagnosticTestRun::query()->avg('duration_ms') ?? 0)),
+                'lastSuccessfulEchoAt' => $lastSuccessfulEcho?->finished_at->toIso8601String(),
+                'recentTests' => DiagnosticTestRun::query()
+                    ->with('dicomNode:id,public_id,name')
+                    ->latest('started_at')
+                    ->limit(5)
+                    ->get()
+                    ->map(static fn (DiagnosticTestRun $run): array => [
+                        'publicId' => $run->public_id,
+                        'testType' => $run->test_type,
+                        'status' => $run->status,
+                        'durationMilliseconds' => $run->duration_ms,
+                        'startedAt' => $run->started_at->toIso8601String(),
+                        'dicomNode' => ['publicId' => $run->dicomNode->public_id, 'name' => $run->dicomNode->name],
+                    ])
+                    ->values()
+                    ->all(),
+            ];
+        }
+
         return Inertia::render('Dashboard', [
             'summary' => [
                 'organizations' => $organizations,
@@ -67,6 +100,7 @@ final class DashboardController extends Controller
                 'unverifiedDicomNodes' => $unverifiedDicomNodes,
             ],
             'recentChanges' => $recentChanges,
+            'diagnostics' => $diagnostics,
             'tasks' => [
                 [
                     'label' => 'Mindestens ein System dokumentieren',

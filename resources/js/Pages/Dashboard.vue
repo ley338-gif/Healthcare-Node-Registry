@@ -9,6 +9,8 @@ import {
     CircleAlert,
     CircleCheck,
     CircleHelp,
+    Clock3,
+    FlaskConical,
     Map,
     Radio,
 } from '@lucide/vue';
@@ -41,11 +43,36 @@ type Task = {
     href: string;
 };
 
+type Diagnostics = {
+    failedTests: number;
+    averageDurationMilliseconds: number;
+    lastSuccessfulEchoAt: string | null;
+    recentTests: Array<{
+        publicId: string;
+        testType: string;
+        status: string;
+        durationMilliseconds: number;
+        startedAt: string;
+        dicomNode: { publicId: string; name: string };
+    }>;
+};
+
 const props = defineProps<{
     summary: Summary;
     recentChanges: RecentChange[];
     tasks: Task[];
+    diagnostics: Diagnostics | null;
 }>();
+
+const testTypeLabel = (type: string): string =>
+    ({
+        network: 'Netzwerk',
+        dicom_echo: 'C-ECHO',
+        worklist: 'Worklist',
+        pacs_query: 'PACS Query',
+        dicom_storage: 'DICOM Storage',
+        dicom_capability_matrix: 'Capability-Matrix',
+    })[type] ?? type;
 
 const warningCount = computed(() => props.summary.failedDicomNodes + props.summary.unverifiedDicomNodes);
 
@@ -215,6 +242,88 @@ const changeIconClass = (eventType: string): string => {
                 </p>
             </Link>
         </div>
+
+        <section v-if="diagnostics" class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="grid h-10 w-10 place-items-center rounded-xl bg-teal-50 text-teal-700">
+                        <FlaskConical :size="19" />
+                    </div>
+                    <div>
+                        <h2 class="font-semibold text-slate-950">Diagnosestatus</h2>
+                        <p class="text-sm text-slate-500">Aktuelle Ergebnisse des Test-Workspace</p>
+                    </div>
+                </div>
+                <Link
+                    href="/tests"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white"
+                    ><FlaskConical :size="16" />Tests öffnen</Link
+                >
+            </div>
+            <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                <div class="rounded-xl border border-rose-200 bg-rose-50 p-4">
+                    <p class="text-xs font-medium text-rose-700">Fehlgeschlagene Testläufe</p>
+                    <p class="mt-2 text-2xl font-semibold text-rose-800">{{ diagnostics.failedTests }}</p>
+                </div>
+                <div class="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                    <p class="text-xs font-medium text-blue-700">Durchschnittliche Testdauer</p>
+                    <p class="mt-2 text-2xl font-semibold text-blue-800">
+                        {{ diagnostics.averageDurationMilliseconds }} ms
+                    </p>
+                </div>
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                    <p class="text-xs font-medium text-emerald-700">Letzter erfolgreicher C-ECHO</p>
+                    <p class="mt-2 text-sm font-semibold text-emerald-800">
+                        {{
+                            diagnostics.lastSuccessfulEchoAt
+                                ? formatDate(diagnostics.lastSuccessfulEchoAt)
+                                : 'Noch nicht erfolgreich'
+                        }}
+                    </p>
+                </div>
+            </div>
+            <div class="mt-5 overflow-x-auto rounded-xl border border-slate-200">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+                    <thead class="bg-slate-50 text-xs text-slate-500 uppercase">
+                        <tr>
+                            <th class="px-4 py-3">Zeitpunkt</th>
+                            <th class="px-4 py-3">Knoten</th>
+                            <th class="px-4 py-3">Test</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3">Dauer</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr v-for="test in diagnostics.recentTests" :key="test.publicId">
+                            <td class="px-4 py-3 text-slate-600">{{ formatDate(test.startedAt) }}</td>
+                            <td class="px-4 py-3 font-semibold text-slate-900">{{ test.dicomNode.name }}</td>
+                            <td class="px-4 py-3">{{ testTypeLabel(test.testType) }}</td>
+                            <td class="px-4 py-3">
+                                <span
+                                    class="rounded-full px-2 py-1 text-xs font-semibold"
+                                    :class="
+                                        test.status === 'success'
+                                            ? 'bg-emerald-50 text-emerald-700'
+                                            : 'bg-rose-50 text-rose-700'
+                                    "
+                                    >{{ test.status }}</span
+                                >
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center gap-1"
+                                    ><Clock3 :size="14" />{{ test.durationMilliseconds }} ms</span
+                                >
+                            </td>
+                        </tr>
+                        <tr v-if="diagnostics.recentTests.length === 0">
+                            <td colspan="5" class="px-4 py-8 text-center text-slate-500">
+                                Noch keine Diagnose-Testläufe vorhanden.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
         <div class="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
             <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
