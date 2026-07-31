@@ -23,6 +23,7 @@ import {
     Send,
     Settings2,
     Stethoscope,
+    TableProperties,
     X,
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
@@ -170,6 +171,7 @@ const worklistDialogOpen = ref(false);
 const pacsDialogOpen = ref(false);
 const profileDialogOpen = ref(false);
 const storageDialogOpen = ref(false);
+const capabilityDialogOpen = ref(false);
 const editingProfileId = ref<string | null>(null);
 const historyFrom = ref(props.historyFilters.history_from ?? '');
 const historyTo = ref(props.historyFilters.history_to ?? '');
@@ -212,6 +214,7 @@ const profileForm = useForm({
     enabled: true,
 });
 const storageForm = useForm({ confirmed: false, calling_ae_title: 'NODE_REGISTRY', called_ae_title: '' });
+const capabilityForm = useForm({ calling_ae_title: 'NODE_REGISTRY', called_ae_title: '' });
 
 const selectedNode = computed(() => props.nodes.find((node) => node.public_id === selectedNodeId.value) ?? null);
 
@@ -284,6 +287,48 @@ const worklistResults = computed<WorklistItem[]>(() => {
 
     return Array.isArray(results) ? (results as WorklistItem[]) : [];
 });
+
+type CapabilityCell = { sopClass: string; transferSyntax: string; status: string; verification: string };
+const capabilityMatrix = computed<CapabilityCell[]>(() => {
+    if (displayedDiagnosticResult.value?.testType !== 'dicom_capability_matrix') return [];
+    const matrix = displayedDiagnosticResult.value.details.matrix;
+    return Array.isArray(matrix) ? (matrix as CapabilityCell[]) : [];
+});
+const capabilitySopClasses = computed<Record<string, { label: string; uid: string }>>(
+    () => (displayedDiagnosticResult.value?.details.sopClasses ?? {}) as Record<string, { label: string; uid: string }>,
+);
+const capabilityTransferSyntaxes = computed<Record<string, { label: string; uid: string }>>(
+    () =>
+        (displayedDiagnosticResult.value?.details.transferSyntaxes ?? {}) as Record<
+            string,
+            { label: string; uid: string }
+        >,
+);
+const capabilityStatus = (sopClass: string, transferSyntax: string): string =>
+    capabilityMatrix.value.find((cell) => cell.sopClass === sopClass && cell.transferSyntax === transferSyntax)
+        ?.status ?? 'not_tested';
+
+const exportCapabilityMatrix = (): void => {
+    const rows = ['SOP Class,Transfer Syntax,Status,Prüfart'];
+    for (const cell of capabilityMatrix.value) {
+        rows.push(
+            [
+                capabilitySopClasses.value[cell.sopClass]?.label ?? cell.sopClass,
+                capabilityTransferSyntaxes.value[cell.transferSyntax]?.label ?? cell.transferSyntax,
+                cell.status,
+                'Presentation Context',
+            ]
+                .map((value) => `"${value.replaceAll('"', '""')}"`)
+                .join(','),
+        );
+    }
+    const url = URL.createObjectURL(new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dicom-capabilities-${selectedNode.value?.public_id ?? 'result'}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+};
 
 watch(filteredNodes, (nodes) => {
     if (nodes.length === 0) return;
@@ -444,6 +489,24 @@ const runStorageTest = (): void => {
     });
 };
 
+const openCapabilityTest = (): void => {
+    if (!selectedNode.value?.supports_store || !props.canRunStorage) return;
+    capabilityForm.reset();
+    capabilityForm.called_ae_title = selectedNode.value.ae_title;
+    capabilityDialogOpen.value = true;
+};
+
+const runCapabilityTest = (): void => {
+    if (selectedNode.value === null) return;
+    capabilityForm.post(`/tests/capabilities/${selectedNode.value.public_id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            capabilityDialogOpen.value = false;
+            resultExpanded.value = true;
+        },
+    });
+};
+
 const formatDate = (value: string | null): string => {
     if (value === null) return 'Noch nicht ausgeführt';
 
@@ -460,6 +523,7 @@ const testTypeLabel = (type: string): string =>
         worklist: 'Worklist',
         pacs_query: 'PACS Query',
         dicom_storage: 'DICOM Storage',
+        dicom_capability_matrix: 'Capability-Matrix',
     })[type] ?? type;
 
 const applyHistoryFilters = (): void => {
@@ -709,7 +773,7 @@ const prepareRerun = (run: HistoryRun): void => {
                         <p class="mt-1 text-sm text-slate-500">Geeignete Prüfungen für den ausgewählten Knoten.</p>
                     </div>
 
-                    <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-5">
+                    <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
                         <article
                             class="flex min-h-[220px] flex-col rounded-2xl border border-cyan-200 bg-white p-5 shadow-sm"
                         >
@@ -727,6 +791,26 @@ const prepareRerun = (run: HistoryRun): void => {
                                 <LoaderCircle v-if="networkProcessing" :size="16" class="animate-spin" />
                                 <Cable v-else :size="16" />
                                 {{ networkProcessing ? 'TCP-Verbindung wird geprüft' : 'Verbindung testen' }}
+                            </button>
+                        </article>
+
+                        <article
+                            class="flex min-h-[220px] flex-col rounded-2xl border border-teal-200 bg-white p-5 shadow-sm"
+                        >
+                            <div class="self-start rounded-xl bg-teal-50 p-2.5 text-teal-700">
+                                <TableProperties :size="20" />
+                            </div>
+                            <h3 class="mt-5 font-semibold text-slate-950">Capability-Matrix</h3>
+                            <p class="mt-2 flex-1 text-sm leading-6 text-slate-500">
+                                SOP Classes und Transfer Syntaxes per DICOM Association aushandeln – ohne C-STORE.
+                            </p>
+                            <button
+                                type="button"
+                                :disabled="!canRunStorage || !selectedNode.supports_store || capabilityForm.processing"
+                                class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                                @click="openCapabilityTest"
+                            >
+                                <TableProperties :size="16" />Matrix prüfen
                             </button>
                         </article>
 
@@ -860,6 +944,65 @@ const prepareRerun = (run: HistoryRun): void => {
                                     {{ testTypeLabel(displayedDiagnosticResult.testType) }} ·
                                     {{ displayedDiagnosticResult.durationMilliseconds }} ms
                                 </p>
+                            </div>
+
+                            <div
+                                v-if="capabilityMatrix.length"
+                                class="overflow-x-auto rounded-xl border border-slate-200"
+                            >
+                                <table class="min-w-full divide-y divide-slate-200 text-xs">
+                                    <thead class="bg-slate-50">
+                                        <tr>
+                                            <th class="px-3 py-3 text-left font-semibold text-slate-700">SOP Class</th>
+                                            <th
+                                                v-for="(syntax, key) in capabilityTransferSyntaxes"
+                                                :key="key"
+                                                class="min-w-28 px-3 py-3 text-left font-semibold text-slate-700"
+                                            >
+                                                {{ syntax.label }}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 bg-white">
+                                        <tr v-for="(sop, sopKey) in capabilitySopClasses" :key="sopKey">
+                                            <th class="px-3 py-3 text-left font-medium text-slate-800">
+                                                {{ sop.label }}
+                                            </th>
+                                            <td
+                                                v-for="(_, syntaxKey) in capabilityTransferSyntaxes"
+                                                :key="syntaxKey"
+                                                class="px-3 py-3"
+                                            >
+                                                <span
+                                                    class="rounded-full px-2 py-1 font-semibold"
+                                                    :class="
+                                                        capabilityStatus(String(sopKey), String(syntaxKey)) ===
+                                                        'accepted'
+                                                            ? 'bg-emerald-50 text-emerald-700'
+                                                            : capabilityStatus(String(sopKey), String(syntaxKey)) ===
+                                                                'not_tested'
+                                                              ? 'bg-slate-100 text-slate-500'
+                                                              : 'bg-rose-50 text-rose-700'
+                                                    "
+                                                    >{{ capabilityStatus(String(sopKey), String(syntaxKey)) }}</span
+                                                >
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p class="border-t border-slate-200 bg-teal-50 px-3 py-2 text-xs text-teal-800">
+                                    Prüfart: ausschließlich Presentation-Context-Negotiation; kein Objekt wurde
+                                    gespeichert.
+                                </p>
+                                <div class="border-t border-slate-200 p-3 text-right">
+                                    <button
+                                        type="button"
+                                        class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700"
+                                        @click="exportCapabilityMatrix"
+                                    >
+                                        <Download :size="14" />Matrix als CSV
+                                    </button>
+                                </div>
                             </div>
                             <ol class="space-y-2">
                                 <li
@@ -1439,6 +1582,52 @@ const prepareRerun = (run: HistoryRun): void => {
                     </div>
                 </form>
             </aside>
+        </div>
+
+        <div v-if="capabilityDialogOpen && selectedNode" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
+            <button
+                type="button"
+                class="absolute inset-0 bg-slate-950/40"
+                aria-label="Capability-Dialog schließen"
+                @click="capabilityDialogOpen = false"
+            />
+            <section class="absolute inset-y-0 right-0 w-full max-w-lg overflow-y-auto bg-white p-6 shadow-2xl">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold text-teal-600 uppercase">DICOM Capability-Matrix</p>
+                        <h2 class="mt-2 text-xl font-semibold text-slate-950">Presentation Contexts prüfen</h2>
+                        <p class="mt-2 text-sm text-slate-500">
+                            Die Association wird nach der Aushandlung beendet. Es wird kein C-STORE ausgeführt.
+                        </p>
+                    </div>
+                    <button type="button" @click="capabilityDialogOpen = false"><X :size="20" /></button>
+                </div>
+                <form class="mt-6 space-y-4" @submit.prevent="runCapabilityTest">
+                    <label class="block text-sm font-medium text-slate-700"
+                        >Calling AE Title<input
+                            v-model="capabilityForm.calling_ae_title"
+                            maxlength="16"
+                            class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                    /></label>
+                    <label class="block text-sm font-medium text-slate-700"
+                        >Called AE Title<input
+                            v-model="capabilityForm.called_ae_title"
+                            maxlength="16"
+                            class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                    /></label>
+                    <button
+                        type="submit"
+                        :disabled="capabilityForm.processing"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                    >
+                        <LoaderCircle
+                            v-if="capabilityForm.processing"
+                            :size="16"
+                            class="animate-spin"
+                        /><TableProperties v-else :size="16" />Capability-Matrix prüfen
+                    </button>
+                </form>
+            </section>
         </div>
 
         <div v-if="storageDialogOpen && selectedNode" class="fixed inset-0 z-50" role="dialog" aria-modal="true">

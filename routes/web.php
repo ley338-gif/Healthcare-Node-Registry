@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\CapabilityMatrixDiagnosticController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DiagnosticProfileExecutionController;
@@ -97,6 +98,8 @@ Route::middleware('auth')->group(function (): void {
         ->name('tests.pacs-query.run');
     Route::post('/tests/storage/{dicomNode}', StorageDiagnosticController::class)
         ->name('tests.storage.run');
+    Route::post('/tests/capabilities/{dicomNode}', CapabilityMatrixDiagnosticController::class)
+        ->name('tests.capabilities.run');
 
     Route::post('/tests/profiles', [DiagnosticTestProfileController::class, 'store'])
         ->name('tests.profiles.store');
