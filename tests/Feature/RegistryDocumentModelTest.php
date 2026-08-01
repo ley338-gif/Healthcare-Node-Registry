@@ -111,6 +111,24 @@ final class RegistryDocumentModelTest extends TestCase
         RegistryDocument::factory()->create(['category' => 'unknown_category']);
     }
 
+    public function test_document_validity_status_uses_configured_warning_period(): void
+    {
+        config()->set('registry_documents.expiry_warning_days', 60);
+
+        $active = RegistryDocument::factory()->create(['valid_until' => CarbonImmutable::today()->addDays(61)]);
+        $expiring = RegistryDocument::factory()->create(['valid_until' => CarbonImmutable::today()->addDays(60)]);
+        $expired = RegistryDocument::factory()->create(['valid_until' => CarbonImmutable::today()->subDay()]);
+        $undated = RegistryDocument::factory()->create(['valid_until' => null]);
+        $archived = RegistryDocument::factory()->create(['valid_until' => CarbonImmutable::today()->addYear(), 'archived_at' => now()]);
+
+        self::assertSame('active', $active->validity_status);
+        self::assertSame('expiring_soon', $expiring->validity_status);
+        self::assertSame('Läuft bald ab', $expiring->validity_status_label);
+        self::assertSame('expired', $expired->validity_status);
+        self::assertSame('undated', $undated->validity_status);
+        self::assertSame('archived', $archived->validity_status);
+    }
+
     /** @return array{Organization, Site, Department, System} */
     private function structure(): array
     {

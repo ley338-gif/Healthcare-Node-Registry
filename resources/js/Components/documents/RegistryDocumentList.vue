@@ -27,7 +27,11 @@ export type RegistryDocumentItem = {
     category_label: string;
     visibility: string;
     status: string;
+    valid_from: string | null;
     valid_until: string | null;
+    contract_reference: string | null;
+    validity_status: 'active' | 'expiring_soon' | 'expired' | 'undated' | 'archived';
+    validity_status_label: string;
     updated_at: string;
     current_version: RegistryDocumentVersionItem | null;
     versions: RegistryDocumentVersionItem[];
@@ -64,12 +68,11 @@ const filtered = computed(() =>
             [item.title, item.description, item.current_version?.original_filename].some((value) =>
                 value?.toLocaleLowerCase('de').includes(term),
             );
-        const expired = item.valid_until !== null && new Date(item.valid_until).getTime() < Date.now();
         return (
             matchesSearch &&
             (!category.value || categoryValue(item) === category.value) &&
             (!scanStatus.value || item.current_version?.malware_scan_status === scanStatus.value) &&
-            (!validity.value || (validity.value === 'expired' ? expired : item.valid_until === null))
+            (!validity.value || item.validity_status === validity.value)
         );
     }),
 );
@@ -86,6 +89,16 @@ const size = (value: number): string =>
     new Intl.NumberFormat('de-DE', { style: 'unit', unit: 'kilobyte', maximumFractionDigits: 1 }).format(value / 1024);
 const dateTime = (value: string): string =>
     new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+const date = (value: string): string =>
+    new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(value));
+const validityClasses = (status: RegistryDocumentItem['validity_status']): string =>
+    ({
+        active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+        expiring_soon: 'bg-amber-50 text-amber-700 ring-amber-200',
+        expired: 'bg-red-50 text-red-700 ring-red-200',
+        undated: 'bg-slate-100 text-slate-600 ring-slate-200',
+        archived: 'bg-slate-200 text-slate-600 ring-slate-300',
+    })[status];
 const scanLabel = (status: string): string =>
     ({
         clean: 'Sauber',
@@ -170,8 +183,11 @@ const uploadVersionFromPreview = (document: RegistryDocumentItem): void => {
                     class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                 >
                     <option value="">Alle Gültigkeiten</option>
+                    <option value="active">Aktiv</option>
+                    <option value="expiring_soon">Läuft bald ab</option>
                     <option value="expired">Abgelaufen</option>
                     <option value="undated">Ohne Gültigkeitsdatum</option>
+                    <option value="archived">Archiviert</option>
                 </select>
             </div>
             <p v-if="!filtered.length" class="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
@@ -185,7 +201,8 @@ const uploadVersionFromPreview = (document: RegistryDocumentItem): void => {
                             <th class="px-4 py-3">Kategorie</th>
                             <th class="px-4 py-3">Version</th>
                             <th class="px-4 py-3">Datei</th>
-                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3">Gültigkeit</th>
+                            <th class="px-4 py-3">Scanstatus</th>
                             <th class="px-4 py-3"><span class="sr-only">Aktionen</span></th>
                         </tr>
                     </thead>
@@ -201,6 +218,17 @@ const uploadVersionFromPreview = (document: RegistryDocumentItem): void => {
                                     >{{ item.current_version.original_filename }} ·
                                     {{ size(item.current_version.size_bytes) }}</template
                                 ><template v-else>—</template>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span
+                                    class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset"
+                                    :class="validityClasses(item.validity_status)"
+                                >
+                                    {{ item.validity_status_label }}
+                                </span>
+                                <p v-if="item.valid_until" class="mt-1 text-xs text-slate-500">
+                                    bis {{ date(item.valid_until) }}
+                                </p>
                             </td>
                             <td class="px-4 py-3">
                                 {{
@@ -246,6 +274,9 @@ const uploadVersionFromPreview = (document: RegistryDocumentItem): void => {
                     <div>
                         <h4 class="font-semibold text-slate-950">Versionshistorie · {{ expandedDocument.title }}</h4>
                         <p class="mt-1 text-xs text-slate-500">Frühere Versionen bleiben unverändert erhalten.</p>
+                        <p v-if="expandedDocument.contract_reference" class="mt-1 text-xs text-slate-500">
+                            Vertragsreferenz: {{ expandedDocument.contract_reference }}
+                        </p>
                     </div>
                     <button
                         v-if="canManageVersions"

@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Support\RegistryDocumentCategory;
+use App\Support\RegistryDocumentValidityStatus;
 use Carbon\CarbonImmutable;
 use Database\Factories\RegistryDocumentFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,11 +34,16 @@ use Illuminate\Support\Str;
  * @property CarbonImmutable|null $archived_at
  * @property CarbonImmutable $created_at
  * @property CarbonImmutable $updated_at
+ * @property-read string $validity_status
+ * @property-read string $validity_status_label
  */
 final class RegistryDocument extends Model
 {
     /** @use HasFactory<RegistryDocumentFactory> */
     use HasFactory;
+
+    /** @var list<string> */
+    protected $appends = ['validity_status', 'validity_status_label'];
 
     protected $fillable = [
         'title',
@@ -81,6 +88,18 @@ final class RegistryDocument extends Model
         return 'public_id';
     }
 
+    /** @return Attribute<string, never> */
+    protected function validityStatus(): Attribute
+    {
+        return Attribute::get(fn (): string => $this->resolveValidityStatus()->value);
+    }
+
+    /** @return Attribute<string, never> */
+    protected function validityStatusLabel(): Attribute
+    {
+        return Attribute::get(fn (): string => $this->resolveValidityStatus()->label());
+    }
+
     /** @return MorphTo<Model, $this> */
     public function documentable(): MorphTo
     {
@@ -109,5 +128,26 @@ final class RegistryDocument extends Model
     public function updatedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    private function resolveValidityStatus(): RegistryDocumentValidityStatus
+    {
+        if ($this->archived_at !== null || $this->status === 'archived') {
+            return RegistryDocumentValidityStatus::Archived;
+        }
+        if ($this->valid_until === null) {
+            return RegistryDocumentValidityStatus::Undated;
+        }
+
+        $today = CarbonImmutable::today();
+        if ($this->valid_until->isBefore($today)) {
+            return RegistryDocumentValidityStatus::Expired;
+        }
+        $warningDays = max(0, (int) config('registry_documents.expiry_warning_days'));
+        if ($this->valid_until->lessThanOrEqualTo($today->addDays($warningDays))) {
+            return RegistryDocumentValidityStatus::ExpiringSoon;
+        }
+
+        return RegistryDocumentValidityStatus::Active;
     }
 }
