@@ -14,6 +14,12 @@ final class RbacBootstrapper
         'tests.run.storage' => 'DICOM-Storage-Test ausführen',
         'tests.analyze_file' => 'DICOM-Dateien analysieren',
         'tests.export' => 'Diagnoseergebnisse exportieren',
+        'documents.view' => 'Dokumente anzeigen',
+        'documents.upload' => 'Dokumente hochladen',
+        'documents.update' => 'Dokumente bearbeiten',
+        'documents.archive' => 'Dokumente archivieren',
+        'documents.download' => 'Dokumente herunterladen',
+        'documents.manage_versions' => 'Dokumentversionen verwalten',
     ];
 
     public function ensureSystemAdministratorRole(): Role

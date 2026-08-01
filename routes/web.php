@@ -16,6 +16,7 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
 use App\Http\Controllers\PacsQueryDiagnosticController;
 use App\Http\Controllers\RegistryDocumentationController;
+use App\Http\Controllers\RegistryDocumentController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\StorageDiagnosticController;
 use App\Http\Controllers\SystemController;
@@ -42,6 +43,9 @@ Route::middleware('auth')->group(function (): void {
         ->name('registry-documentation.store');
     Route::put('/registry-documentation/{registryDocumentation}', [RegistryDocumentationController::class, 'update'])
         ->name('registry-documentation.update');
+    Route::post('/registry-documents/{documentableType}/{documentable}', [RegistryDocumentController::class, 'store'])
+        ->whereIn('documentableType', ['organizations', 'sites', 'departments', 'systems'])
+        ->name('registry-documents.store');
 
     Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
     Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');

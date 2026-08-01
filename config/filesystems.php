@@ -18,5 +18,12 @@ return [
             'throw' => false,
             'report' => false,
         ],
+        'registry_documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/registry-documents'),
+            'serve' => false,
+            'throw' => true,
+            'report' => true,
+        ],
     ],
 ];
