@@ -67,6 +67,12 @@ final class Site extends Model
         return $this->morphMany(RegistryDocumentation::class, 'documentable');
     }
 
+    /** @return MorphMany<RegistryDocument, $this> */
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(RegistryDocument::class, 'documentable');
+    }
+
     /**
      * @param  Builder<Site>  $query
      */
