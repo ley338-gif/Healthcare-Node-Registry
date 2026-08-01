@@ -11,6 +11,14 @@
 - Audit-Ereignisse für Dokumentationsänderungen ohne vollständige Langtexte
 - zentrale Audit-Filterung und Entity-Auflösung als Vorbereitung der globalen Audit-Seite
 
+- private Dokumentenablage für Organisationen, Standorte, Abteilungen und Systeme
+- unveränderliche Dateiversionen mit aktueller Version, SHA-256 und Duplikaterkennung
+- zentrale Dokumentkategorien, Gültigkeitsstatus, Suche, Filter und serverseitige Pagination
+- serverseitige Datei-Allowlist mit MIME- und Signaturprüfung sowie konfigurierbarem Größenlimit
+- Malware-Scanner-Schnittstelle mit Fail-Closed-Zugriff für nicht saubere Versionen
+- berechtigungsgeprüfter Download und abgesicherte PDF-Vorschau ohne öffentliche Storage-URL
+- Audit-Ereignisse für Upload, Versionierung, Metadaten, Archivierung und Scanfehler
+
 ### Added
 
 - Diagnose-Workspace mit standardisierter Ergebnisarchitektur und persistentem Verlauf

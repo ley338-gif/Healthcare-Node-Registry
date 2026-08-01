@@ -1,106 +1,93 @@
-# Strukturierte Registry-Dokumentation
+# Registry-Dokumentation und Dokumentenablage
 
-`registry_documentation` speichert aktuelle Betriebsdokumentation polymorph für Organisationen, Standorte, Abteilungen und Systeme. Stammdaten wie Hersteller, Hostname oder Adresse bleiben in ihren Registry-Modellen und werden in der Dokumentationsoberfläche nur read-only angezeigt.
+Die Registry verbindet zwei getrennte, aber gemeinsam dargestellte Informationsarten:
 
-## Struktur
+- `registry_documentation` enthält editierbare Betriebsdokumentation für Organisationen, Standorte, Abteilungen und Systeme.
+- `registry_documents` und `registry_document_versions` verwalten hochgeladene Dateien und deren unveränderliche Versionen für dieselben vier Registry-Kontexte.
 
-Jeder Eintrag besitzt Dokumentationstyp, Sektion, Titel, optionalen Inhalt, strukturierte JSON-Daten, Sichtbarkeit sowie Ersteller und letzten Bearbeiter. Pro Entität, Dokumentationstyp und Sektion existiert höchstens ein Eintrag.
+Stammdaten wie Hersteller, Hostname oder Adresse verbleiben ausschließlich in den jeweiligen Registry-Modellen und werden im Dokumentationsbereich nur lesend angezeigt.
 
-Systeme bieten zehn Betriebssektionen. Organisationen, Standorte und Abteilungen besitzen eigene fachlich passende Sektionen. Alle verwenden `DocumentationPanel.vue` mit Cards, sektionenweisem Slide-over und einem nachvollziehbaren Fortschritt aus explizit definierten Pflichtfeldern.
+## Strukturierte Dokumentation
 
-## Audit und Berechtigungen
+Ein Dokumentationseintrag besitzt Dokumentationstyp, Sektion, Titel, optionalen Inhalt, strukturierte JSON-Daten, Sichtbarkeit sowie Ersteller und letzten Bearbeiter. Pro Entität, Dokumentationstyp und Sektion existiert höchstens ein Eintrag.
 
-Lesen und Bearbeiten verwenden die bestehenden Registry-Policies. Es wurde kein paralleles Rollensystem eingeführt. Jede Anlage oder Änderung erzeugt `documentation.updated` über `RegistryAudit` am dokumentierten Registry-Kontext.
+Die Oberfläche verwendet die bestehenden Workspace-Cards und ein sektionenweises Slide-over. Leere Sektionen bleiben kompakt; gepflegte Inhalte und ihr Status werden hervorgehoben. Die Vollständigkeit wird ausschließlich aus explizit definierten Pflichtfeldern berechnet. Gibt es keine Pflichtfelder, zeigt die UI keinen erfundenen Prozentwert.
 
-Das Audit enthält keine vollständigen Langtexte oder JSON-Inhalte. Für diese Felder werden Länge und SHA-256 protokolliert. Damit bleibt die Änderung nachweisbar, ohne sensible Betriebsinformationen zu duplizieren.
+## Dokumente und Versionen
+
+Ein Registry-Dokument enthält fachliche Metadaten wie Titel, Beschreibung, Kategorie, Sichtbarkeit, Gültigkeitszeitraum, Vertragsreferenz und Schlagwörter. Es gehört polymorph genau einer Organisation, einem Standort, einer Abteilung oder einem System.
+
+Jeder Upload erzeugt eine separate Version mit fortlaufender Versionsnummer, Original- und Storage-Dateiname, erkanntem MIME-Typ, Erweiterung, Größe, SHA-256, Uploader, Uploadzeit, Änderungshinweis und Malware-Status. `current_version_id` verweist über einen zusammengesetzten Fremdschlüssel ausschließlich auf eine Version desselben Dokuments. Eine neue Version verändert die fachlichen Dokumentmetadaten nicht und löscht ältere Versionen oder Dateien nicht.
+
+Dokumente werden archiviert statt physisch gelöscht. Archivierte Dokumente sind weder bearbeitbar noch herunterladbar und akzeptieren keine neuen Versionen. Auch archivierte Registry-Kontexte akzeptieren keine neuen Dokumente.
+
+## Kategorien und Gültigkeit
+
+Die zentrale Kategorie-Taxonomie umfasst Verträge, Lizenzen, Herstellerdokumentation, Handbücher, Installations- und Netzwerkunterlagen, Firewallfreigaben, Betriebs- und Notfallhandbücher, Backup-/Recovery-Dokumentation, SOPs, Zertifikate, Datenschutz, Informationssicherheit, ISO-Nachweise, Schnittstellendokumentation, Testprotokolle und Sonstiges.
+
+Aus `valid_from`, `valid_until`, Archivstatus und dem konfigurierten Warnzeitraum wird ein Status abgeleitet: noch nicht gültig, gültig, läuft bald ab, abgelaufen oder archiviert. Der Warnzeitraum beträgt standardmäßig 60 Tage und kann über `REGISTRY_DOCUMENT_EXPIRY_WARNING_DAYS` angepasst werden.
+
+## Suche und Filter
+
+Suche, Filter und Pagination werden serverseitig ausgeführt. Durchsucht werden Titel, Beschreibung, Kategorie, Vertragsreferenz, Schlagwörter und Originaldateiname. Filter stehen für Kategorie, Dateityp, Dokumentstatus, Gültigkeit, Uploader, Uploadzeitraum und Malware-Status zur Verfügung. Dokumente fremder Registry-Kontexte werden nicht in die jeweilige Workspace-Liste gemischt.
+
+PDF-Inhalte werden nicht automatisch extrahiert oder indexiert. Im Projekt existiert derzeit keine freigegebene OCR- oder Volltext-Extraktionsinfrastruktur.
+
+## Upload und Dateiprüfung
+
+Das Standardlimit beträgt 25 MiB (`REGISTRY_DOCUMENT_MAX_UPLOAD_KB=25600`). Serverseitig werden Erweiterung, durch PHP erkannter MIME-Typ und Dateisignatur gemeinsam geprüft.
+
+| Erweiterung | Erlaubter Inhalt |
+| --- | --- |
+| `pdf` | PDF |
+| `png` | PNG-Bild |
+| `jpg`, `jpeg` | JPEG-Bild |
+| `docx` | OOXML-Textdokument mit passender interner Struktur |
+| `xlsx` | OOXML-Tabelle mit passender interner Struktur |
+| `txt` | UTF-8-Text ohne Nullbytes |
+| `zip` | ZIP-Datei; wird weder geöffnet noch entpackt |
+
+HTML, SVG, ausführbare Dateien, Skripte und Office-Makroformate wie `docm` oder `xlsm` sind nicht freigegeben. Der Originalname wird bereinigt und nur als Metadatum gespeichert. Der tatsächliche Storage-Name ist eine serverseitig erzeugte UUID; der Pfad wird nicht aus Benutzereingaben gebildet.
+
+SHA-256 dient als Integritätsmerkmal und zur Duplikaterkennung. Derselbe Inhalt kann nicht doppelt demselben Registry-Kontext beziehungsweise demselben Dokument als Version zugeordnet werden.
+
+## Malware-Scan
+
+`MalwareScanner` ist die austauschbare Scanner-Schnittstelle. Unterstützte Zustände sind `pending`, `clean`, `infected`, `failed` und `unavailable`. Nur `clean` darf heruntergeladen oder als PDF angezeigt werden; alle anderen Zustände werden serverseitig gesperrt.
+
+Die Standardbindung ist derzeit `UnavailableMalwareScanner`. Ohne installationsspezifischen produktiven Adapter werden Uploads daher privat gespeichert und mit `unavailable` markiert, sind aber nicht abrufbar. Infizierte Dateien bleiben als gesperrter Nachweis im privaten Storage; es gibt aktuell keinen automatischen Quarantäne-, Rescan- oder Bereinigungsjob.
+
+## Berechtigungen und Zugriff
+
+Die Dokumentenfunktionen verwenden das bestehende RBAC und zusätzlich die Policy des zugeordneten Registry-Kontexts. Es gibt kein paralleles Rollenmodell.
+
+- `documents.view`: Dokumentmetadaten und PDF-Vorschau
+- `documents.upload`: neues Dokument hochladen
+- `documents.update`: Metadaten bearbeiten
+- `documents.archive`: archivieren und wiederherstellen
+- `documents.download`: saubere Version herunterladen
+- `documents.manage_versions`: neue Version anlegen
+
+Die Datei liegt auf dem nicht öffentlich ausgelieferten Disk `registry_documents` unter `storage/app/private/registry-documents`. Downloads und Vorschauen erfolgen ausschließlich über autorisierte Controller-Endpunkte. Downloads verwenden `Content-Disposition: attachment` und `X-Content-Type-Options: nosniff`. Die PDF-Vorschau verwendet `inline`, private No-Store-Header, `SAMEORIGIN` und eine restriktive Content-Security-Policy.
+
+## Audit und Historie
+
+Dokumentaktionen verwenden `RegistryAudit` und dieselbe append-only Ereignisquelle `security_events` wie die übrige Registry. Upload, neue Version, Metadatenänderung, Archivierung, Wiederherstellung sowie fehlgeschlagene oder infizierte Scans werden am zugeordneten Registry-Kontext protokolliert und erscheinen in dessen bestehender Historie.
+
+Dateiinhalte, interne Storage-Pfade und rohe Scanner-Ausgaben werden nicht in Audit-Metadaten übernommen. Downloads und Vorschauzugriffe erzeugen derzeit kein eigenes Audit-Ereignis.
 
 ## Bekannte Einschränkungen
 
-- keine Datei-Uploads oder Anhänge
-- keine Freigabe- oder Versionsworkflows
-- keine Exporte
-- `restricted` ist vorbereitet; feinere Sichtbarkeitsrechte folgen erst bei einem abgestimmten Berechtigungskonzept
+- Standardmäßig ist kein produktiver Malware-Scanner angebunden; Dateien bleiben bis zur Scannerintegration gesperrt.
+- Es gibt keinen automatischen Rescan, keine physische Löschung und keinen konfigurierbaren Retention-Job.
+- Es gibt keinen Freigabe- oder Vier-Augen-Workflow.
+- Vorschau ist ausschließlich für saubere PDF-Versionen verfügbar; Office-, Bild-, Text- und ZIP-Dateien werden nicht inline dargestellt.
+- ZIP-Dateien werden nicht entpackt oder inhaltlich analysiert.
+- `restricted` ist als Sichtbarkeit gespeichert; eine über die bestehenden Kontext- und Dokumentrechte hinausgehende Feld- oder Mandantentrennung ist nicht implementiert.
+- Audit protokolliert fachliche Änderungen, derzeit aber keine einzelnen Dateiabrufe.
 
-## Bestandsanalyse für die Dokumentenablage
+## Backup, Restore und Aufbewahrung
 
-Die vorhandene strukturierte Dokumentation bleibt die Quelle für editierbare
-Betriebsinformationen. Eine künftige Dateiablage ergänzt sie, ersetzt sie aber
-nicht: Das fachliche Dokument und seine unveränderlichen Dateiversionen benötigen
-eigene Modelle mit einer polymorphen Zuordnung zu denselben vier Registry-Entitäten.
-Stammdaten bleiben weiterhin ausschließlich in Organisation, Standort, Abteilung
-und System gespeichert.
+PostgreSQL und `storage/app/private/registry-documents` bilden gemeinsam den vollständigen Dokumentbestand. Backup und Restore müssen beide Teile aus demselben konsistenten Sicherungszeitpunkt umfassen. Ein Datenbank-Restore ohne die passenden Dateien erzeugt nicht abrufbare Versionen; ein Storage-Restore ohne die passenden Metadaten erzeugt verwaiste Dateien.
 
-### Vorhandene Datenstruktur und Abläufe
-
-| Bereich | Heutiger Stand | Konsequenz |
-| --- | --- | --- |
-| Dokumentation | `RegistryDocumentation` mit UUID, polymorphem Kontext, Typ, Sektion, Freitext, JSON-Feldern, Sichtbarkeit und Bearbeitern | Bestehende Datensätze und Endpunkte bleiben erhalten. Binärdateien gehören nicht in dieses Modell. |
-| Eindeutigkeit | Eine Sektion je Kontext und Dokumentationstyp | Geeignet für den aktuellen Bearbeitungsstand, nicht für Dateiversionen. |
-| Vollständigkeit | Das Frontend zählt explizit als `required` definierte Felder; Boolean-Werte gelten als gepflegt | Berechnung ist nachvollziehbar. Ohne definierte Pflichtfelder darf kein scheinpräziser Prozentwert entstehen. |
-| Autorisierung | Lesen und Schreiben delegieren an die bestehenden `view`- und `update`-Policies des Registry-Kontexts (`registry.view`/`registry.manage`) | Dokumentrechte müssen in die vorhandene RBAC-Konvention aufgenommen und zusätzlich serverseitig gegen den Kontext geprüft werden. |
-| Audit | Anlage und Änderung schreiben `documentation.updated` über `RegistryAudit`; Langtext und JSON erscheinen nur als Länge und SHA-256 | Dateiaktionen verwenden dieselbe `security_events`-Quelle. Dateiinhalte und sensible Metadaten dürfen nicht ins Audit gelangen. |
-| Historie | `RegistryHistoryService` sammelt Ereignisse eines Kontexts und seiner Nachfolger; `RegistryHistoryViewService` filtert und paginiert | Dokumentereignisse werden am zugeordneten Registry-Kontext protokolliert und erscheinen dadurch ohne zweite Historienarchitektur. |
-| Storage | Der Standard-Disk `local` liegt unter `storage/app/private`; `public` existiert separat. Docker persistiert `storage` in einem Volume | Dokumentdateien verwenden ausschließlich einen privaten Disk. Keine Storage-URL und kein Symlink auf den Public-Disk. |
-| Bestehender Upload | Die DICOM-Dateianalyse kopiert einen Upload in ein Verzeichnis mit Modus `0700`, analysiert ihn und entfernt ihn im `finally`-Block | Das Muster für temporäre Verarbeitung und garantierte Bereinigung ist nutzbar, aber keine dauerhafte Dokumentablage. |
-
-Es gibt aktuell weder einen allgemeinen Datei-Download oder eine Vorschau noch
-eine persistente Upload-Funktion, Dateiversionierung, Duplikaterkennung oder
-Quarantäne. Eine Malware-Integration ist nicht vorhanden. Die DICOM-Analyse
-begrenzt nur die Größe; sie ist keine MIME-, Magic-Byte- oder Malware-Prüfung für
-Registry-Dokumente.
-
-### Wiederverwendbare Komponenten
-
-- `DocumentationPanel.vue` und die zentralen Sektionsdefinitionen für Systeme,
-  Organisationen, Standorte und Abteilungen
-- die vorhandenen System- und Organisationsstruktur-Workspaces mit Tabs und
-  deren Datenübergabe
-- bestehende Slide-over-Gestaltung sowie `StatusBadge.vue`, `EmptyState.vue` und
-  die vorhandene Pagination
-- Registry-Policies, Rollen, Berechtigungen und die etablierten Test-Helper
-- `RegistryAudit`, `RegistryHistoryService`, `RegistryHistoryViewService` und
-  `AuditHistoryPanel.vue`
-- privater Laravel-Storage und die persistenten Docker-Storage-Volumes
-
-### Erforderliche Erweiterungen
-
-Die Dateiablage benötigt ein fachliches, polymorph zugeordnetes Dokumentmodell
-und ein separates, append-only orientiertes Versionsmodell. Die aktuelle Version
-muss eindeutig referenziert werden; alte Versionen bleiben erhalten. Zusätzlich
-sind zentrale Kategorien, eigene Dokumentberechtigungen innerhalb des bestehenden
-RBAC, ein Upload-/Prüfservice, eine Malware-Scanner-Schnittstelle sowie
-autorisierte Download- und Preview-Endpunkte erforderlich. Hash, Dateigröße,
-erkannter MIME-Typ, Scanstatus und sicher erzeugter Storage-Pfad werden pro Version
-gespeichert. Archivierung ersetzt eine normale physische Löschung.
-
-Die UI wird aus dem bestehenden Dokumentationsbereich heraus erweitert. Sie
-verwendet dieselben Workspace-, Card-, Tabellen-, Badge- und Slide-over-Muster;
-es entsteht weder eine zweite Dokumentationsoberfläche noch ein paralleles Audit.
-
-### Vor jedem dauerhaften Upload zu schließende Sicherheitslücken
-
-1. Erlaubte Endungen, serverseitig erkannte MIME-Typen und Dateisignaturen müssen
-   gemeinsam validiert werden; Endung oder Browser-MIME allein reichen nicht.
-2. Ein konfigurierbares Größenlimit, zufällige Storage-Namen, normalisierte
-   Anzeigenamen und strikt vom Server erzeugte Pfade verhindern Ressourcenmissbrauch
-   und Pfadmanipulation.
-3. Dateien werden nur privat gespeichert. Download und Vorschau brauchen für
-   jede Anfrage Autorisierung, sichere `Content-Type`-/`Content-Disposition`-Header
-   und `X-Content-Type-Options: nosniff`.
-4. Ein Malware-Scanner-Vertrag mit den Zuständen `pending`, `clean`, `infected`,
-   `failed` und `unavailable` ist vor Freigabe erforderlich. Nicht saubere Dateien
-   bleiben gesperrt; technische Scannerdetails werden nicht roh angezeigt.
-5. SVG bleibt bis zu einer sicheren Bereinigung gesperrt. ZIP wird nie automatisch
-   entpackt; ausführbare Dateien und Office-Makroformate bleiben verboten.
-6. SHA-256 und eine definierte Duplikatregel verhindern unbemerkte Doppeluploads.
-   Datenbank- und Storage-Schreibvorgänge benötigen ein konsistentes Fehler- und
-   Aufräumverhalten.
-7. Upload, Versionswechsel, Scanfehler, Infektionsfund und Archivierung werden
-   über `RegistryAudit` am Registry-Kontext protokolliert, ohne Dateiinhalte,
-   Zugangsdaten, interne Pfade oder ungefilterte Scanner-Ausgaben zu speichern.
-8. Das persistente private Storage-Volume muss in Backup, Restore, Aufbewahrung
-   und Desaster-Recovery gemeinsam mit den Versionsmetadaten berücksichtigt werden.
-
-Bis diese Punkte implementiert und getestet sind, ist die Dokumentenablage nur
-geplant. Die derzeitige Anwendung stellt keine dauerhafte Upload-, Download- oder
-Vorschaufunktion für Registry-Dokumente bereit.
+Nach einem Restore sind mindestens Versionsanzahl, `current_version_id`, Dateiexistenz, Größe und SHA-256 stichprobenartig zu prüfen. Archivierte Dokumente und alte Versionen werden genauso wiederhergestellt wie aktive Daten. Bis eine verbindliche Aufbewahrungsrichtlinie und ein getesteter Löschprozess vorliegen, dürfen Dokumente und Versionen nicht außerhalb eines kontrollierten Administrationsverfahrens entfernt werden.

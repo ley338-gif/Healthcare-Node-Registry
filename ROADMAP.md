@@ -7,9 +7,15 @@
 - [x] strukturierte Dokumentation für Systeme, Organisationen, Standorte und Abteilungen
 - [x] Audit-Ereignisse für Dokumentationsänderungen ohne rohe Langtexte
 - [x] wiederverwendbare Filter-, Detail- und Dokumentationskomponenten
+- [x] private Registry-Dokumentenablage mit Kategorien, Versionen und Integritätsprüfsummen
+- [x] serverseitige Datei-Allowlist, Größenlimit und Malware-Scanner-Schnittstelle
+- [x] berechtigungsgeprüfte Downloads und PDF-Vorschau
+- [x] Dokumentfilter, Gültigkeitsstatus und serverseitige Pagination
+- [x] Dokumentaktionen in der gemeinsamen Registry-Historie
 - [ ] globale Audit-Seite auf der vorbereiteten gemeinsamen Query-Grundlage
 - [ ] Audit-Export, Aufbewahrung und Integritätsnachweis
-- [ ] Dokumentenanhänge und Freigabeworkflows
+- [ ] produktiven Malware-Scanner anbinden und Rescan-Workflow bereitstellen
+- [ ] Dokumentfreigabe, Vier-Augen-Prinzip und verbindliche Aufbewahrungsregeln
 
 ## 0.1.1 – Foundation Hardening
 

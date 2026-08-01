@@ -34,6 +34,8 @@ Abfrage und Visualisierung von Assets, Endpoints und Connections. Keine zweite f
 
 Dokumentenmetadaten, Version, Kategorie, Hash, Storage-Referenz, Quarantäne-/Scanstatus und Berechtigungen.
 
+Die implementierte Ablage, ihre Sicherheitsgrenzen sowie Backup- und Restore-Anforderungen sind in [Architektur der Registry-Dokumentenablage](registry-document-storage.md) beschrieben.
+
 ## Taxonomy
 
 Kontrollierte System-, Endpoint-, Dienst-, Status- und Dokumenttypen.
