@@ -9,10 +9,12 @@ use App\Models\RegistryDocumentVersion;
 use App\Models\Site;
 use App\Models\System;
 use App\Models\User;
+use App\Support\RegistryDocumentCategory;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use ValueError;
 
 final class RegistryDocumentModelTest extends TestCase
 {
@@ -93,6 +95,22 @@ final class RegistryDocumentModelTest extends TestCase
         self::assertSame('pending', $version->malware_scan_status);
     }
 
+    public function test_document_category_is_cast_to_the_central_enum(): void
+    {
+        $document = RegistryDocument::factory()->create([
+            'category' => RegistryDocumentCategory::MaintenanceContract,
+        ]);
+
+        self::assertSame(RegistryDocumentCategory::MaintenanceContract, $document->category);
+        self::assertSame('maintenance_contract', $document->getRawOriginal('category'));
+    }
+
+    public function test_unknown_document_category_is_rejected(): void
+    {
+        $this->expectException(ValueError::class);
+        RegistryDocument::factory()->create(['category' => 'unknown_category']);
+    }
+
     /** @return array{Organization, Site, Department, System} */
     private function structure(): array
     {
@@ -121,7 +139,7 @@ final class RegistryDocumentModelTest extends TestCase
         return [
             'title' => 'Betriebshandbuch',
             'description' => 'Freigegebene Betriebsunterlagen',
-            'category' => 'other',
+            'category' => RegistryDocumentCategory::Other,
             'visibility' => 'internal',
             'status' => 'active',
             'tags' => [],

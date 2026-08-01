@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\RegistryDocument;
 use App\Models\System;
 use App\Models\User;
+use App\Support\RegistryDocumentCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<RegistryDocument> */
@@ -20,7 +21,7 @@ final class RegistryDocumentFactory extends Factory
             'current_version_id' => null,
             'title' => fake()->sentence(3),
             'description' => fake()->optional()->paragraph(),
-            'category' => 'other',
+            'category' => RegistryDocumentCategory::Other,
             'visibility' => 'internal',
             'status' => 'active',
             'valid_from' => null,

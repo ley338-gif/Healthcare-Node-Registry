@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\RegistryDocumentCategory;
 use Carbon\CarbonImmutable;
 use Database\Factories\RegistryDocumentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +20,7 @@ use Illuminate\Support\Str;
  * @property int|null $current_version_id
  * @property string $title
  * @property string|null $description
- * @property string $category
+ * @property RegistryDocumentCategory $category
  * @property string $visibility
  * @property string $status
  * @property CarbonImmutable|null $valid_from
@@ -65,6 +66,7 @@ final class RegistryDocument extends Model
     protected function casts(): array
     {
         return [
+            'category' => RegistryDocumentCategory::class,
             'tags' => 'array',
             'valid_from' => 'immutable_date',
             'valid_until' => 'immutable_date',
