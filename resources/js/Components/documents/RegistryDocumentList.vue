@@ -67,8 +67,9 @@ const props = withDefaults(
         uploaders: Array<{ public_id: string; name: string }>;
         showFilters?: boolean;
         showContext?: boolean;
+        standalone?: boolean;
     }>(),
-    { showFilters: false, showContext: false },
+    { showFilters: false, showContext: false, standalone: false },
 );
 
 const uploadOpen = ref(false);
@@ -116,6 +117,14 @@ const scanLabel = (status: string): string =>
         failed: 'Fehlgeschlagen',
         infected: 'Infiziert',
     })[status] ?? status;
+const scanClasses = (status: string): string =>
+    ({
+        clean: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+        pending: 'bg-amber-50 text-amber-700 ring-amber-200',
+        unavailable: 'bg-slate-100 text-slate-600 ring-slate-200',
+        failed: 'bg-red-50 text-red-700 ring-red-200',
+        infected: 'bg-red-50 text-red-700 ring-red-200',
+    })[status] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
 const toggleVersions = (document: RegistryDocumentItem): void => {
     expandedDocumentId.value = expandedDocumentId.value === document.public_id ? null : document.public_id;
 };
@@ -169,7 +178,7 @@ const resetFilters = (): void => {
 </script>
 
 <template>
-    <section class="mt-6 border-t border-slate-200 pt-6">
+    <section :class="standalone ? '' : 'mt-6 border-t border-slate-200 pt-6'">
         <div class="flex items-start justify-between gap-4">
             <div>
                 <h3 class="font-semibold text-slate-950">
@@ -193,7 +202,7 @@ const resetFilters = (): void => {
             </button>
         </div>
 
-        <div v-if="showFilters" class="mt-4 grid gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div v-if="showFilters" class="mt-5 grid gap-3 rounded-xl bg-slate-50 p-3 sm:grid-cols-2 xl:grid-cols-5">
             <input
                 v-model="search"
                 aria-label="Dokumente durchsuchen"
@@ -315,7 +324,7 @@ const resetFilters = (): void => {
         </div>
         <div v-else class="mt-4 overflow-x-auto rounded-xl border border-slate-200">
             <table class="min-w-full divide-y divide-slate-200 text-sm">
-                <thead class="bg-slate-50 text-left text-xs text-slate-500">
+                <thead class="bg-slate-100/80 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
                     <tr>
                         <th class="px-4 py-3">Titel</th>
                         <th v-if="showContext" class="px-4 py-3">Zuordnung</th>
@@ -328,9 +337,13 @@ const resetFilters = (): void => {
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    <tr v-for="item in documents.data" :key="item.public_id">
-                        <td class="px-4 py-3 font-medium text-slate-900">{{ item.title }}</td>
-                        <td v-if="showContext" class="px-4 py-3">
+                    <tr
+                        v-for="item in documents.data"
+                        :key="item.public_id"
+                        class="transition-colors hover:bg-blue-50/40"
+                    >
+                        <td class="px-4 py-4 font-medium text-slate-900">{{ item.title }}</td>
+                        <td v-if="showContext" class="px-4 py-4">
                             <Link
                                 v-if="item.documentable_url"
                                 :href="item.documentable_url"
@@ -340,17 +353,17 @@ const resetFilters = (): void => {
                             </Link>
                             <p class="mt-1 text-xs text-slate-500">{{ item.documentable_type_label }}</p>
                         </td>
-                        <td class="px-4 py-3">{{ item.category_label }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-4">{{ item.category_label }}</td>
+                        <td class="px-4 py-4">
                             {{ item.current_version ? `v${item.current_version.version_number}` : '—' }}
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-4">
                             <template v-if="item.current_version"
                                 >{{ item.current_version.original_filename }} ·
                                 {{ size(item.current_version.size_bytes) }}</template
                             ><template v-else>—</template>
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-4">
                             <span
                                 class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset"
                                 :class="validityClasses(item.validity_status)"
@@ -361,13 +374,18 @@ const resetFilters = (): void => {
                                 bis {{ date(item.valid_until) }}
                             </p>
                         </td>
-                        <td class="px-4 py-3">
-                            {{
-                                item.current_version ? scanLabel(item.current_version.malware_scan_status) : item.status
-                            }}
+                        <td class="px-4 py-4">
+                            <span
+                                v-if="item.current_version"
+                                class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset"
+                                :class="scanClasses(item.current_version.malware_scan_status)"
+                            >
+                                {{ scanLabel(item.current_version.malware_scan_status) }}
+                            </span>
+                            <span v-else class="text-sm text-slate-500">{{ item.status }}</span>
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex justify-end gap-3">
+                        <td class="px-4 py-4 text-right">
+                            <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
                                 <button
                                     v-if="canUpdate && item.validity_status !== 'archived'"
                                     type="button"

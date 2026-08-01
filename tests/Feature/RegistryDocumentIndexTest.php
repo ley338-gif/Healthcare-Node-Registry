@@ -38,6 +38,15 @@ final class RegistryDocumentIndexTest extends TestCase
                 ->where('documents.data.0.documentable_name', fn (string $name): bool => $name !== '')
                 ->where('documents.data.0.documentable_type_label', fn (string $label): bool => in_array($label, ['Organisation', 'Standort', 'Abteilung', 'System'], true))
                 ->has('documentCategories')
+                ->has('documentTargets.organizations.0', fn ($target) => $target
+                    ->hasAll(['public_id', 'name']))
+                ->has('documentTargets.sites.0', fn ($target) => $target
+                    ->hasAll(['public_id', 'name']))
+                ->has('documentTargets.departments.0', fn ($target) => $target
+                    ->hasAll(['public_id', 'name']))
+                ->has('documentTargets.systems.0', fn ($target) => $target
+                    ->hasAll(['public_id', 'name']))
+                ->where('canUploadDocuments', true)
                 ->has('documentUploaders'));
     }
 
