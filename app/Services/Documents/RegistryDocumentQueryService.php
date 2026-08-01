@@ -20,6 +20,7 @@ final class RegistryDocumentQueryService
     public const FILTER_KEYS = [
         'document_search', 'document_category', 'document_file_type', 'document_status',
         'document_validity', 'document_uploader', 'document_from', 'document_to', 'document_scan_status',
+        'document_entity_type',
     ];
 
     /**
@@ -32,6 +33,84 @@ final class RegistryDocumentQueryService
             'currentVersion.uploadedByUser:id,public_id,name',
             'versions.uploadedByUser:id,public_id,name',
         ]);
+        $this->applyFilters($query, $filters);
+
+        return $this->paginateQuery($query);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, RegistryDocument>
+     */
+    public function paginateAll(array $filters): LengthAwarePaginator
+    {
+        $query = RegistryDocument::query()->with([
+            'documentable',
+            'currentVersion.uploadedByUser:id,public_id,name',
+            'versions.uploadedByUser:id,public_id,name',
+        ]);
+        $entityType = $this->value($filters, 'document_entity_type');
+        $model = match ($entityType) {
+            'organization' => Organization::class,
+            'site' => Site::class,
+            'department' => Department::class,
+            'system' => System::class,
+            default => null,
+        };
+        $query->when($model !== null, fn (Builder $builder) => $builder->where('documentable_type', $model));
+        $this->applyFilters($query, $filters);
+
+        return $this->paginateQuery($query);
+    }
+
+    /** @return Collection<int, array{public_id: string, name: string}> */
+    public function allUploaders(): Collection
+    {
+        return User::query()
+            ->whereHas('uploadedRegistryDocumentVersions')
+            ->orderBy('name')
+            ->get(['public_id', 'name'])
+            ->map(fn (User $user): array => ['public_id' => $user->public_id, 'name' => $user->name]);
+    }
+
+    /**
+     * @param  Builder<RegistryDocument>  $query
+     * @return LengthAwarePaginator<int, RegistryDocument>
+     */
+    private function paginateQuery(Builder $query): LengthAwarePaginator
+    {
+        return $query->latest('updated_at')->paginate(10, ['*'], 'document_page')->withQueryString()->through(function (RegistryDocument $document): RegistryDocument {
+            $document->setAttribute('category_label', $document->category->label());
+            $context = $document->relationLoaded('documentable') ? $document->documentable : null;
+            if ($context instanceof Organization || $context instanceof Site || $context instanceof Department || $context instanceof System) {
+                $type = match (true) {
+                    $context instanceof Organization => ['organization', 'Organisation'],
+                    $context instanceof Site => ['site', 'Standort'],
+                    $context instanceof Department => ['department', 'Abteilung'],
+                    default => ['system', 'System'],
+                };
+                $document->setAttribute('documentable_name', $context->name);
+                $document->setAttribute('documentable_type_key', $type[0]);
+                $document->setAttribute('documentable_type_label', $type[1]);
+                $document->setAttribute(
+                    'documentable_url',
+                    $context instanceof System
+                        ? "/systems/{$context->public_id}"
+                        : '/structure?'.http_build_query(['selected_type' => $type[0], 'selected_id' => $context->public_id]),
+                );
+            }
+            $document->unsetRelation('documentable');
+
+            return $document;
+        });
+    }
+
+    /**
+     * @param  Builder<RegistryDocument>  $query
+     * @param  array<string, mixed>  $filters
+     */
+    private function applyFilters(Builder $query, array $filters): void
+    {
         $search = trim((string) ($filters['document_search'] ?? ''));
         $categoryMatches = collect(RegistryDocumentCategory::cases())
             ->filter(fn (RegistryDocumentCategory $category): bool => $search !== '' && str_contains(mb_strtolower($category->label()), mb_strtolower($search)))
@@ -58,12 +137,6 @@ final class RegistryDocumentQueryService
             ->when($this->value($filters, 'document_to') !== '', fn (Builder $builder) => $builder->whereHas('currentVersion', fn (Builder $versionQuery) => $versionQuery->whereDate('uploaded_at', '<=', $this->value($filters, 'document_to'))));
 
         $this->applyValidity($query, $this->value($filters, 'document_validity'));
-
-        return $query->latest('updated_at')->paginate(10, ['*'], 'document_page')->withQueryString()->through(function (RegistryDocument $document): RegistryDocument {
-            $document->setAttribute('category_label', $document->category->label());
-
-            return $document;
-        });
     }
 
     /** @return Collection<int, array{public_id: string, name: string}> */

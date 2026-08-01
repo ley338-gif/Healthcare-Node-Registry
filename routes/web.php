@@ -17,6 +17,7 @@ use App\Http\Controllers\OrganizationStructureController;
 use App\Http\Controllers\PacsQueryDiagnosticController;
 use App\Http\Controllers\RegistryDocumentationController;
 use App\Http\Controllers\RegistryDocumentController;
+use App\Http\Controllers\RegistryDocumentIndexController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\StorageDiagnosticController;
 use App\Http\Controllers\SystemController;
@@ -34,6 +35,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::get('/structure', OrganizationStructureController::class)->name('structure.index');
+    Route::get('/documents', RegistryDocumentIndexController::class)->name('documents.index');
 
     Route::get('/registry-documentation/{documentableType}/{documentable}', [RegistryDocumentationController::class, 'index'])
         ->whereIn('documentableType', ['organizations', 'sites', 'departments', 'systems'])

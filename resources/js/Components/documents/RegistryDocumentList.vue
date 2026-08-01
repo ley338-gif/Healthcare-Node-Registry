@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { Archive, ArchiveRestore, ChevronDown, Download, Eye, FileText, Pencil, Upload } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import RegistryDocumentUploadSlideover from './RegistryDocumentUploadSlideover.vue';
@@ -39,6 +39,10 @@ export type RegistryDocumentItem = {
     updated_at: string;
     current_version: RegistryDocumentVersionItem | null;
     versions: RegistryDocumentVersionItem[];
+    documentable_name?: string;
+    documentable_type_key?: string;
+    documentable_type_label?: string;
+    documentable_url?: string;
 };
 
 export type RegistryDocumentPagination = {
@@ -47,20 +51,25 @@ export type RegistryDocumentPagination = {
     total: number;
 };
 
-const props = defineProps<{
-    documents: RegistryDocumentPagination;
-    documentableType: string;
-    documentableId: string;
-    categories: Array<{ value: string; label: string }>;
-    canUpload: boolean;
-    canManageVersions: boolean;
-    canDownload: boolean;
-    canPreview: boolean;
-    canUpdate: boolean;
-    canArchive: boolean;
-    filters: Record<string, string | undefined>;
-    uploaders: Array<{ public_id: string; name: string }>;
-}>();
+const props = withDefaults(
+    defineProps<{
+        documents: RegistryDocumentPagination;
+        documentableType: string;
+        documentableId: string;
+        categories: Array<{ value: string; label: string }>;
+        canUpload: boolean;
+        canManageVersions: boolean;
+        canDownload: boolean;
+        canPreview: boolean;
+        canUpdate: boolean;
+        canArchive: boolean;
+        filters: Record<string, string | undefined>;
+        uploaders: Array<{ public_id: string; name: string }>;
+        showFilters?: boolean;
+        showContext?: boolean;
+    }>(),
+    { showFilters: false, showContext: false },
+);
 
 const uploadOpen = ref(false);
 const versionDocument = ref<RegistryDocumentItem | null>(null);
@@ -77,6 +86,7 @@ const validity = ref(props.filters.document_validity ?? '');
 const uploader = ref(props.filters.document_uploader ?? '');
 const from = ref(props.filters.document_from ?? '');
 const to = ref(props.filters.document_to ?? '');
+const entityType = ref(props.filters.document_entity_type ?? '');
 const expandedDocument = computed(
     () => props.documents.data.find((item) => item.public_id === expandedDocumentId.value) ?? null,
 );
@@ -145,6 +155,7 @@ const applyFilters = (): void => {
             document_uploader: uploader.value || undefined,
             document_from: from.value || undefined,
             document_to: to.value || undefined,
+            document_entity_type: entityType.value || undefined,
             document_page: undefined,
         },
         { preserveState: true, preserveScroll: true, replace: true },
@@ -152,7 +163,7 @@ const applyFilters = (): void => {
 };
 const resetFilters = (): void => {
     search.value = category.value = fileType.value = status.value = scanStatus.value = validity.value = '';
-    uploader.value = from.value = to.value = '';
+    uploader.value = from.value = to.value = entityType.value = '';
     applyFilters();
 };
 </script>
@@ -164,7 +175,13 @@ const resetFilters = (): void => {
                 <h3 class="font-semibold text-slate-950">
                     Dateien <span class="text-slate-400">{{ documents.total }}</span>
                 </h3>
-                <p class="mt-1 text-sm text-slate-500">Versionierte Dateien zu diesem Registry-Eintrag.</p>
+                <p class="mt-1 text-sm text-slate-500">
+                    {{
+                        showContext
+                            ? 'Versionierte Dateien aus der gesamten Registry.'
+                            : 'Versionierte Dateien zu diesem Registry-Eintrag.'
+                    }}
+                </p>
             </div>
             <button
                 v-if="canUpload"
@@ -176,7 +193,7 @@ const resetFilters = (): void => {
             </button>
         </div>
 
-        <div class="mt-4 grid gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div v-if="showFilters" class="mt-4 grid gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-2 xl:grid-cols-5">
             <input
                 v-model="search"
                 aria-label="Dokumente durchsuchen"
@@ -184,6 +201,18 @@ const resetFilters = (): void => {
                 class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                 @keyup.enter="applyFilters"
             />
+            <select
+                v-if="showContext"
+                v-model="entityType"
+                aria-label="Registry-Ebene filtern"
+                class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            >
+                <option value="">Alle Registry-Ebenen</option>
+                <option value="organization">Organisationen</option>
+                <option value="site">Standorte</option>
+                <option value="department">Abteilungen</option>
+                <option value="system">Systeme</option>
+            </select>
             <select
                 v-model="category"
                 aria-label="Kategorie filtern"
@@ -289,6 +318,7 @@ const resetFilters = (): void => {
                 <thead class="bg-slate-50 text-left text-xs text-slate-500">
                     <tr>
                         <th class="px-4 py-3">Titel</th>
+                        <th v-if="showContext" class="px-4 py-3">Zuordnung</th>
                         <th class="px-4 py-3">Kategorie</th>
                         <th class="px-4 py-3">Version</th>
                         <th class="px-4 py-3">Datei</th>
@@ -300,6 +330,16 @@ const resetFilters = (): void => {
                 <tbody class="divide-y divide-slate-100">
                     <tr v-for="item in documents.data" :key="item.public_id">
                         <td class="px-4 py-3 font-medium text-slate-900">{{ item.title }}</td>
+                        <td v-if="showContext" class="px-4 py-3">
+                            <Link
+                                v-if="item.documentable_url"
+                                :href="item.documentable_url"
+                                class="font-semibold text-blue-700 hover:text-blue-900"
+                            >
+                                {{ item.documentable_name }}
+                            </Link>
+                            <p class="mt-1 text-xs text-slate-500">{{ item.documentable_type_label }}</p>
+                        </td>
                         <td class="px-4 py-3">{{ item.category_label }}</td>
                         <td class="px-4 py-3">
                             {{ item.current_version ? `v${item.current_version.version_number}` : '—' }}

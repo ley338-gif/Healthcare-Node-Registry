@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { Boxes, Building2, FlaskConical, LayoutDashboard, Map, Settings, ShieldCheck } from '@lucide/vue';
+import { Boxes, Building2, FileText, FlaskConical, LayoutDashboard, Map, Settings, ShieldCheck } from '@lucide/vue';
 import type { PageProps } from '../../types';
 const page = usePage<PageProps>();
 const isActive = (paths: string[]) =>
@@ -21,6 +21,13 @@ const groups = [
                 href: '/systems',
                 paths: ['/systems'],
                 icon: Boxes,
+                enabled: true,
+            },
+            {
+                label: 'Dokumente',
+                href: '/documents',
+                paths: ['/documents'],
+                icon: FileText,
                 enabled: true,
             },
         ],
