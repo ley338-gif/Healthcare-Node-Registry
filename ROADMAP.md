@@ -1,5 +1,16 @@
 # Roadmap
 
+## Registry-Historie und Dokumentation
+
+- [x] gemeinsame kontextbezogene Audit-Abfrage
+- [x] Systemhistorie und Historie der Organisationsstruktur
+- [x] strukturierte Dokumentation für Systeme, Organisationen, Standorte und Abteilungen
+- [x] Audit-Ereignisse für Dokumentationsänderungen ohne rohe Langtexte
+- [x] wiederverwendbare Filter-, Detail- und Dokumentationskomponenten
+- [ ] globale Audit-Seite auf der vorbereiteten gemeinsamen Query-Grundlage
+- [ ] Audit-Export, Aufbewahrung und Integritätsnachweis
+- [ ] Dokumentenanhänge und Freigabeworkflows
+
 ## 0.1.1 – Foundation Hardening
 
 Abgeschlossen.

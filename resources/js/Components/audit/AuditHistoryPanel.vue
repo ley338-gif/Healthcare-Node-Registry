@@ -9,6 +9,7 @@ export type AuditEvent = {
     event_type: string;
     subject_type: string;
     subject_public_id: string | null;
+    entity?: { type: string; label: string; public_id: string | null; url: string | null };
     actor_name: string;
     metadata: Record<string, unknown>;
     occurred_at: string;
@@ -176,7 +177,7 @@ const display = (value: unknown): string =>
                                 {{ formatDate(event.occurred_at) }}
                             </td>
                             <td class="px-4 py-3 font-medium text-slate-900">{{ label(event.event_type) }}</td>
-                            <td class="px-4 py-3 text-slate-600">{{ event.subject_type }}</td>
+                            <td class="px-4 py-3 text-slate-600">{{ event.entity?.label ?? event.subject_type }}</td>
                             <td class="px-4 py-3 text-slate-600">{{ event.actor_name }}</td>
                             <td class="px-4 py-3 text-right">
                                 <button class="font-medium text-blue-700 hover:text-blue-900" @click="selected = event">
@@ -210,6 +211,9 @@ const display = (value: unknown): string =>
                             <h2 class="mt-1 text-xl font-semibold text-slate-900">{{ label(selected.event_type) }}</h2>
                             <p class="mt-1 text-sm text-slate-500">
                                 {{ formatDate(selected.occurred_at) }} · {{ selected.actor_name }}
+                            </p>
+                            <p class="mt-1 text-sm text-slate-500">
+                                Betroffene Entität: {{ selected.entity?.label ?? selected.subject_type }}
                             </p>
                         </div>
                         <button class="rounded-lg p-2 hover:bg-slate-100" @click="selected = null">

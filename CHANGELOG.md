@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Registry-Historie und Dokumentation
+
+- gemeinsame Registry-Historie für Systeme, Organisationen, Standorte und Abteilungen
+- serverseitige Audit-Filter, Kennzahlen, Pagination und Detailansicht
+- strukturierte polymorphe Betriebsdokumentation mit kontextspezifischen Sektionen
+- nachvollziehbarer Dokumentationsstand auf Basis definierter Pflichtfelder
+- Audit-Ereignisse für Dokumentationsänderungen ohne vollständige Langtexte
+- zentrale Audit-Filterung und Entity-Auflösung als Vorbereitung der globalen Audit-Seite
+
 ### Added
 
 - Diagnose-Workspace mit standardisierter Ergebnisarchitektur und persistentem Verlauf

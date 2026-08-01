@@ -11,6 +11,7 @@ use App\Models\Site;
 use App\Models\System;
 use App\Models\User;
 use App\Services\Audit\RegistryHistoryService;
+use App\Services\Audit\RegistryHistoryViewService;
 use App\Support\RegistryAudit;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -78,6 +79,30 @@ final class RegistryHistoryServiceTest extends TestCase
     {
         $this->expectException(AuthorizationException::class);
         (new RegistryHistoryService)->forContext(User::factory()->create(), System::factory()->create())->get();
+    }
+
+    public function test_global_history_uses_shared_filters_and_entity_resolution(): void
+    {
+        $user = $this->viewer();
+        $system = System::factory()->create();
+        $organization = $this->organization('Andere Organisation');
+        $audit = new RegistryAudit;
+        $audit->record('registry.system.updated', $system, $user, ['status' => 'success']);
+        $audit->record('registry.organization.archived', $organization, $user, ['status' => 'warning']);
+        $query = (new RegistryHistoryService)->global($user);
+
+        $view = app(RegistryHistoryViewService::class)->present($query, [
+            'history_type' => 'registry.system.updated',
+            'history_status' => 'success',
+            'history_user' => $user->public_id,
+            'history_search' => 'system',
+        ]);
+
+        self::assertSame(1, $view['history']->total());
+        $event = $view['history']->items()[0];
+        self::assertSame('System', $event['entity']['label']);
+        self::assertSame("/systems?selected={$system->public_id}", $event['entity']['url']);
+        self::assertSame(2, $view['historyStats']['total']);
     }
 
     private function viewer(): User
