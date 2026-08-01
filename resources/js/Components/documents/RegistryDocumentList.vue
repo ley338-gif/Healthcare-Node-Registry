@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ChevronDown, Download, FileText, Upload } from '@lucide/vue';
+import { ChevronDown, Download, Eye, FileText, Upload } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import RegistryDocumentUploadSlideover from './RegistryDocumentUploadSlideover.vue';
+import RegistryDocumentPreviewSlideover from './RegistryDocumentPreviewSlideover.vue';
 import RegistryDocumentVersionSlideover from './RegistryDocumentVersionSlideover.vue';
 
 export type RegistryDocumentVersionItem = {
@@ -40,10 +41,13 @@ const props = defineProps<{
     canUpload: boolean;
     canManageVersions: boolean;
     canDownload: boolean;
+    canPreview: boolean;
 }>();
 
 const uploadOpen = ref(false);
 const versionDocument = ref<RegistryDocumentItem | null>(null);
+const previewDocument = ref<RegistryDocumentItem | null>(null);
+const previewVersion = ref<RegistryDocumentVersionItem | null>(null);
 const expandedDocumentId = ref<string | null>(null);
 const search = ref('');
 const category = ref('');
@@ -92,6 +96,18 @@ const scanLabel = (status: string): string =>
     })[status] ?? status;
 const toggleVersions = (document: RegistryDocumentItem): void => {
     expandedDocumentId.value = expandedDocumentId.value === document.public_id ? null : document.public_id;
+};
+const openPreview = (document: RegistryDocumentItem, version: RegistryDocumentVersionItem): void => {
+    previewDocument.value = document;
+    previewVersion.value = version;
+};
+const closePreview = (): void => {
+    previewDocument.value = null;
+    previewVersion.value = null;
+};
+const uploadVersionFromPreview = (document: RegistryDocumentItem): void => {
+    closePreview();
+    versionDocument.value = document;
 };
 </script>
 
@@ -194,17 +210,31 @@ const toggleVersions = (document: RegistryDocumentItem): void => {
                                 }}
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <button
-                                    type="button"
-                                    class="inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-900"
-                                    @click="toggleVersions(item)"
-                                >
-                                    Versionen
-                                    <ChevronDown
-                                        :size="15"
-                                        :class="{ 'rotate-180': expandedDocumentId === item.public_id }"
-                                    />
-                                </button>
+                                <div class="flex justify-end gap-3">
+                                    <button
+                                        v-if="
+                                            canPreview &&
+                                            item.current_version?.mime_type === 'application/pdf' &&
+                                            item.current_version.malware_scan_status === 'clean'
+                                        "
+                                        type="button"
+                                        class="inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-900"
+                                        @click="openPreview(item, item.current_version)"
+                                    >
+                                        <Eye :size="15" /> Vorschau
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-900"
+                                        @click="toggleVersions(item)"
+                                    >
+                                        Versionen
+                                        <ChevronDown
+                                            :size="15"
+                                            :class="{ 'rotate-180': expandedDocumentId === item.public_id }"
+                                        />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -252,12 +282,26 @@ const toggleVersions = (document: RegistryDocumentItem): void => {
                                     {{ version.uploaded_by_user?.name ?? 'Unbekannt' }}
                                 </p>
                             </div>
-                            <a
-                                v-if="canDownload && version.malware_scan_status === 'clean'"
-                                :href="`/registry-document-versions/${version.public_id}/download`"
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                                ><Download :size="15" /> Herunterladen</a
-                            >
+                            <div class="flex gap-2">
+                                <button
+                                    v-if="
+                                        canPreview &&
+                                        version.mime_type === 'application/pdf' &&
+                                        version.malware_scan_status === 'clean'
+                                    "
+                                    type="button"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                    @click="openPreview(expandedDocument, version)"
+                                >
+                                    <Eye :size="15" /> Vorschau
+                                </button>
+                                <a
+                                    v-if="canDownload && version.malware_scan_status === 'clean'"
+                                    :href="`/registry-document-versions/${version.public_id}/download`"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                    ><Download :size="15" /> Herunterladen</a
+                                >
+                            </div>
                         </div>
                         <p v-if="version.change_note" class="mt-3 text-sm text-slate-700">{{ version.change_note }}</p>
                         <p class="mt-3 font-mono text-[11px] break-all text-slate-400">SHA-256 {{ version.sha256 }}</p>
@@ -277,6 +321,14 @@ const toggleVersions = (document: RegistryDocumentItem): void => {
             :open="versionDocument !== null"
             :document="versionDocument"
             @close="versionDocument = null"
+        />
+        <RegistryDocumentPreviewSlideover
+            :document="previewDocument"
+            :version="previewVersion"
+            :can-download="canDownload"
+            :can-manage-versions="canManageVersions"
+            @close="closePreview"
+            @new-version="uploadVersionFromPreview"
         />
     </section>
 </template>

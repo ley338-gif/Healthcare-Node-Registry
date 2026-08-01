@@ -97,6 +97,7 @@ const props = withDefaults(
         canUploadDocuments: boolean;
         canManageDocumentVersions: boolean;
         canDownloadDocuments: boolean;
+        canViewDocuments: boolean;
         topologyNodes?: NetworkNode[];
         topologyConnections?: NetworkConnection[];
         canManage: boolean;
@@ -463,6 +464,7 @@ const closeEditPanel = (): void => {
                 :can-upload-documents="canUploadDocuments"
                 :can-manage-document-versions="canManageDocumentVersions"
                 :can-download-documents="canDownloadDocuments"
+                :can-view-documents="canViewDocuments"
                 @edit="openEditPanel"
             />
         </div>

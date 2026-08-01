@@ -117,6 +117,7 @@ const props = withDefaults(
         canUploadDocuments?: boolean;
         canManageDocumentVersions?: boolean;
         canDownloadDocuments?: boolean;
+        canViewDocuments?: boolean;
     }>(),
     {
         topologyNodes: () => [],
@@ -132,6 +133,7 @@ const props = withDefaults(
         canUploadDocuments: false,
         canManageDocumentVersions: false,
         canDownloadDocuments: false,
+        canViewDocuments: false,
     },
 );
 
@@ -558,6 +560,7 @@ const statusClass = (value: string): string => {
                     :can-upload-documents="canUploadDocuments"
                     :can-manage-document-versions="canManageDocumentVersions"
                     :can-download-documents="canDownloadDocuments"
+                    :can-view-documents="canViewDocuments"
                     :can-manage="canManage"
                     :master-data="documentationMasterData"
                 />

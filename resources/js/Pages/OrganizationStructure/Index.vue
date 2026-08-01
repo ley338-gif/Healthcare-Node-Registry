@@ -118,6 +118,7 @@ const props = defineProps<{
     canUploadDocuments: boolean;
     canManageDocumentVersions: boolean;
     canDownloadDocuments: boolean;
+    canViewDocuments: boolean;
     canManageDocumentation: boolean;
 }>();
 
@@ -1228,6 +1229,7 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                             :can-upload-documents="canUploadDocuments"
                             :can-manage-document-versions="canManageDocumentVersions"
                             :can-download-documents="canDownloadDocuments"
+                            :can-view-documents="canViewDocuments"
                             :can-manage="canManageDocumentation"
                             :master-data="documentationMasterData"
                         />

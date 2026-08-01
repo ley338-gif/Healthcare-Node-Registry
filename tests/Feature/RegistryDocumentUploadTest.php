@@ -146,6 +146,50 @@ final class RegistryDocumentUploadTest extends TestCase
         $this->actingAs($this->administrator())->get("/registry-document-versions/{$version->public_id}/download")->assertStatus(423);
     }
 
+    public function test_clean_pdf_version_can_be_previewed_privately_with_range_support(): void
+    {
+        Storage::fake('registry_documents');
+        $version = RegistryDocumentVersion::factory()->create([
+            'storage_disk' => 'registry_documents',
+            'storage_path' => 'systems/test/preview.pdf',
+            'original_filename' => 'Technisches Handbuch.pdf',
+            'mime_type' => 'application/pdf',
+            'file_extension' => 'pdf',
+            'malware_scan_status' => 'clean',
+        ]);
+        Storage::disk('registry_documents')->put($version->storage_path, '%PDF-1.7 preview contents');
+
+        $response = $this->actingAs($this->administrator())
+            ->withHeader('Range', 'bytes=0-7')
+            ->get("/registry-document-versions/{$version->public_id}/preview");
+
+        $response->assertStatus(206)
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('Content-Range', 'bytes 0-7/25')
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Frame-Options', 'SAMEORIGIN');
+        self::assertStringContainsString('inline', (string) $response->headers->get('Content-Disposition'));
+        self::assertStringContainsString("frame-ancestors 'self'", (string) $response->headers->get('Content-Security-Policy'));
+    }
+
+    public function test_preview_rejects_unauthorized_non_pdf_and_unscanned_versions(): void
+    {
+        Storage::fake('registry_documents');
+        $version = RegistryDocumentVersion::factory()->create([
+            'storage_disk' => 'registry_documents',
+            'storage_path' => 'systems/test/document.txt',
+            'mime_type' => 'text/plain',
+            'file_extension' => 'txt',
+            'malware_scan_status' => 'clean',
+        ]);
+        Storage::disk('registry_documents')->put($version->storage_path, 'plain text');
+
+        $this->actingAs(User::factory()->create())->get("/registry-document-versions/{$version->public_id}/preview")->assertForbidden();
+        $this->actingAs($this->administrator())->get("/registry-document-versions/{$version->public_id}/preview")->assertStatus(415);
+        $version->update(['mime_type' => 'application/pdf', 'file_extension' => 'pdf', 'malware_scan_status' => 'pending']);
+        $this->actingAs($this->administrator())->get("/registry-document-versions/{$version->public_id}/preview")->assertStatus(423);
+    }
+
     private function administrator(): User
     {
         $role = app(RbacBootstrapper::class)->ensureSystemAdministratorRole();

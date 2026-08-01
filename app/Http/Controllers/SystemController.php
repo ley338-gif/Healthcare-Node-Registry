@@ -283,6 +283,7 @@ final class SystemController extends Controller
             'canUploadDocuments' => $request->user()?->hasPermission('documents.upload') ?? false,
             'canManageDocumentVersions' => $request->user()?->hasPermission('documents.manage_versions') ?? false,
             'canDownloadDocuments' => $request->user()?->hasPermission('documents.download') ?? false,
+            'canViewDocuments' => $request->user()?->hasPermission('documents.view') ?? false,
             'dicomNodeOptions' => DicomNode::query()
                 ->active()
                 ->whereHas(
@@ -409,6 +410,7 @@ final class SystemController extends Controller
             'canUploadDocuments' => $user->hasPermission('documents.upload'),
             'canManageDocumentVersions' => $user->hasPermission('documents.manage_versions'),
             'canDownloadDocuments' => $user->hasPermission('documents.download'),
+            'canViewDocuments' => $user->hasPermission('documents.view'),
             ...$historyView,
 
             'systemTypes' => [

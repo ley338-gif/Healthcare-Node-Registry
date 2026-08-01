@@ -50,6 +50,8 @@ Route::middleware('auth')->group(function (): void {
         ->name('registry-documents.versions.store');
     Route::get('/registry-document-versions/{registryDocumentVersion}/download', [RegistryDocumentController::class, 'downloadVersion'])
         ->name('registry-document-versions.download');
+    Route::get('/registry-document-versions/{registryDocumentVersion}/preview', [RegistryDocumentController::class, 'previewVersion'])
+        ->name('registry-document-versions.preview');
 
     Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
     Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');

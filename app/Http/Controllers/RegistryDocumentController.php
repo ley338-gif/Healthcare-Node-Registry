@@ -15,6 +15,8 @@ use App\Services\Documents\RegistryDocumentUploadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class RegistryDocumentController extends Controller
@@ -60,6 +62,30 @@ final class RegistryDocumentController extends Controller
             $registryDocumentVersion->original_filename,
             ['Content-Type' => $registryDocumentVersion->mime_type, 'X-Content-Type-Options' => 'nosniff'],
         );
+    }
+
+    public function previewVersion(RegistryDocumentVersion $registryDocumentVersion): BinaryFileResponse
+    {
+        Gate::authorize('documents.view');
+        $document = $registryDocumentVersion->document;
+        abort_if($document->archived_at !== null, 404);
+        $context = $document->documentable;
+        abort_unless($context instanceof Organization || $context instanceof Site || $context instanceof Department || $context instanceof System, 404);
+        Gate::authorize('view', $context);
+        abort_unless($registryDocumentVersion->malware_scan_status === 'clean', 423, 'Die Dokumentversion ist nicht zur Vorschau freigegeben.');
+        abort_unless($registryDocumentVersion->mime_type === 'application/pdf' && $registryDocumentVersion->file_extension === 'pdf', 415);
+        $disk = Storage::disk($registryDocumentVersion->storage_disk);
+        abort_unless($disk->exists($registryDocumentVersion->storage_path), 404);
+
+        return response()
+            ->file($disk->path($registryDocumentVersion->storage_path), [
+                'Content-Type' => 'application/pdf',
+                'Cache-Control' => 'private, no-store, max-age=0',
+                'Content-Security-Policy' => "default-src 'none'; frame-ancestors 'self'",
+                'X-Content-Type-Options' => 'nosniff',
+                'X-Frame-Options' => 'SAMEORIGIN',
+            ])
+            ->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $registryDocumentVersion->original_filename);
     }
 
     private function resolve(string $type, string $publicId): Organization|Site|Department|System
