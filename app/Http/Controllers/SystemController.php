@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\Audit\RegistryHistoryService;
 use App\Services\Audit\RegistryHistoryViewService;
 use App\Support\RegistryAudit;
+use App\Support\RegistryDocumentCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -278,6 +279,8 @@ final class SystemController extends Controller
             'dicomConnections' => $selectedDicomConnections,
             'documentation' => $selectedDocumentation,
             'documents' => $selectedDocuments,
+            'documentCategories' => RegistryDocumentCategory::options(),
+            'canUploadDocuments' => $request->user()?->hasPermission('documents.upload') ?? false,
             'dicomNodeOptions' => DicomNode::query()
                 ->active()
                 ->whereHas(
@@ -400,6 +403,8 @@ final class SystemController extends Controller
             'system' => $system,
             'documentation' => $system->documentation,
             'documents' => $system->documents->each(fn ($document) => $document->setAttribute('category_label', $document->category->label())),
+            'documentCategories' => RegistryDocumentCategory::options(),
+            'canUploadDocuments' => $user->hasPermission('documents.upload'),
             ...$historyView,
 
             'systemTypes' => [

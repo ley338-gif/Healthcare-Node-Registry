@@ -16,6 +16,8 @@ const props = defineProps<{
     canManage: boolean;
     masterData?: Array<{ label: string; value: string | null }>;
     documents?: RegistryDocumentItem[];
+    documentCategories?: Array<{ value: string; label: string }>;
+    canUploadDocuments?: boolean;
 }>();
 
 const selectedSection = ref<DocumentationSection | null>(null);
@@ -130,6 +132,12 @@ const save = (): void => {
             @field-change="updateField"
             @visibility-change="(value) => (form.visibility = value)"
         />
-        <RegistryDocumentList :documents="documents ?? []" />
+        <RegistryDocumentList
+            :documents="documents ?? []"
+            :documentable-type="documentableType"
+            :documentable-id="documentableId"
+            :categories="documentCategories ?? []"
+            :can-upload="canUploadDocuments ?? false"
+        />
     </div>
 </template>

@@ -113,6 +113,8 @@ const props = withDefaults(
         historyUsers?: Array<{ public_id: string; name: string }>;
         documentation?: RegistryDocumentationItem[];
         documents?: RegistryDocumentItem[];
+        documentCategories?: Array<{ value: string; label: string }>;
+        canUploadDocuments?: boolean;
     }>(),
     {
         topologyNodes: () => [],
@@ -124,6 +126,8 @@ const props = withDefaults(
         historyUsers: () => [],
         documentation: () => [],
         documents: () => [],
+        documentCategories: () => [],
+        canUploadDocuments: false,
     },
 );
 
@@ -546,6 +550,8 @@ const statusClass = (value: string): string => {
                     :sections="systemDocumentationSections"
                     :documentation="documentation"
                     :documents="documents"
+                    :document-categories="documentCategories"
+                    :can-upload-documents="canUploadDocuments"
                     :can-manage="canManage"
                     :master-data="documentationMasterData"
                 />

@@ -112,7 +112,9 @@ final class OrganizationStructureDocumentationWorkspaceTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->has('documents', 1)
                 ->where('documents.0.title', 'Standortplan')
-                ->where('documents.0.current_version.original_filename', 'document.pdf'));
+                ->where('documents.0.current_version.original_filename', 'document.pdf')
+                ->where('canUploadDocuments', true)
+                ->has('documentCategories', 19));
     }
 
     /** @return array{Organization, Site, Department} */

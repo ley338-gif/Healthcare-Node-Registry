@@ -114,6 +114,8 @@ const props = defineProps<{
     historyUsers: Array<{ public_id: string; name: string }>;
     documentation: RegistryDocumentationItem[];
     documents: RegistryDocumentItem[];
+    documentCategories: Array<{ value: string; label: string }>;
+    canUploadDocuments: boolean;
     canManageDocumentation: boolean;
 }>();
 
@@ -1220,6 +1222,8 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                             :sections="documentationSections"
                             :documentation="documentation"
                             :documents="documents"
+                            :document-categories="documentCategories"
+                            :can-upload-documents="canUploadDocuments"
                             :can-manage="canManageDocumentation"
                             :master-data="documentationMasterData"
                         />

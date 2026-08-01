@@ -10,6 +10,7 @@ use App\Models\System;
 use App\Models\User;
 use App\Services\Audit\RegistryHistoryService;
 use App\Services\Audit\RegistryHistoryViewService;
+use App\Support\RegistryDocumentCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -164,6 +165,8 @@ final class OrganizationStructureController extends Controller
             ...$historyView,
             'documentation' => $documentation,
             'documents' => $documents,
+            'documentCategories' => RegistryDocumentCategory::options(),
+            'canUploadDocuments' => $user?->hasPermission('documents.upload') ?? false,
             'canManageDocumentation' => $canManageDocumentation,
         ]);
     }

@@ -93,6 +93,8 @@ const props = withDefaults(
         dicomNodeOptions: DicomNodeOption[];
         documentation: RegistryDocumentationItem[];
         documents: RegistryDocumentItem[];
+        documentCategories: Array<{ value: string; label: string }>;
+        canUploadDocuments: boolean;
         topologyNodes?: NetworkNode[];
         topologyConnections?: NetworkConnection[];
         canManage: boolean;
@@ -455,6 +457,8 @@ const closeEditPanel = (): void => {
                 :can-manage-dicom-connections="canManageDicomConnections"
                 :documentation="documentation"
                 :documents="documents"
+                :document-categories="documentCategories"
+                :can-upload-documents="canUploadDocuments"
                 @edit="openEditPanel"
             />
         </div>

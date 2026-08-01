@@ -41,6 +41,8 @@ defineProps<{
     historyUsers: Array<{ public_id: string; name: string }>;
     documentation: RegistryDocumentationItem[];
     documents: RegistryDocumentItem[];
+    documentCategories: Array<{ value: string; label: string }>;
+    canUploadDocuments: boolean;
 }>();
 
 const editPanelOpen = ref(false);
@@ -75,6 +77,8 @@ const editPanelOpen = ref(false);
             :history-users="historyUsers"
             :documentation="documentation"
             :documents="documents"
+            :document-categories="documentCategories"
+            :can-upload-documents="canUploadDocuments"
             @edit="editPanelOpen = true"
         />
 

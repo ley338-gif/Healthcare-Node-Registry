@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { FileText } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import RegistryDocumentUploadSlideover from './RegistryDocumentUploadSlideover.vue';
 export type RegistryDocumentItem = {
     public_id: string;
     title: string;
@@ -21,12 +22,19 @@ export type RegistryDocumentItem = {
         uploaded_by_user?: { name: string };
     } | null;
 };
-const props = defineProps<{ documents: RegistryDocumentItem[] }>();
+const props = defineProps<{
+    documents: RegistryDocumentItem[];
+    documentableType: string;
+    documentableId: string;
+    categories: Array<{ value: string; label: string }>;
+    canUpload: boolean;
+}>();
+const uploadOpen = ref(false);
 const search = ref('');
 const category = ref('');
 const scanStatus = ref('');
 const validity = ref('');
-const categories = computed(() => [
+const filterCategories = computed(() => [
     ...new Map(props.documents.map((item) => [categoryValue(item), item.category_label])).entries(),
 ]);
 const filtered = computed(() =>
@@ -61,7 +69,14 @@ const date = (v: string) => new Intl.DateTimeFormat('de-DE', { dateStyle: 'mediu
                 </h3>
                 <p class="mt-1 text-sm text-slate-500">Versionierte Dateien zu diesem Registry-Eintrag.</p>
             </div>
-            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">Upload folgt</span>
+            <button
+                v-if="canUpload"
+                type="button"
+                class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                @click="uploadOpen = true"
+            >
+                Dokument hochladen
+            </button>
         </div>
         <div v-if="!documents.length" class="mt-4 flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
             <FileText :size="19" class="text-slate-400" />
@@ -81,7 +96,9 @@ const date = (v: string) => new Intl.DateTimeFormat('de-DE', { dateStyle: 'mediu
                     class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                 >
                     <option value="">Alle Kategorien</option>
-                    <option v-for="option in categories" :key="option[0]" :value="option[0]">{{ option[1] }}</option>
+                    <option v-for="option in filterCategories" :key="option[0]" :value="option[0]">
+                        {{ option[1] }}
+                    </option>
                 </select>
                 <select
                     v-model="scanStatus"
@@ -159,5 +176,12 @@ const date = (v: string) => new Intl.DateTimeFormat('de-DE', { dateStyle: 'mediu
                 </article>
             </div>
         </template>
+        <RegistryDocumentUploadSlideover
+            :open="uploadOpen"
+            :documentable-type="documentableType"
+            :documentable-id="documentableId"
+            :categories="props.categories"
+            @close="uploadOpen = false"
+        />
     </section>
 </template>
