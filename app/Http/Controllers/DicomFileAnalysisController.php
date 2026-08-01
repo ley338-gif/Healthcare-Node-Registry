@@ -13,7 +13,7 @@ final class DicomFileAnalysisController extends Controller
     {
         $result = $analyzer->analyze($request->file('dicom_file'));
         $audit->record('diagnostics.file-analysis.completed', $request->user(), $request->user(), ['successful' => $result->successful, 'file_size' => $result->summary['fileSize'] ?? null]);
-        $response = back()->with('dicomFileAnalysis', $result->toArray());
+        $response = to_route('tests.index')->with('dicomFileAnalysis', $result->toArray());
 
         return $result->successful ? $response->with('success', 'DICOM-Datei analysiert.') : $response->with('error', $result->errors[0] ?? 'DICOM-Analyse fehlgeschlagen.');
     }

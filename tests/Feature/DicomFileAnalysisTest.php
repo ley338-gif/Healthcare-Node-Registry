@@ -26,6 +26,25 @@ final class DicomFileAnalysisTest extends TestCase
         $this->assertDatabaseHas('security_events', ['event_type' => 'diagnostics.file-analysis.completed']);
     }
 
+    public function test_analysis_result_is_returned_to_the_test_workspace_after_redirect(): void
+    {
+        $this->withoutVite();
+        $this->app->instance(DicomFileAnalyzer::class, new DicomFileAnalyzer(new FakeDumpRunner(new DicomDumpResult(true, 0, $this->validDump()))));
+
+        $this->actingAs($this->administrator())
+            ->followingRedirects()
+            ->post('/tests/dicom-file-analysis', [
+                'dicom_file' => UploadedFile::fake()->createWithContent('image.dcm', str_repeat("\0", 128).'DICMdata'),
+            ])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Tests/Index')
+                ->where('fileAnalysis.successful', true)
+                ->where('fileAnalysis.summary.sopClassUid', '1.2.840.10008.5.1.4.1.1.2')
+                ->where('fileAnalysis.summary.patientId', '[REDACTED]')
+                ->where('fileAnalysis.errors', []));
+    }
+
     public function test_invalid_file_returns_controlled_error_and_temporary_file_is_deleted(): void
     {
         $before = glob(sys_get_temp_dir().DIRECTORY_SEPARATOR.'hnr-analyze-*') ?: [];

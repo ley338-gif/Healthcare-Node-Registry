@@ -27,7 +27,7 @@ import {
     TableProperties,
     X,
 } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import Pagination from '../../Components/Pagination.vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 
@@ -184,7 +184,9 @@ const pacsDialogOpen = ref(false);
 const profileDialogOpen = ref(false);
 const storageDialogOpen = ref(false);
 const capabilityDialogOpen = ref(false);
-const fileAnalysisDialogOpen = ref(false);
+const fileAnalysisDialogOpen = ref(props.fileAnalysis !== null);
+const fileAnalysisResult = ref<FileAnalysis | null>(props.fileAnalysis);
+const fileAnalysisResultElement = ref<HTMLElement | null>(null);
 const editingProfileId = ref<string | null>(null);
 const historyFrom = ref(props.historyFilters.history_from ?? '');
 const historyTo = ref(props.historyFilters.history_to ?? '');
@@ -346,6 +348,7 @@ const exportCapabilityMatrix = (): void => {
 
 const selectDicomFile = (event: Event): void => {
     fileAnalysisForm.dicom_file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    fileAnalysisResult.value = null;
 };
 
 const analyzeDicomFile = (): void => {
@@ -355,6 +358,16 @@ const analyzeDicomFile = (): void => {
         onSuccess: () => fileAnalysisForm.reset(),
     });
 };
+
+watch(
+    () => props.fileAnalysis,
+    (analysis) => {
+        if (analysis === null) return;
+        fileAnalysisResult.value = analysis;
+        fileAnalysisDialogOpen.value = true;
+        void nextTick(() => fileAnalysisResultElement.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    },
+);
 
 watch(filteredNodes, (nodes) => {
     if (nodes.length === 0) return;
@@ -1673,23 +1686,29 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                         />Datei analysieren
                     </button>
                 </form>
-                <div v-if="fileAnalysis" class="mt-8 space-y-4">
+                <div v-if="fileAnalysisResult" ref="fileAnalysisResultElement" class="mt-8 scroll-mt-6 space-y-4">
                     <div
                         class="rounded-xl p-4"
-                        :class="fileAnalysis.successful ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'"
+                        :class="
+                            fileAnalysisResult.successful
+                                ? 'bg-emerald-50 text-emerald-800'
+                                : 'bg-rose-50 text-rose-800'
+                        "
                     >
                         <p class="font-semibold">
                             {{
-                                fileAnalysis.successful
+                                fileAnalysisResult.successful
                                     ? 'DICOM-Datei erfolgreich analysiert'
                                     : 'Analyse fehlgeschlagen'
                             }}
                         </p>
-                        <p v-for="error in fileAnalysis.errors" :key="error" class="mt-1 text-sm">{{ error }}</p>
+                        <p v-for="error in fileAnalysisResult.errors" :key="error" class="mt-1 text-sm">
+                            {{ error }}
+                        </p>
                     </div>
-                    <dl v-if="Object.keys(fileAnalysis.summary).length" class="grid gap-3 sm:grid-cols-2">
+                    <dl v-if="Object.keys(fileAnalysisResult.summary).length" class="grid gap-3 sm:grid-cols-2">
                         <div
-                            v-for="(value, key) in fileAnalysis.summary"
+                            v-for="(value, key) in fileAnalysisResult.summary"
                             :key="key"
                             class="rounded-xl border border-slate-200 p-3"
                         >
@@ -1697,15 +1716,18 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                             <dd class="mt-1 text-sm font-medium break-all text-slate-900">{{ value ?? '—' }}</dd>
                         </div>
                     </dl>
-                    <div v-if="fileAnalysis.warnings.length" class="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
-                        <p v-for="warning in fileAnalysis.warnings" :key="warning">{{ warning }}</p>
+                    <div
+                        v-if="fileAnalysisResult.warnings.length"
+                        class="rounded-xl bg-amber-50 p-4 text-sm text-amber-800"
+                    >
+                        <p v-for="warning in fileAnalysisResult.warnings" :key="warning">{{ warning }}</p>
                     </div>
-                    <details v-if="fileAnalysis.dump" class="rounded-xl border border-slate-200 p-4">
+                    <details v-if="fileAnalysisResult.dump" class="rounded-xl border border-slate-200 p-4">
                         <summary class="cursor-pointer text-sm font-semibold text-slate-700">
                             Vollständiger bereinigter DICOM-Dump
                         </summary>
                         <pre class="mt-3 max-h-96 overflow-auto rounded-lg bg-slate-950 p-3 text-xs text-slate-100">{{
-                            fileAnalysis.dump
+                            fileAnalysisResult.dump
                         }}</pre>
                     </details>
                 </div>
