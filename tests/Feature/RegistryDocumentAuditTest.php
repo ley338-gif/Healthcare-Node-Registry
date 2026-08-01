@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Department;
+use App\Models\Organization;
 use App\Models\RegistryDocument;
 use App\Models\SecurityEvent;
+use App\Models\Site;
 use App\Models\System;
 use App\Models\User;
 use App\Services\Documents\MalwareScanner;
@@ -91,6 +94,65 @@ final class RegistryDocumentAuditTest extends TestCase
             self::assertSame($scanStatus, $event->metadata['scan_status']);
             self::assertStringNotContainsString('Secret scanner', json_encode($event->metadata, JSON_THROW_ON_ERROR));
         }
+    }
+
+    public function test_upload_and_version_events_are_attributed_to_the_correct_registry_context(): void
+    {
+        $this->withoutVite();
+        Storage::fake('registry_documents');
+        $organization = Organization::query()->create(['name' => 'Auditverbund']);
+        $site = Site::query()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Auditstandort',
+            'country_code' => 'DE',
+            'timezone' => 'Europe/Berlin',
+        ]);
+        $department = Department::query()->create(['site_id' => $site->id, 'name' => 'Auditabteilung']);
+        $system = System::factory()->create([
+            'organization_id' => $organization->id,
+            'site_id' => $site->id,
+            'department_id' => $department->id,
+        ]);
+        $contexts = [
+            'organizations' => $organization,
+            'sites' => $site,
+            'departments' => $department,
+            'systems' => $system,
+        ];
+        $user = $this->administrator();
+
+        foreach ($contexts as $type => $context) {
+            $this->actingAs($user)->post("/registry-documents/{$type}/{$context->public_id}", [
+                'title' => "Audit {$type}",
+                'category' => 'other',
+                'visibility' => 'internal',
+                'file' => UploadedFile::fake()->createWithContent("{$type}.pdf", "%PDF-1.7 {$type}"),
+            ])->assertSessionHasNoErrors();
+
+            $this->assertDatabaseHas('security_events', [
+                'event_type' => 'document.created',
+                'subject_type' => $context::class,
+                'subject_public_id' => $context->public_id,
+            ]);
+        }
+
+        $systemDocument = RegistryDocument::query()
+            ->where('documentable_type', System::class)
+            ->where('documentable_id', $system->id)
+            ->firstOrFail();
+        $this->actingAs($user)->post("/registry-documents/{$systemDocument->public_id}/versions", [
+            'file' => UploadedFile::fake()->createWithContent('systems-v2.pdf', '%PDF-1.7 systems v2'),
+            'change_note' => 'Auditversion',
+        ])->assertSessionHasNoErrors();
+
+        $this->actingAs($user)->get("/systems/{$system->public_id}?history_type=document.created")
+            ->assertInertia(fn ($page) => $page
+                ->has('history.data', 1)
+                ->where('history.data.0.subject_public_id', $system->public_id));
+        $this->actingAs($user)->get("/systems/{$system->public_id}?history_type=document.version_uploaded")
+            ->assertInertia(fn ($page) => $page
+                ->has('history.data', 1)
+                ->where('history.data.0.subject_public_id', $system->public_id));
     }
 
     private function administrator(): User

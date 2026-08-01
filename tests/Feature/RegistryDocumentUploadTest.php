@@ -61,6 +61,39 @@ final class RegistryDocumentUploadTest extends TestCase
         ])->assertSessionHasErrors('file');
     }
 
+    public function test_upload_rejects_files_above_the_configured_size_limit(): void
+    {
+        Storage::fake('registry_documents');
+        config()->set('registry_documents.max_upload_kb', 1);
+        $system = System::factory()->create();
+
+        $this->actingAs($this->administrator())->post("/registry-documents/systems/{$system->public_id}", [
+            ...$this->metadata(),
+            'file' => UploadedFile::fake()->createWithContent('large.pdf', "%PDF-1.7\n".str_repeat('x', 2048)),
+        ])->assertSessionHasErrors('file');
+
+        self::assertSame(0, RegistryDocument::query()->count());
+        Storage::disk('registry_documents')->assertDirectoryEmpty('');
+    }
+
+    public function test_upload_rejects_wrong_and_archived_registry_contexts(): void
+    {
+        Storage::fake('registry_documents');
+        $system = System::factory()->create();
+        $archivedSystem = System::factory()->create(['archived_at' => now()]);
+        $user = $this->administrator();
+        $file = fn () => UploadedFile::fake()->createWithContent('file.pdf', '%PDF-1.7 context');
+
+        $this->actingAs($user)->post("/registry-documents/organizations/{$system->public_id}", [
+            ...$this->metadata(), 'file' => $file(),
+        ])->assertNotFound();
+        $this->actingAs($user)->post("/registry-documents/systems/{$archivedSystem->public_id}", [
+            ...$this->metadata(), 'file' => $file(),
+        ])->assertStatus(422);
+
+        self::assertSame(0, RegistryDocument::query()->count());
+    }
+
     public function test_duplicate_file_for_same_context_is_rejected(): void
     {
         Storage::fake('registry_documents');
@@ -98,6 +131,41 @@ final class RegistryDocumentUploadTest extends TestCase
         self::assertSame(2, $document->currentVersion?->version_number);
         self::assertSame('Vertrag verlängert', $document->currentVersion?->change_note);
         $this->assertDatabaseHas('security_events', ['event_type' => 'document.version_uploaded', 'subject_public_id' => $system->public_id]);
+    }
+
+    public function test_new_version_retains_old_file_and_document_metadata(): void
+    {
+        Storage::fake('registry_documents');
+        $system = System::factory()->create();
+        $user = $this->administrator();
+        $metadata = [
+            ...$this->metadata(),
+            'description' => 'Technische Vertragsunterlagen',
+            'valid_from' => '2026-01-01',
+            'valid_until' => '2027-01-01',
+            'contract_reference' => 'MAINT-42',
+            'tags' => ['wartung', 'kritisch'],
+        ];
+        $this->actingAs($user)->post("/registry-documents/systems/{$system->public_id}", [
+            ...$metadata, 'file' => UploadedFile::fake()->createWithContent('version-1.pdf', '%PDF-1.7 retained'),
+        ])->assertSessionHasNoErrors();
+        $document = RegistryDocument::query()->firstOrFail();
+        $firstVersion = $document->currentVersion;
+        self::assertNotNull($firstVersion);
+
+        $this->actingAs($user)->post("/registry-documents/{$document->public_id}/versions", [
+            'file' => UploadedFile::fake()->createWithContent('version-2.pdf', '%PDF-1.7 replacement'),
+            'change_note' => 'Neue Fassung',
+        ])->assertSessionHasNoErrors();
+
+        $document->refresh();
+        self::assertSame('Wartungsvertrag', $document->title);
+        self::assertSame('Technische Vertragsunterlagen', $document->description);
+        self::assertSame('MAINT-42', $document->contract_reference);
+        self::assertSame(['wartung', 'kritisch'], $document->tags);
+        self::assertNotSame($firstVersion->id, $document->current_version_id);
+        self::assertTrue($document->versions()->whereKey($firstVersion->id)->exists());
+        Storage::disk('registry_documents')->assertExists($firstVersion->storage_path);
     }
 
     public function test_new_version_requires_permission_and_rejects_duplicate_content(): void
@@ -146,6 +214,22 @@ final class RegistryDocumentUploadTest extends TestCase
         $this->actingAs($this->administrator())->get("/registry-document-versions/{$version->public_id}/download")->assertStatus(423);
     }
 
+    public function test_download_rejects_archived_documents_and_infected_versions(): void
+    {
+        Storage::fake('registry_documents');
+        $version = RegistryDocumentVersion::factory()->create([
+            'storage_disk' => 'registry_documents',
+            'storage_path' => 'systems/test/infected.pdf',
+            'malware_scan_status' => 'infected',
+        ]);
+        Storage::disk('registry_documents')->put($version->storage_path, '%PDF-1.7 infected');
+        $user = $this->administrator();
+
+        $this->actingAs($user)->get("/registry-document-versions/{$version->public_id}/download")->assertStatus(423);
+        $version->document->update(['status' => 'archived', 'archived_at' => now()]);
+        $this->actingAs($user)->get("/registry-document-versions/{$version->public_id}/download")->assertNotFound();
+    }
+
     public function test_clean_pdf_version_can_be_previewed_privately_with_range_support(): void
     {
         Storage::fake('registry_documents');
@@ -188,6 +272,19 @@ final class RegistryDocumentUploadTest extends TestCase
         $this->actingAs($this->administrator())->get("/registry-document-versions/{$version->public_id}/preview")->assertStatus(415);
         $version->update(['mime_type' => 'application/pdf', 'file_extension' => 'pdf', 'malware_scan_status' => 'pending']);
         $this->actingAs($this->administrator())->get("/registry-document-versions/{$version->public_id}/preview")->assertStatus(423);
+    }
+
+    public function test_private_document_file_is_not_exposed_through_public_storage(): void
+    {
+        Storage::fake('registry_documents');
+        $version = RegistryDocumentVersion::factory()->create([
+            'storage_disk' => 'registry_documents',
+            'storage_path' => 'systems/private/document.pdf',
+            'malware_scan_status' => 'clean',
+        ]);
+        Storage::disk('registry_documents')->put($version->storage_path, '%PDF-1.7 private');
+
+        $this->get('/storage/'.$version->storage_path)->assertNotFound();
     }
 
     private function administrator(): User
