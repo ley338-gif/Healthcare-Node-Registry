@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CapabilityMatrixDiagnosticController;
 use App\Http\Controllers\DashboardController;
@@ -33,6 +34,8 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
+    Route::get('/audit/export/{format}', [AuditController::class, 'export'])->whereIn('format', ['csv'])->name('audit.export');
 
     Route::get('/structure', OrganizationStructureController::class)->name('structure.index');
     Route::get('/documents', RegistryDocumentIndexController::class)->name('documents.index');

@@ -24,10 +24,11 @@ final class RegistryHistoryViewService
      *   historyUsers: Collection<int, array{public_id: string, name: string}>
      * }
      */
-    public function present(Builder $baseQuery, array $filters, string $pageName = 'history_page'): array
+    public function present(Builder $baseQuery, array $filters, string $pageName = 'history_page', int $perPage = 15): array
     {
         $filteredQuery = $this->applyFilters(clone $baseQuery, $filters);
-        $actorIds = (clone $baseQuery)->get()->pluck('metadata')->map(
+        $history = $filteredQuery->paginate($perPage, ['*'], $pageName)->withQueryString();
+        $actorIds = collect($history->items())->pluck('metadata')->map(
             fn (mixed $metadata): ?string => is_array($metadata) && is_string($metadata['actor_public_id'] ?? null)
                 ? $metadata['actor_public_id']
                 : null,
@@ -36,7 +37,7 @@ final class RegistryHistoryViewService
         $now = CarbonImmutable::now();
 
         return [
-            'history' => $filteredQuery->paginate(15, ['*'], $pageName)->withQueryString()->through(
+            'history' => $history->through(
                 fn (SecurityEvent $event): array => $this->event($event, $actors),
             ),
             'historyStats' => [

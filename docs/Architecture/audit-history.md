@@ -25,7 +25,6 @@ Kontextabfragen verwenden die vorhandene `view`-Policy der Entität. Die globale
 
 Dokumentations-Langtexte und strukturierte Daten werden im Audit nicht vollständig gespeichert. Stattdessen werden geänderte Feldnamen sowie Länge und SHA-256 abgelegt. Patientendaten dürfen nicht als Audit-Metadaten geschrieben werden.
 
-## Vorbereitung des globalen Audit-Explorers
+## Globaler Audit-Explorer
 
-Eine `/audit`-Route ist noch nicht implementiert. Eine spätere Seite verwendet `RegistryHistoryService::global()`, `RegistryHistoryViewService::applyFilters()` beziehungsweise `present()`, `RegistryAuditEntityResolver` und `AuditHistoryPanel.vue`. Dadurch bleibt die globale Ansicht eine weitere Projektion derselben Datenbasis.
-
+Die berechtigungsgeschützte Route `/audit` projiziert alle Einträge zentral über `RegistryHistoryService::global()`, `RegistryHistoryViewService` und `RegistryAuditEntityResolver`. Suche, Zeitraum, Aktion, Objekttyp, Benutzer, Registry-Kontext, Fehler/Test-Einschränkung und Sortierung laufen serverseitig. Die Standardseite umfasst 50 Einträge; der CSV-Export wird gestreamt und verwendet dieselbe Filterpipeline. Weitere Exportformate können im formatgebundenen Export-Endpunkt ergänzt werden.

@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Zentraler Audit-Arbeitsbereich mit globaler Suche, Filtern, Detailansicht und CSV-Export
+
 ## Registry-Historie und Dokumentation
 
 - [x] gemeinsame kontextbezogene Audit-Abfrage

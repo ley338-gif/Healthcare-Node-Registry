@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Zentralen, read-only Audit-Arbeitsbereich mit Berechtigungsprüfung, serverseitiger Filterung, 50er-Paginierung, Slide-over-Details und CSV-Export ergänzt.
+
 ## [Unreleased]
 
 ### Registry-Historie und Dokumentation

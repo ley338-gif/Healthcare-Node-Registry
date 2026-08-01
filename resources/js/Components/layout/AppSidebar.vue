@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { Boxes, Building2, FileText, FlaskConical, LayoutDashboard, Map, Settings, ShieldCheck } from '@lucide/vue';
 import type { PageProps } from '../../types';
 const page = usePage<PageProps>();
+const canViewAudit = ((page.props.auth as { permissions?: string[] })?.permissions ?? []).includes('audit.view');
 const isActive = (paths: string[]) =>
     paths.some((path) => (path === '/' ? page.url === '/' : page.url.startsWith(path)));
 const groups = [
@@ -56,11 +57,10 @@ const groups = [
         items: [
             {
                 label: 'Audit',
-                href: '#',
-                paths: [],
+                href: '/audit',
+                paths: ['/audit'],
                 icon: ShieldCheck,
-                enabled: false,
-                badge: 'später',
+                enabled: canViewAudit,
             },
             {
                 label: 'Einstellungen',

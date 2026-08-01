@@ -16,6 +16,8 @@ final class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user()?->only(['id', 'name', 'email']),
                 'roles' => $request->user()?->roles()->pluck('name')->values() ?? [],
+                'permissions' => $request->user()?->roles()->with('permissions')->get()
+                    ->pluck('permissions')->flatten()->pluck('name')->unique()->values() ?? [],
             ],
             'flash' => [
                 'success' => fn (): ?string => $request->session()->get('success'),
