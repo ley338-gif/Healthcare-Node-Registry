@@ -13,6 +13,7 @@ use App\Models\System;
 use App\Models\User;
 use App\Services\Audit\RegistryHistoryService;
 use App\Services\Audit\RegistryHistoryViewService;
+use App\Services\Documents\RegistryDocumentQueryService;
 use App\Support\RegistryAudit;
 use App\Support\RegistryDocumentCategory;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +25,7 @@ use Inertia\Response;
 
 final class SystemController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, RegistryDocumentQueryService $documentQueryService): Response
     {
         Gate::authorize('viewAny', System::class);
 
@@ -222,12 +223,15 @@ final class SystemController extends Controller
         $selectedDicomNodes = collect();
         $selectedDicomConnections = collect();
         $selectedDocumentation = collect();
-        $selectedDocuments = collect();
+        $selectedDocuments = ['data' => [], 'links' => [], 'total' => 0];
+        $documentUploaders = collect();
+        $documentFilters = $request->only(RegistryDocumentQueryService::FILTER_KEYS);
 
         if ($selectedSystem !== null) {
             Gate::authorize('view', $selectedSystem);
             $selectedDocumentation = $selectedSystem->documentation;
-            $selectedDocuments = $selectedSystem->documents()->with(['currentVersion.uploadedByUser:id,public_id,name', 'versions.uploadedByUser:id,public_id,name'])->latest('updated_at')->get()->each(fn ($document) => $document->setAttribute('category_label', $document->category->label()));
+            $selectedDocuments = $documentQueryService->paginate($selectedSystem, $documentFilters);
+            $documentUploaders = $documentQueryService->uploaders($selectedSystem);
 
             $selectedDicomNodes = $selectedSystem
                 ->dicomNodes()
@@ -279,6 +283,8 @@ final class SystemController extends Controller
             'dicomConnections' => $selectedDicomConnections,
             'documentation' => $selectedDocumentation,
             'documents' => $selectedDocuments,
+            'documentFilters' => $documentFilters,
+            'documentUploaders' => $documentUploaders,
             'documentCategories' => RegistryDocumentCategory::options(),
             'canUploadDocuments' => $request->user()?->hasPermission('documents.upload') ?? false,
             'canManageDocumentVersions' => $request->user()?->hasPermission('documents.manage_versions') ?? false,
@@ -382,6 +388,7 @@ final class SystemController extends Controller
         System $system,
         RegistryHistoryService $historyService,
         RegistryHistoryViewService $historyViewService,
+        RegistryDocumentQueryService $documentQueryService,
     ): Response {
         Gate::authorize('view', $system);
 
@@ -392,7 +399,6 @@ final class SystemController extends Controller
             'documentation' => fn ($query) => $query
                 ->with('updatedByUser:id,public_id,name')
                 ->orderBy('section'),
-            'documents' => fn ($query) => $query->with(['currentVersion.uploadedByUser:id,public_id,name', 'versions.uploadedByUser:id,public_id,name'])->latest('updated_at'),
         ]);
 
         $user = $request->user();
@@ -407,7 +413,9 @@ final class SystemController extends Controller
         return Inertia::render('Registry/Systems/Show', [
             'system' => $system,
             'documentation' => $system->documentation,
-            'documents' => $system->documents->each(fn ($document) => $document->setAttribute('category_label', $document->category->label())),
+            'documents' => $documentQueryService->paginate($system, $request->only(RegistryDocumentQueryService::FILTER_KEYS)),
+            'documentFilters' => $request->only(RegistryDocumentQueryService::FILTER_KEYS),
+            'documentUploaders' => $documentQueryService->uploaders($system),
             'documentCategories' => RegistryDocumentCategory::options(),
             'canUploadDocuments' => $user->hasPermission('documents.upload'),
             'canManageDocumentVersions' => $user->hasPermission('documents.manage_versions'),

@@ -10,6 +10,7 @@ use App\Models\System;
 use App\Models\User;
 use App\Services\Audit\RegistryHistoryService;
 use App\Services\Audit\RegistryHistoryViewService;
+use App\Services\Documents\RegistryDocumentQueryService;
 use App\Support\RegistryDocumentCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ final class OrganizationStructureController extends Controller
         Request $request,
         RegistryHistoryService $historyService,
         RegistryHistoryViewService $historyViewService,
+        RegistryDocumentQueryService $documentQueryService,
     ): Response {
         $organizations = Organization::query()
             ->active()
@@ -117,7 +119,9 @@ final class OrganizationStructureController extends Controller
             'historyUsers' => collect(),
         ];
         $documentation = collect();
-        $documents = collect();
+        $documents = ['data' => [], 'links' => [], 'total' => 0];
+        $documentUploaders = collect();
+        $documentFilters = $request->only(RegistryDocumentQueryService::FILTER_KEYS);
         $canManageDocumentation = false;
         $includeDescendants = $request->query('history_scope', 'descendants') !== 'direct';
         $user = $request->user();
@@ -132,7 +136,8 @@ final class OrganizationStructureController extends Controller
                 ->orderBy('section')
                 ->get();
             $canManageDocumentation = Gate::forUser($user)->allows('update', $selectedContext);
-            $documents = $selectedContext->documents()->with(['currentVersion.uploadedByUser:id,public_id,name', 'versions.uploadedByUser:id,public_id,name'])->latest('updated_at')->get()->each(fn ($document) => $document->setAttribute('category_label', $document->category->label()));
+            $documents = $documentQueryService->paginate($selectedContext, $documentFilters);
+            $documentUploaders = $documentQueryService->uploaders($selectedContext);
         }
 
         if (
@@ -165,6 +170,8 @@ final class OrganizationStructureController extends Controller
             ...$historyView,
             'documentation' => $documentation,
             'documents' => $documents,
+            'documentFilters' => $documentFilters,
+            'documentUploaders' => $documentUploaders,
             'documentCategories' => RegistryDocumentCategory::options(),
             'canUploadDocuments' => $user?->hasPermission('documents.upload') ?? false,
             'canManageDocumentVersions' => $user?->hasPermission('documents.manage_versions') ?? false,

@@ -23,7 +23,7 @@ import ContentCard from '../../ui/ContentCard.vue';
 import AuditHistoryPanel, { type AuditEvent } from '../../audit/AuditHistoryPanel.vue';
 import DocumentationPanel from '../../documentation/DocumentationPanel.vue';
 import type { RegistryDocumentationItem } from '../../documentation/documentationTypes';
-import type { RegistryDocumentItem } from '../../documents/RegistryDocumentList.vue';
+import type { RegistryDocumentPagination } from '../../documents/RegistryDocumentList.vue';
 import { systemDocumentationSections } from '../../documentation/systemDocumentationSections';
 
 export type SelectOption = {
@@ -112,7 +112,9 @@ const props = withDefaults(
         historyEventTypes?: string[];
         historyUsers?: Array<{ public_id: string; name: string }>;
         documentation?: RegistryDocumentationItem[];
-        documents?: RegistryDocumentItem[];
+        documents?: RegistryDocumentPagination;
+        documentFilters?: Record<string, string | undefined>;
+        documentUploaders?: Array<{ public_id: string; name: string }>;
         documentCategories?: Array<{ value: string; label: string }>;
         canUploadDocuments?: boolean;
         canManageDocumentVersions?: boolean;
@@ -130,7 +132,9 @@ const props = withDefaults(
         historyEventTypes: () => [],
         historyUsers: () => [],
         documentation: () => [],
-        documents: () => [],
+        documents: () => ({ data: [], links: [], total: 0 }),
+        documentFilters: () => ({}),
+        documentUploaders: () => [],
         documentCategories: () => [],
         canUploadDocuments: false,
         canManageDocumentVersions: false,
@@ -567,6 +571,8 @@ const statusClass = (value: string): string => {
                     :can-view-documents="canViewDocuments"
                     :can-update-documents="canUpdateDocuments"
                     :can-archive-documents="canArchiveDocuments"
+                    :document-filters="documentFilters"
+                    :document-uploaders="documentUploaders"
                     :can-manage="canManage"
                     :master-data="documentationMasterData"
                 />

@@ -63,6 +63,12 @@ final class User extends Authenticatable
         return $this->hasMany(DiagnosticTestRun::class);
     }
 
+    /** @return HasMany<RegistryDocumentVersion, $this> */
+    public function uploadedRegistryDocumentVersions(): HasMany
+    {
+        return $this->hasMany(RegistryDocumentVersion::class, 'uploaded_by');
+    }
+
     public function hasRole(string $role): bool
     {
         return $this->roles->contains('name', $role);

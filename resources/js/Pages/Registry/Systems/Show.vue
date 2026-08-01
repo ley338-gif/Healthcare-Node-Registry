@@ -15,7 +15,7 @@ import AppLayout from '../../../Layouts/AppLayout.vue';
 import { ref } from 'vue';
 import type { AuditEvent } from '../../../Components/audit/AuditHistoryPanel.vue';
 import type { RegistryDocumentationItem } from '../../../Components/documentation/documentationTypes';
-import type { RegistryDocumentItem } from '../../../Components/documents/RegistryDocumentList.vue';
+import type { RegistryDocumentPagination } from '../../../Components/documents/RegistryDocumentList.vue';
 
 defineProps<{
     system: SystemDetail;
@@ -40,7 +40,9 @@ defineProps<{
     historyEventTypes: string[];
     historyUsers: Array<{ public_id: string; name: string }>;
     documentation: RegistryDocumentationItem[];
-    documents: RegistryDocumentItem[];
+    documents: RegistryDocumentPagination;
+    documentFilters: Record<string, string | undefined>;
+    documentUploaders: Array<{ public_id: string; name: string }>;
     documentCategories: Array<{ value: string; label: string }>;
     canUploadDocuments: boolean;
     canManageDocumentVersions: boolean;
@@ -89,6 +91,8 @@ const editPanelOpen = ref(false);
             :can-view-documents="canViewDocuments"
             :can-update-documents="canUpdateDocuments"
             :can-archive-documents="canArchiveDocuments"
+            :document-filters="documentFilters"
+            :document-uploaders="documentUploaders"
             @edit="editPanelOpen = true"
         />
 

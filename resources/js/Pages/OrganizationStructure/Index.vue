@@ -23,7 +23,7 @@ import AppLayout from '../../Layouts/AppLayout.vue';
 import AuditHistoryPanel, { type AuditEvent } from '../../Components/audit/AuditHistoryPanel.vue';
 import DocumentationPanel from '../../Components/documentation/DocumentationPanel.vue';
 import type { RegistryDocumentationItem } from '../../Components/documentation/documentationTypes';
-import type { RegistryDocumentItem } from '../../Components/documents/RegistryDocumentList.vue';
+import type { RegistryDocumentPagination } from '../../Components/documents/RegistryDocumentList.vue';
 import {
     departmentDocumentationSections,
     organizationDocumentationSections,
@@ -113,7 +113,9 @@ const props = defineProps<{
     historyEventTypes: string[];
     historyUsers: Array<{ public_id: string; name: string }>;
     documentation: RegistryDocumentationItem[];
-    documents: RegistryDocumentItem[];
+    documents: RegistryDocumentPagination;
+    documentFilters: Record<string, string | undefined>;
+    documentUploaders: Array<{ public_id: string; name: string }>;
     documentCategories: Array<{ value: string; label: string }>;
     canUploadDocuments: boolean;
     canManageDocumentVersions: boolean;
@@ -1234,6 +1236,8 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                             :can-view-documents="canViewDocuments"
                             :can-update-documents="canUpdateDocuments"
                             :can-archive-documents="canArchiveDocuments"
+                            :document-filters="documentFilters"
+                            :document-uploaders="documentUploaders"
                             :can-manage="canManageDocumentation"
                             :master-data="documentationMasterData"
                         />

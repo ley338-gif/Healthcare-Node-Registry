@@ -14,7 +14,7 @@ import EmptyState from '../../../Components/ui/EmptyState.vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
 import type { RegistryDocumentationItem } from '../../../Components/documentation/documentationTypes';
-import type { RegistryDocumentItem } from '../../../Components/documents/RegistryDocumentList.vue';
+import type { RegistryDocumentPagination } from '../../../Components/documents/RegistryDocumentList.vue';
 
 type SelectOption = {
     value: string;
@@ -92,7 +92,9 @@ const props = withDefaults(
         dicomConnections: DicomConnection[];
         dicomNodeOptions: DicomNodeOption[];
         documentation: RegistryDocumentationItem[];
-        documents: RegistryDocumentItem[];
+        documents: RegistryDocumentPagination;
+        documentFilters: Record<string, string | undefined>;
+        documentUploaders: Array<{ public_id: string; name: string }>;
         documentCategories: Array<{ value: string; label: string }>;
         canUploadDocuments: boolean;
         canManageDocumentVersions: boolean;
@@ -469,6 +471,8 @@ const closeEditPanel = (): void => {
                 :can-view-documents="canViewDocuments"
                 :can-update-documents="canUpdateDocuments"
                 :can-archive-documents="canArchiveDocuments"
+                :document-filters="documentFilters"
+                :document-uploaders="documentUploaders"
                 @edit="openEditPanel"
             />
         </div>

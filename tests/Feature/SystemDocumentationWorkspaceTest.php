@@ -120,13 +120,13 @@ final class SystemDocumentationWorkspaceTest extends TestCase
         $this->actingAs($user)->get("/systems/{$system->public_id}")
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->has('documents', 1)
-                ->where('documents.0.title', 'Systemhandbuch')
-                ->where('documents.0.category_label', 'Sonstiges')
-                ->where('documents.0.current_version.version_number', 1)
-                ->where('documents.0.validity_status', 'expiring_soon')
-                ->where('documents.0.validity_status_label', 'Läuft bald ab')
-                ->where('documents.0.contract_reference', 'SUP-2026-42')
+                ->has('documents.data', 1)
+                ->where('documents.data.0.title', 'Systemhandbuch')
+                ->where('documents.data.0.category_label', 'Sonstiges')
+                ->where('documents.data.0.current_version.version_number', 1)
+                ->where('documents.data.0.validity_status', 'expiring_soon')
+                ->where('documents.data.0.validity_status_label', 'Läuft bald ab')
+                ->where('documents.data.0.contract_reference', 'SUP-2026-42')
                 ->where('canUploadDocuments', true)
                 ->where('documentCategories.0.value', 'maintenance_contract'));
     }

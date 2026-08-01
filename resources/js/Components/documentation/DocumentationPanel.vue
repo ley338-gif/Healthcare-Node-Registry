@@ -6,7 +6,7 @@ import DocumentationCompleteness from './DocumentationCompleteness.vue';
 import DocumentationEditorSlideover from './DocumentationEditorSlideover.vue';
 import DocumentationSectionCard from './DocumentationSectionCard.vue';
 import type { DocumentationSection, RegistryDocumentationItem } from './documentationTypes';
-import RegistryDocumentList, { type RegistryDocumentItem } from '../documents/RegistryDocumentList.vue';
+import RegistryDocumentList, { type RegistryDocumentPagination } from '../documents/RegistryDocumentList.vue';
 
 const props = defineProps<{
     documentableType: 'organizations' | 'sites' | 'departments' | 'systems';
@@ -15,7 +15,9 @@ const props = defineProps<{
     documentation: RegistryDocumentationItem[];
     canManage: boolean;
     masterData?: Array<{ label: string; value: string | null }>;
-    documents?: RegistryDocumentItem[];
+    documents?: RegistryDocumentPagination;
+    documentFilters?: Record<string, string | undefined>;
+    documentUploaders?: Array<{ public_id: string; name: string }>;
     documentCategories?: Array<{ value: string; label: string }>;
     canUploadDocuments?: boolean;
     canManageDocumentVersions?: boolean;
@@ -138,7 +140,7 @@ const save = (): void => {
             @visibility-change="(value) => (form.visibility = value)"
         />
         <RegistryDocumentList
-            :documents="documents ?? []"
+            :documents="documents ?? { data: [], links: [], total: 0 }"
             :documentable-type="documentableType"
             :documentable-id="documentableId"
             :categories="documentCategories ?? []"
@@ -148,6 +150,8 @@ const save = (): void => {
             :can-preview="canViewDocuments ?? false"
             :can-update="canUpdateDocuments ?? false"
             :can-archive="canArchiveDocuments ?? false"
+            :filters="documentFilters ?? {}"
+            :uploaders="documentUploaders ?? []"
         />
     </div>
 </template>
