@@ -68,8 +68,9 @@ const props = withDefaults(
         showFilters?: boolean;
         showContext?: boolean;
         standalone?: boolean;
+        focusDocumentPublicId?: string;
     }>(),
-    { showFilters: false, showContext: false, standalone: false },
+    { showFilters: false, showContext: false, standalone: false, focusDocumentPublicId: undefined },
 );
 
 const uploadOpen = ref(false);
@@ -88,6 +89,13 @@ const uploader = ref(props.filters.document_uploader ?? '');
 const from = ref(props.filters.document_from ?? '');
 const to = ref(props.filters.document_to ?? '');
 const entityType = ref(props.filters.document_entity_type ?? '');
+if (props.focusDocumentPublicId) {
+    const focused = props.documents.data.find((item) => item.public_id === props.focusDocumentPublicId);
+    if (focused?.current_version) {
+        previewDocument.value = focused;
+        previewVersion.value = focused.current_version;
+    }
+}
 const expandedDocument = computed(
     () => props.documents.data.find((item) => item.public_id === expandedDocumentId.value) ?? null,
 );

@@ -197,6 +197,8 @@ final class DicomNetworkMapController extends Controller
                 ['value' => 'move', 'label' => 'C-MOVE'],
                 ['value' => 'get', 'label' => 'C-GET'],
             ],
+            'focusNodePublicId' => $request->query('node'),
+            'focusConnectionPublicId' => $request->query('connection'),
         ]);
     }
 }

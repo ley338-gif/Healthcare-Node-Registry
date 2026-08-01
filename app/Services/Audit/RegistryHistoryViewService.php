@@ -4,6 +4,8 @@ namespace App\Services\Audit;
 
 use App\Models\SecurityEvent;
 use App\Models\User;
+use App\Support\AuditChangePresenter;
+use App\Support\AuditEventGroup;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -11,7 +13,10 @@ use Illuminate\Support\Collection;
 
 final class RegistryHistoryViewService
 {
-    public function __construct(private readonly RegistryAuditEntityResolver $entityResolver) {}
+    public function __construct(
+        private readonly RegistryAuditEntityResolver $entityResolver,
+        private readonly AuditChangePresenter $changePresenter,
+    ) {}
 
     /**
      * @param  Builder<SecurityEvent>  $baseQuery
@@ -91,6 +96,8 @@ final class RegistryHistoryViewService
     private function event(SecurityEvent $event, Collection $actors): array
     {
         $entity = $this->entityResolver->resolve($event);
+        $group = AuditEventGroup::fromEventType($event->event_type);
+        $changes = $this->changePresenter->changes($event->metadata);
 
         return [
             'event_id' => $event->event_id,
@@ -98,6 +105,9 @@ final class RegistryHistoryViewService
             'subject_type' => $entity['type'],
             'subject_public_id' => $event->subject_public_id,
             'entity' => $entity,
+            'event_group' => ['value' => $group->value, 'label' => $group->label()],
+            'changes' => $changes,
+            'change_summary' => count($changes) > 1 ? 'Mehrere Felder geändert' : null,
             'actor_name' => $actors->get($event->metadata['actor_public_id'] ?? '') ?? 'System',
             'metadata' => $event->metadata,
             'occurred_at' => $event->occurred_at->toIso8601String(),

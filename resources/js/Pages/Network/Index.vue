@@ -32,6 +32,8 @@ const props = defineProps<{
         unverified_nodes: number;
     };
     services: ServiceOption[];
+    focusNodePublicId: string | null;
+    focusConnectionPublicId: string | null;
 }>();
 
 const search = ref('');
@@ -358,7 +360,14 @@ const resetFilters = (): void => {
                 </div>
             </div>
 
-            <DicomNetworkMap v-else :nodes="visibleNodes" :connections="visibleConnections" :layout-mode="layoutMode" />
+            <DicomNetworkMap
+                v-else
+                :nodes="visibleNodes"
+                :connections="visibleConnections"
+                :layout-mode="layoutMode"
+                :focus-node-public-id="focusNodePublicId"
+                :focus-connection-public-id="focusConnectionPublicId"
+            />
 
             <footer class="border-t border-slate-200 bg-white px-5 py-3">
                 <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">

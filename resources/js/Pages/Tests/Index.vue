@@ -86,6 +86,7 @@ type HistoryFilters = {
     history_type?: string;
     history_status?: string;
     history_user?: string;
+    run?: string;
 };
 
 type WorklistItem = {
@@ -178,7 +179,9 @@ const selectedNodeId = ref<string | null>(props.nodes[0]?.public_id ?? null);
 const echoProcessing = ref(false);
 const networkProcessing = ref(false);
 const resultExpanded = ref(true);
-const selectedHistoryRun = ref<HistoryRun | null>(null);
+const selectedHistoryRun = ref<HistoryRun | null>(
+    props.history.data.find((run) => run.public_id === props.historyFilters.run) ?? null,
+);
 const worklistDialogOpen = ref(false);
 const pacsDialogOpen = ref(false);
 const profileDialogOpen = ref(false);

@@ -67,6 +67,7 @@ const uploadOpen = ref(false);
                     show-filters
                     show-context
                     standalone
+                    :focus-document-public-id="documentFilters.document"
                 />
             </div>
         </div>

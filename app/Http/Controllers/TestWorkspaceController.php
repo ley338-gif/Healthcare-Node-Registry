@@ -26,6 +26,7 @@ final class TestWorkspaceController extends Controller
             'history_type' => ['nullable', 'string', 'max:60'],
             'history_status' => ['nullable', 'string', 'max:30'],
             'history_user' => ['nullable', 'uuid'],
+            'run' => ['nullable', 'uuid'],
         ]);
 
         $nodeModels = DicomNode::query()
@@ -147,6 +148,7 @@ final class TestWorkspaceController extends Controller
                     fn ($userQuery) => $userQuery->where('public_id', $filters['history_user']),
                 ),
             )
+            ->when(isset($filters['run']), fn ($query) => $query->orderByRaw('CASE WHEN public_id = ? THEN 0 ELSE 1 END', [$filters['run']]))
             ->latest('started_at')
             ->paginate(10, ['*'], 'history_page')
             ->withQueryString()

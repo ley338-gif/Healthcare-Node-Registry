@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Audit-Tabelle um kompakte Vorher-/Nachher-Werte, zentrale Ereignisgruppen und zustandsabhängige Deep Links in Registry-, DICOM-, Dokument- und Test-Workspaces erweitert.
 - Zentralen, read-only Audit-Arbeitsbereich mit Berechtigungsprüfung, serverseitiger Filterung, 50er-Paginierung, Slide-over-Details und CSV-Export ergänzt.
 
 ## [Unreleased]

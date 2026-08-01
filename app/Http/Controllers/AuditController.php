@@ -10,6 +10,7 @@ use App\Models\System;
 use App\Models\User;
 use App\Services\Audit\RegistryHistoryService;
 use App\Services\Audit\RegistryHistoryViewService;
+use App\Support\AuditEventGroup;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,7 +19,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class AuditController extends Controller
 {
-    private const FILTERS = ['history_search', 'history_from', 'history_to', 'history_type', 'history_user', 'object_type', 'organization', 'site', 'department', 'system', 'only_errors', 'only_tests', 'sort'];
+    private const FILTERS = ['history_search', 'history_from', 'history_to', 'history_type', 'history_user', 'event_group', 'object_type', 'organization', 'site', 'department', 'system', 'only_errors', 'only_tests', 'sort'];
 
     public function index(Request $request, RegistryHistoryService $history, RegistryHistoryViewService $view): Response
     {
@@ -32,6 +33,7 @@ final class AuditController extends Controller
         return Inertia::render('Audit/Index', [
             'events' => $data['history'], 'filters' => $filters, 'stats' => $this->stats($global),
             'eventTypes' => $data['historyEventTypes'],
+            'eventGroups' => AuditEventGroup::options(),
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['public_id', 'name']),
             'organizations' => Organization::query()->orderBy('name')->get(['public_id', 'name']),
             'sites' => Site::query()->orderBy('name')->get(['public_id', 'name']),
@@ -70,10 +72,12 @@ final class AuditController extends Controller
     private function auditQuery(Builder $query, array $filters): Builder
     {
         $type = trim((string) ($filters['object_type'] ?? ''));
+        $group = AuditEventGroup::tryFrom(trim((string) ($filters['event_group'] ?? '')));
         $sort = ($filters['sort'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
 
         return $query->reorder('occurred_at', $sort)
             ->when($type !== '', fn (Builder $q) => $q->where('subject_type', 'like', '%\\'.$type))
+            ->when($group !== null, fn (Builder $q) => $group->apply($q))
             ->when(($filters['only_errors'] ?? '') === '1', fn (Builder $q) => $q->where(fn (Builder $x) => $x->where('metadata->status', 'failed')->orWhere('event_type', 'like', '%failed%')))
             ->when(($filters['only_tests'] ?? '') === '1', fn (Builder $q) => $q->where(fn (Builder $x) => $x->where('event_type', 'like', 'diagnostics.%')->orWhere('event_type', 'like', '%test%')));
     }

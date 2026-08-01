@@ -21,6 +21,7 @@ final class RegistryDocumentQueryService
         'document_search', 'document_category', 'document_file_type', 'document_status',
         'document_validity', 'document_uploader', 'document_from', 'document_to', 'document_scan_status',
         'document_entity_type',
+        'document',
     ];
 
     /**
@@ -118,6 +119,7 @@ final class RegistryDocumentQueryService
             ->all();
 
         $query
+            ->when($this->value($filters, 'document') !== '', fn (Builder $builder) => $builder->orderByRaw('CASE WHEN public_id = ? THEN 0 ELSE 1 END', [$this->value($filters, 'document')]))
             ->when($search !== '', fn (Builder $builder) => $builder->where(function (Builder $searchQuery) use ($search, $categoryMatches): void {
                 $searchQuery->where('title', 'ilike', "%{$search}%")
                     ->orWhere('description', 'ilike', "%{$search}%")

@@ -61,12 +61,16 @@ const props = withDefaults(
         nodes: NetworkNode[];
         connections: NetworkConnection[];
         focusSystemPublicId?: string | null;
+        focusNodePublicId?: string | null;
+        focusConnectionPublicId?: string | null;
         compact?: boolean;
         detailsEnabled?: boolean;
         layoutMode?: 'wide' | 'balanced';
     }>(),
     {
         focusSystemPublicId: null,
+        focusNodePublicId: null,
+        focusConnectionPublicId: null,
         compact: false,
         detailsEnabled: true,
         layoutMode: 'wide',
@@ -382,7 +386,18 @@ const closeConnectionDetails = (): void => {
     selectedConnection.value = null;
 };
 
-onMounted(fitMap);
+onMounted(() => {
+    fitMap();
+    if (!props.detailsEnabled) return;
+    if (props.focusNodePublicId) {
+        selectedNode.value = props.nodes.find((node) => node.public_id === props.focusNodePublicId) ?? null;
+        nodeDetailsOpen.value = selectedNode.value !== null;
+    } else if (props.focusConnectionPublicId) {
+        selectedConnection.value =
+            props.connections.find((item) => item.public_id === props.focusConnectionPublicId) ?? null;
+        connectionDetailsOpen.value = selectedConnection.value !== null;
+    }
+});
 
 watch(() => [props.nodes, props.connections, props.focusSystemPublicId, props.layoutMode], fitMap, { deep: true });
 </script>

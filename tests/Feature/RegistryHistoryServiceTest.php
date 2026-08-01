@@ -101,7 +101,7 @@ final class RegistryHistoryServiceTest extends TestCase
         self::assertSame(1, $view['history']->total());
         $event = $view['history']->items()[0];
         self::assertSame('System', $event['entity']['label']);
-        self::assertSame("/systems?selected={$system->public_id}", $event['entity']['url']);
+        self::assertSame("/systems/{$system->public_id}", $event['entity']['url']);
         self::assertSame(2, $view['historyStats']['total']);
     }
 

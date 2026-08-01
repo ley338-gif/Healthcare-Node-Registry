@@ -1,11 +1,26 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Archive, CirclePlus, Download, FileText, History, Pencil, RotateCcw, Search, TestTube2, X } from '@lucide/vue';
+import {
+    Archive,
+    ArrowDown,
+    CirclePlus,
+    Download,
+    ExternalLink,
+    FileText,
+    History,
+    Pencil,
+    RotateCcw,
+    Search,
+    TestTube2,
+    X,
+} from '@lucide/vue';
 import { computed, ref } from 'vue';
 import Pagination from '../../Components/Pagination.vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 
 type Option = { public_id: string; name: string };
+type EventGroup = { value: string; label: string };
+type AuditChange = { field: string; label: string; before: unknown; after: unknown };
 type Event = {
     event_id: string;
     event_type: string;
@@ -14,7 +29,10 @@ type Event = {
     actor_name: string;
     occurred_at: string;
     metadata: Record<string, unknown>;
-    entity: { label: string; url: string | null };
+    entity: { label: string; url: string | null; navigable: boolean };
+    event_group: EventGroup;
+    changes: AuditChange[];
+    change_summary: string | null;
 };
 type Page<T> = {
     data: T[];
@@ -28,6 +46,7 @@ const props = defineProps<{
     filters: Record<string, string>;
     stats: Record<string, number>;
     eventTypes: string[];
+    eventGroups: EventGroup[];
     users: Option[];
     organizations: Option[];
     sites: Option[];
@@ -40,6 +59,7 @@ const form = ref({
     history_to: props.filters.history_to ?? '',
     history_type: props.filters.history_type ?? '',
     history_user: props.filters.history_user ?? '',
+    event_group: props.filters.event_group ?? '',
     object_type: props.filters.object_type ?? '',
     organization: props.filters.organization ?? '',
     site: props.filters.site ?? '',
@@ -84,6 +104,7 @@ const reset = () => {
         history_to: '',
         history_type: '',
         history_user: '',
+        event_group: '',
         object_type: '',
         organization: '',
         site: '',
@@ -126,6 +147,19 @@ const detail = (event: Event) =>
         event.metadata.details ??
             (Array.isArray(event.metadata.changed_fields) ? event.metadata.changed_fields.join(', ') : '—'),
     );
+const value = (item: unknown): string => {
+    if (item === null || item === undefined || item === '') return '—';
+    if (item === true) return 'Aktiv';
+    if (item === false) return 'Inaktiv';
+    if (typeof item === 'object') return JSON.stringify(item);
+    const labels: Record<string, string> = {
+        active: 'Aktiv',
+        archived: 'Archiviert',
+        success: 'Erfolgreich',
+        failed: 'Fehlgeschlagen',
+    };
+    return labels[String(item)] ?? String(item);
+};
 const exportUrl = computed(
     () => `/audit/export/csv?${new URLSearchParams(params() as Record<string, string>).toString()}`,
 );
@@ -188,6 +222,12 @@ const exportUrl = computed(
                 <select v-model="form.object_type" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
                     <option value="">Alle Objekttypen</option>
                     <option v-for="item in objectTypes" :key="item">{{ item }}</option>
+                </select>
+                <select v-model="form.event_group" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                    <option value="">Alle Gruppen</option>
+                    <option v-for="group in eventGroups" :key="group.value" :value="group.value">
+                        {{ group.label }}
+                    </option>
                 </select>
                 <select v-model="form.history_type" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
                     <option value="">Alle Aktionen</option>
@@ -290,10 +330,38 @@ const exportUrl = computed(
                             </td>
                             <td class="px-4 py-3 text-slate-600">{{ event.entity.label }}</td>
                             <td class="px-4 py-3 font-medium text-slate-900">
-                                {{ event.metadata.name ?? event.subject_public_id ?? '—' }}
+                                <div class="flex items-center gap-2">
+                                    <span>{{
+                                        event.metadata.name ??
+                                        event.metadata.document_title ??
+                                        event.subject_public_id ??
+                                        '—'
+                                    }}</span>
+                                    <Link
+                                        v-if="event.entity.url"
+                                        :href="event.entity.url"
+                                        class="rounded-md p-1 text-slate-400 hover:bg-blue-50 hover:text-blue-700"
+                                        aria-label="Objekt öffnen"
+                                        @click.stop
+                                        ><ExternalLink :size="14"
+                                    /></Link>
+                                </div>
                             </td>
-                            <td class="hidden max-w-xs truncate px-4 py-3 text-slate-600 lg:table-cell">
-                                {{ detail(event) }}
+                            <td class="hidden max-w-xs px-4 py-3 text-slate-600 lg:table-cell">
+                                <p v-if="event.changes.length > 1" class="font-medium text-slate-700">
+                                    {{ event.change_summary }}
+                                </p>
+                                <div v-else-if="event.changes.length === 1" class="min-w-32 leading-tight">
+                                    <p class="text-xs font-semibold text-slate-500">{{ event.changes[0].label }}</p>
+                                    <p class="mt-1 break-words text-slate-500 line-through">
+                                        {{ value(event.changes[0].before) }}
+                                    </p>
+                                    <ArrowDown :size="13" class="my-0.5 text-blue-500" />
+                                    <p class="font-medium break-words text-slate-900">
+                                        {{ value(event.changes[0].after) }}
+                                    </p>
+                                </div>
+                                <p v-else>{{ detail(event) }}</p>
                             </td>
                             <td class="hidden px-4 py-3 text-slate-600 xl:table-cell">
                                 {{ event.metadata.site_name ?? event.metadata.department_name ?? '—' }}
@@ -339,28 +407,36 @@ const exportUrl = computed(
                         <dd>
                             {{ selected.entity.label }} · {{ selected.metadata.name ?? selected.subject_public_id }}
                         </dd>
-                        <dt class="text-slate-500">Änderungsdetails</dt>
-                        <dd>{{ detail(selected) }}</dd>
+                        <dt class="text-slate-500">Ereignisgruppe</dt>
+                        <dd>{{ selected.event_group.label }}</dd>
+                        <template v-if="selected.changes.length === 0">
+                            <dt class="text-slate-500">Änderungsdetails</dt>
+                            <dd>{{ detail(selected) }}</dd>
+                        </template>
                         <dt class="text-slate-500">IP-Adresse</dt>
                         <dd>{{ selected.metadata.ip_address ?? '—' }}</dd>
                         <dt class="text-slate-500">Browser / User-Agent</dt>
                         <dd class="break-words">{{ selected.metadata.user_agent ?? '—' }}</dd>
                     </dl>
-                    <div
-                        v-if="selected.metadata.before || selected.metadata.after"
-                        class="mt-6 grid gap-3 sm:grid-cols-2"
-                    >
-                        <div class="rounded-xl border border-slate-200 p-4">
-                            <p class="text-xs font-semibold text-slate-500 uppercase">Vorher</p>
-                            <pre class="mt-2 text-xs whitespace-pre-wrap">{{
-                                JSON.stringify(selected.metadata.before, null, 2)
-                            }}</pre>
-                        </div>
-                        <div class="rounded-xl border border-slate-200 p-4">
-                            <p class="text-xs font-semibold text-slate-500 uppercase">Nachher</p>
-                            <pre class="mt-2 text-xs whitespace-pre-wrap">{{
-                                JSON.stringify(selected.metadata.after, null, 2)
-                            }}</pre>
+                    <div v-if="selected.changes.length" class="mt-6 space-y-3">
+                        <h3 class="text-sm font-semibold text-slate-900">Geänderte Felder</h3>
+                        <div
+                            v-for="change in selected.changes"
+                            :key="change.field"
+                            class="rounded-xl border border-slate-200 p-4"
+                        >
+                            <p class="text-sm font-semibold text-slate-800">{{ change.label }}</p>
+                            <div class="mt-3 grid grid-cols-[1fr_auto_1fr] items-start gap-3 text-sm">
+                                <div>
+                                    <p class="text-xs text-slate-500">Vorher</p>
+                                    <p class="mt-1 break-words">{{ value(change.before) }}</p>
+                                </div>
+                                <ArrowDown :size="16" class="mt-5 -rotate-90 text-blue-500" />
+                                <div>
+                                    <p class="text-xs text-slate-500">Nachher</p>
+                                    <p class="mt-1 font-medium break-words text-slate-900">{{ value(change.after) }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-6 flex gap-3">
@@ -368,8 +444,16 @@ const exportUrl = computed(
                             v-if="selected.entity.url"
                             :href="selected.entity.url"
                             class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
-                            >Objekt öffnen</Link
+                            ><ExternalLink :size="16" class="mr-2 inline" />Objekt öffnen</Link
                         >
+                        <button
+                            v-else
+                            disabled
+                            class="cursor-not-allowed rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-400"
+                            title="Objekt ist archiviert, gelöscht oder nicht mehr verfügbar"
+                        >
+                            Objekt öffnen
+                        </button>
                     </div>
                     <details class="mt-6 rounded-xl border border-slate-200 p-4">
                         <summary class="cursor-pointer text-sm font-medium">Technische Daten</summary>
