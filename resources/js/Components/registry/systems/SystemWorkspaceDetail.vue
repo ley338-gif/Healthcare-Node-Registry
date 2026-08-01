@@ -115,6 +115,8 @@ const props = withDefaults(
         documents?: RegistryDocumentItem[];
         documentCategories?: Array<{ value: string; label: string }>;
         canUploadDocuments?: boolean;
+        canManageDocumentVersions?: boolean;
+        canDownloadDocuments?: boolean;
     }>(),
     {
         topologyNodes: () => [],
@@ -128,6 +130,8 @@ const props = withDefaults(
         documents: () => [],
         documentCategories: () => [],
         canUploadDocuments: false,
+        canManageDocumentVersions: false,
+        canDownloadDocuments: false,
     },
 );
 
@@ -552,6 +556,8 @@ const statusClass = (value: string): string => {
                     :documents="documents"
                     :document-categories="documentCategories"
                     :can-upload-documents="canUploadDocuments"
+                    :can-manage-document-versions="canManageDocumentVersions"
+                    :can-download-documents="canDownloadDocuments"
                     :can-manage="canManage"
                     :master-data="documentationMasterData"
                 />

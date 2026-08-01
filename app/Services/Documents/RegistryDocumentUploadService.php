@@ -83,6 +83,48 @@ final class RegistryDocumentUploadService
         }
     }
 
+    public function uploadVersion(RegistryDocument $document, Organization|Site|Department|System $context, User $user, UploadedFile $file, string $changeNote): RegistryDocumentVersion
+    {
+        abort_unless($document->documentable_type === $context::class && $document->documentable_id === $context->getKey(), 404);
+        $inspection = $this->inspector->inspect($file);
+        if ($document->versions()->where('sha256', $inspection['sha256'])->exists()) {
+            throw ValidationException::withMessages(['file' => 'Diese Datei ist bereits als Version vorhanden.']);
+        }
+        $scan = $this->scanner->scan($file->getRealPath());
+        if (! in_array($scan->status, ['pending', 'clean', 'infected', 'failed', 'unavailable'], true)) {
+            throw new \RuntimeException('Ungültiger Malware-Scanstatus.');
+        }
+        $disk = (string) config('registry_documents.disk');
+        $storedFilename = Str::uuid7().'.'.$inspection['extension'];
+        $storagePath = now()->format('Y/m').'/'.$storedFilename;
+        Storage::disk($disk)->put($storagePath, file_get_contents($file->getRealPath()));
+
+        try {
+            return DB::transaction(function () use ($document, $context, $user, $file, $changeNote, $inspection, $scan, $disk, $storedFilename, $storagePath): RegistryDocumentVersion {
+                $locked = RegistryDocument::query()->lockForUpdate()->findOrFail($document->id);
+                $version = $locked->versions()->create([
+                    'version_number' => ((int) $locked->versions()->max('version_number')) + 1,
+                    'original_filename' => $this->safeOriginalName($file),
+                    'stored_filename' => $storedFilename, 'storage_disk' => $disk, 'storage_path' => $storagePath,
+                    'mime_type' => $inspection['mime_type'], 'file_extension' => $inspection['extension'],
+                    'size_bytes' => $inspection['size_bytes'], 'sha256' => $inspection['sha256'],
+                    'uploaded_by' => $user->id, 'uploaded_at' => now(), 'change_note' => $changeNote,
+                    'malware_scan_status' => $scan->status, 'malware_scan_message' => $scan->message, 'metadata' => [],
+                ]);
+                $locked->update(['current_version_id' => $version->id, 'updated_by' => $user->id]);
+                $this->audit->record('document.version_uploaded', $context, $user, [
+                    'document_public_id' => $locked->public_id, 'version_public_id' => $version->public_id,
+                    'version_number' => $version->version_number, 'scan_status' => $scan->status,
+                ]);
+
+                return $version;
+            });
+        } catch (Throwable $exception) {
+            Storage::disk($disk)->delete($storagePath);
+            throw $exception;
+        }
+    }
+
     private function safeOriginalName(UploadedFile $file): string
     {
         $name = basename(str_replace('\\', '/', $file->getClientOriginalName()));

@@ -18,6 +18,8 @@ const props = defineProps<{
     documents?: RegistryDocumentItem[];
     documentCategories?: Array<{ value: string; label: string }>;
     canUploadDocuments?: boolean;
+    canManageDocumentVersions?: boolean;
+    canDownloadDocuments?: boolean;
 }>();
 
 const selectedSection = ref<DocumentationSection | null>(null);
@@ -138,6 +140,8 @@ const save = (): void => {
             :documentable-id="documentableId"
             :categories="documentCategories ?? []"
             :can-upload="canUploadDocuments ?? false"
+            :can-manage-versions="canManageDocumentVersions ?? false"
+            :can-download="canDownloadDocuments ?? false"
         />
     </div>
 </template>

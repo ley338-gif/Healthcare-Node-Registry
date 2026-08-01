@@ -132,7 +132,7 @@ final class OrganizationStructureController extends Controller
                 ->orderBy('section')
                 ->get();
             $canManageDocumentation = Gate::forUser($user)->allows('update', $selectedContext);
-            $documents = $selectedContext->documents()->with(['currentVersion.uploadedByUser:id,public_id,name'])->latest('updated_at')->get()->each(fn ($document) => $document->setAttribute('category_label', $document->category->label()));
+            $documents = $selectedContext->documents()->with(['currentVersion.uploadedByUser:id,public_id,name', 'versions.uploadedByUser:id,public_id,name'])->latest('updated_at')->get()->each(fn ($document) => $document->setAttribute('category_label', $document->category->label()));
         }
 
         if (
@@ -167,6 +167,8 @@ final class OrganizationStructureController extends Controller
             'documents' => $documents,
             'documentCategories' => RegistryDocumentCategory::options(),
             'canUploadDocuments' => $user?->hasPermission('documents.upload') ?? false,
+            'canManageDocumentVersions' => $user?->hasPermission('documents.manage_versions') ?? false,
+            'canDownloadDocuments' => $user?->hasPermission('documents.download') ?? false,
             'canManageDocumentation' => $canManageDocumentation,
         ]);
     }

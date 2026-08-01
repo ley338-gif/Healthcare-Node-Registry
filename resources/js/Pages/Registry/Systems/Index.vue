@@ -95,6 +95,8 @@ const props = withDefaults(
         documents: RegistryDocumentItem[];
         documentCategories: Array<{ value: string; label: string }>;
         canUploadDocuments: boolean;
+        canManageDocumentVersions: boolean;
+        canDownloadDocuments: boolean;
         topologyNodes?: NetworkNode[];
         topologyConnections?: NetworkConnection[];
         canManage: boolean;
@@ -459,6 +461,8 @@ const closeEditPanel = (): void => {
                 :documents="documents"
                 :document-categories="documentCategories"
                 :can-upload-documents="canUploadDocuments"
+                :can-manage-document-versions="canManageDocumentVersions"
+                :can-download-documents="canDownloadDocuments"
                 @edit="openEditPanel"
             />
         </div>

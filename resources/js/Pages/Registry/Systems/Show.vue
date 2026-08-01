@@ -43,6 +43,8 @@ defineProps<{
     documents: RegistryDocumentItem[];
     documentCategories: Array<{ value: string; label: string }>;
     canUploadDocuments: boolean;
+    canManageDocumentVersions: boolean;
+    canDownloadDocuments: boolean;
 }>();
 
 const editPanelOpen = ref(false);
@@ -79,6 +81,8 @@ const editPanelOpen = ref(false);
             :documents="documents"
             :document-categories="documentCategories"
             :can-upload-documents="canUploadDocuments"
+            :can-manage-document-versions="canManageDocumentVersions"
+            :can-download-documents="canDownloadDocuments"
             @edit="editPanelOpen = true"
         />
 

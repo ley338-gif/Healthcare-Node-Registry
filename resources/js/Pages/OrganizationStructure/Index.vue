@@ -116,6 +116,8 @@ const props = defineProps<{
     documents: RegistryDocumentItem[];
     documentCategories: Array<{ value: string; label: string }>;
     canUploadDocuments: boolean;
+    canManageDocumentVersions: boolean;
+    canDownloadDocuments: boolean;
     canManageDocumentation: boolean;
 }>();
 
@@ -1224,6 +1226,8 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                             :documents="documents"
                             :document-categories="documentCategories"
                             :can-upload-documents="canUploadDocuments"
+                            :can-manage-document-versions="canManageDocumentVersions"
+                            :can-download-documents="canDownloadDocuments"
                             :can-manage="canManageDocumentation"
                             :master-data="documentationMasterData"
                         />

@@ -227,7 +227,7 @@ final class SystemController extends Controller
         if ($selectedSystem !== null) {
             Gate::authorize('view', $selectedSystem);
             $selectedDocumentation = $selectedSystem->documentation;
-            $selectedDocuments = $selectedSystem->documents()->with(['currentVersion.uploadedByUser:id,public_id,name'])->latest('updated_at')->get()->each(fn ($document) => $document->setAttribute('category_label', $document->category->label()));
+            $selectedDocuments = $selectedSystem->documents()->with(['currentVersion.uploadedByUser:id,public_id,name', 'versions.uploadedByUser:id,public_id,name'])->latest('updated_at')->get()->each(fn ($document) => $document->setAttribute('category_label', $document->category->label()));
 
             $selectedDicomNodes = $selectedSystem
                 ->dicomNodes()
@@ -281,6 +281,8 @@ final class SystemController extends Controller
             'documents' => $selectedDocuments,
             'documentCategories' => RegistryDocumentCategory::options(),
             'canUploadDocuments' => $request->user()?->hasPermission('documents.upload') ?? false,
+            'canManageDocumentVersions' => $request->user()?->hasPermission('documents.manage_versions') ?? false,
+            'canDownloadDocuments' => $request->user()?->hasPermission('documents.download') ?? false,
             'dicomNodeOptions' => DicomNode::query()
                 ->active()
                 ->whereHas(
@@ -387,7 +389,7 @@ final class SystemController extends Controller
             'documentation' => fn ($query) => $query
                 ->with('updatedByUser:id,public_id,name')
                 ->orderBy('section'),
-            'documents' => fn ($query) => $query->with(['currentVersion.uploadedByUser:id,public_id,name'])->latest('updated_at'),
+            'documents' => fn ($query) => $query->with(['currentVersion.uploadedByUser:id,public_id,name', 'versions.uploadedByUser:id,public_id,name'])->latest('updated_at'),
         ]);
 
         $user = $request->user();
@@ -405,6 +407,8 @@ final class SystemController extends Controller
             'documents' => $system->documents->each(fn ($document) => $document->setAttribute('category_label', $document->category->label())),
             'documentCategories' => RegistryDocumentCategory::options(),
             'canUploadDocuments' => $user->hasPermission('documents.upload'),
+            'canManageDocumentVersions' => $user->hasPermission('documents.manage_versions'),
+            'canDownloadDocuments' => $user->hasPermission('documents.download'),
             ...$historyView,
 
             'systemTypes' => [

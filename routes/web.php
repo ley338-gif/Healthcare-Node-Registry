@@ -46,6 +46,10 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/registry-documents/{documentableType}/{documentable}', [RegistryDocumentController::class, 'store'])
         ->whereIn('documentableType', ['organizations', 'sites', 'departments', 'systems'])
         ->name('registry-documents.store');
+    Route::post('/registry-documents/{registryDocument}/versions', [RegistryDocumentController::class, 'storeVersion'])
+        ->name('registry-documents.versions.store');
+    Route::get('/registry-document-versions/{registryDocumentVersion}/download', [RegistryDocumentController::class, 'downloadVersion'])
+        ->name('registry-document-versions.download');
 
     Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
     Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');
