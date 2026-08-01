@@ -65,7 +65,16 @@ const reset = (): void => {
     apply();
 };
 
-const label = (eventType: string): string => eventType.split('.').slice(1).join(' · ').replaceAll('_', ' ');
+const label = (eventType: string): string =>
+    ({
+        'document.created': 'Dokument hochgeladen',
+        'document.metadata_updated': 'Dokumentmetadaten aktualisiert',
+        'document.version_uploaded': 'Neue Dokumentversion hochgeladen',
+        'document.archived': 'Dokument archiviert',
+        'document.restored': 'Dokument wiederhergestellt',
+        'document.scan_failed': 'Dokumentprüfung fehlgeschlagen',
+        'document.scan_infected': 'Schadsoftware erkannt',
+    })[eventType] ?? eventType.split('.').slice(1).join(' · ').replaceAll('_', ' ');
 const formatDate = (value: string): string =>
     new Intl.DateTimeFormat('de-DE', {
         dateStyle: 'medium',
@@ -86,6 +95,12 @@ const display = (value: unknown): string =>
         : typeof value === 'object'
           ? JSON.stringify(value)
           : String(value);
+const objectLabel = (event: AuditEvent): string => {
+    const title = event.metadata.document_title;
+    if (typeof title !== 'string') return event.entity?.label ?? event.subject_type;
+    const version = event.metadata.version_number;
+    return typeof version === 'number' ? `${title} · Version ${version}` : title;
+};
 </script>
 
 <template>
@@ -177,7 +192,7 @@ const display = (value: unknown): string =>
                                 {{ formatDate(event.occurred_at) }}
                             </td>
                             <td class="px-4 py-3 font-medium text-slate-900">{{ label(event.event_type) }}</td>
-                            <td class="px-4 py-3 text-slate-600">{{ event.entity?.label ?? event.subject_type }}</td>
+                            <td class="px-4 py-3 text-slate-600">{{ objectLabel(event) }}</td>
                             <td class="px-4 py-3 text-slate-600">{{ event.actor_name }}</td>
                             <td class="px-4 py-3 text-right">
                                 <button class="font-medium text-blue-700 hover:text-blue-900" @click="selected = event">

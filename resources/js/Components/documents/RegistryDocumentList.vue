@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ChevronDown, Download, Eye, FileText, Upload } from '@lucide/vue';
+import { router } from '@inertiajs/vue3';
+import { Archive, ArchiveRestore, ChevronDown, Download, Eye, FileText, Pencil, Upload } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import RegistryDocumentUploadSlideover from './RegistryDocumentUploadSlideover.vue';
+import RegistryDocumentMetadataSlideover from './RegistryDocumentMetadataSlideover.vue';
 import RegistryDocumentPreviewSlideover from './RegistryDocumentPreviewSlideover.vue';
 import RegistryDocumentVersionSlideover from './RegistryDocumentVersionSlideover.vue';
 
@@ -30,6 +32,7 @@ export type RegistryDocumentItem = {
     valid_from: string | null;
     valid_until: string | null;
     contract_reference: string | null;
+    tags: string[];
     validity_status: 'active' | 'expiring_soon' | 'expired' | 'undated' | 'archived';
     validity_status_label: string;
     updated_at: string;
@@ -46,12 +49,15 @@ const props = defineProps<{
     canManageVersions: boolean;
     canDownload: boolean;
     canPreview: boolean;
+    canUpdate: boolean;
+    canArchive: boolean;
 }>();
 
 const uploadOpen = ref(false);
 const versionDocument = ref<RegistryDocumentItem | null>(null);
 const previewDocument = ref<RegistryDocumentItem | null>(null);
 const previewVersion = ref<RegistryDocumentVersionItem | null>(null);
+const metadataDocument = ref<RegistryDocumentItem | null>(null);
 const expandedDocumentId = ref<string | null>(null);
 const search = ref('');
 const category = ref('');
@@ -121,6 +127,15 @@ const closePreview = (): void => {
 const uploadVersionFromPreview = (document: RegistryDocumentItem): void => {
     closePreview();
     versionDocument.value = document;
+};
+const toggleArchive = (document: RegistryDocumentItem): void => {
+    const archived = document.validity_status === 'archived';
+    if (!window.confirm(archived ? 'Dokument wiederherstellen?' : 'Dokument archivieren?')) return;
+    router.post(
+        `/registry-documents/${document.public_id}/${archived ? 'restore' : 'archive'}`,
+        {},
+        { preserveScroll: true },
+    );
 };
 </script>
 
@@ -240,6 +255,14 @@ const uploadVersionFromPreview = (document: RegistryDocumentItem): void => {
                             <td class="px-4 py-3 text-right">
                                 <div class="flex justify-end gap-3">
                                     <button
+                                        v-if="canUpdate && item.validity_status !== 'archived'"
+                                        type="button"
+                                        class="inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-blue-900"
+                                        @click="metadataDocument = item"
+                                    >
+                                        <Pencil :size="15" /> Bearbeiten
+                                    </button>
+                                    <button
                                         v-if="
                                             canPreview &&
                                             item.current_version?.mime_type === 'application/pdf' &&
@@ -250,6 +273,16 @@ const uploadVersionFromPreview = (document: RegistryDocumentItem): void => {
                                         @click="openPreview(item, item.current_version)"
                                     >
                                         <Eye :size="15" /> Vorschau
+                                    </button>
+                                    <button
+                                        v-if="canArchive"
+                                        type="button"
+                                        class="inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-blue-900"
+                                        @click="toggleArchive(item)"
+                                    >
+                                        <ArchiveRestore v-if="item.validity_status === 'archived'" :size="15" />
+                                        <Archive v-else :size="15" />
+                                        {{ item.validity_status === 'archived' ? 'Wiederherstellen' : 'Archivieren' }}
                                     </button>
                                     <button
                                         type="button"
@@ -347,6 +380,11 @@ const uploadVersionFromPreview = (document: RegistryDocumentItem): void => {
             :documentable-id="documentableId"
             :categories="props.categories"
             @close="uploadOpen = false"
+        />
+        <RegistryDocumentMetadataSlideover
+            :document="metadataDocument"
+            :categories="categories"
+            @close="metadataDocument = null"
         />
         <RegistryDocumentVersionSlideover
             :open="versionDocument !== null"

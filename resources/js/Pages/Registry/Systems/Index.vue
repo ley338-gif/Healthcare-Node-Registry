@@ -98,6 +98,8 @@ const props = withDefaults(
         canManageDocumentVersions: boolean;
         canDownloadDocuments: boolean;
         canViewDocuments: boolean;
+        canUpdateDocuments: boolean;
+        canArchiveDocuments: boolean;
         topologyNodes?: NetworkNode[];
         topologyConnections?: NetworkConnection[];
         canManage: boolean;
@@ -465,6 +467,8 @@ const closeEditPanel = (): void => {
                 :can-manage-document-versions="canManageDocumentVersions"
                 :can-download-documents="canDownloadDocuments"
                 :can-view-documents="canViewDocuments"
+                :can-update-documents="canUpdateDocuments"
+                :can-archive-documents="canArchiveDocuments"
                 @edit="openEditPanel"
             />
         </div>

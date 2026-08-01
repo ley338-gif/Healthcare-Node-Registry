@@ -48,6 +48,12 @@ Route::middleware('auth')->group(function (): void {
         ->name('registry-documents.store');
     Route::post('/registry-documents/{registryDocument}/versions', [RegistryDocumentController::class, 'storeVersion'])
         ->name('registry-documents.versions.store');
+    Route::put('/registry-documents/{registryDocument}', [RegistryDocumentController::class, 'update'])
+        ->name('registry-documents.update');
+    Route::post('/registry-documents/{registryDocument}/archive', [RegistryDocumentController::class, 'archive'])
+        ->name('registry-documents.archive');
+    Route::post('/registry-documents/{registryDocument}/restore', [RegistryDocumentController::class, 'restore'])
+        ->name('registry-documents.restore');
     Route::get('/registry-document-versions/{registryDocumentVersion}/download', [RegistryDocumentController::class, 'downloadVersion'])
         ->name('registry-document-versions.download');
     Route::get('/registry-document-versions/{registryDocumentVersion}/preview', [RegistryDocumentController::class, 'previewVersion'])

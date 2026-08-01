@@ -46,6 +46,8 @@ defineProps<{
     canManageDocumentVersions: boolean;
     canDownloadDocuments: boolean;
     canViewDocuments: boolean;
+    canUpdateDocuments: boolean;
+    canArchiveDocuments: boolean;
 }>();
 
 const editPanelOpen = ref(false);
@@ -85,6 +87,8 @@ const editPanelOpen = ref(false);
             :can-manage-document-versions="canManageDocumentVersions"
             :can-download-documents="canDownloadDocuments"
             :can-view-documents="canViewDocuments"
+            :can-update-documents="canUpdateDocuments"
+            :can-archive-documents="canArchiveDocuments"
             @edit="editPanelOpen = true"
         />
 

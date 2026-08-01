@@ -170,6 +170,8 @@ final class OrganizationStructureController extends Controller
             'canManageDocumentVersions' => $user?->hasPermission('documents.manage_versions') ?? false,
             'canDownloadDocuments' => $user?->hasPermission('documents.download') ?? false,
             'canViewDocuments' => $user?->hasPermission('documents.view') ?? false,
+            'canUpdateDocuments' => $user?->hasPermission('documents.update') ?? false,
+            'canArchiveDocuments' => $user?->hasPermission('documents.archive') ?? false,
             'canManageDocumentation' => $canManageDocumentation,
         ]);
     }

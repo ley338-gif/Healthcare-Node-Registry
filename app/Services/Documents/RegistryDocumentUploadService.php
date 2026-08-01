@@ -72,8 +72,10 @@ final class RegistryDocumentUploadService
                 $document->update(['current_version_id' => $version->id]);
                 $this->audit->record('document.created', $context, $user, [
                     'document_public_id' => $document->public_id, 'version_public_id' => $version->public_id,
-                    'category' => $document->category->value, 'scan_status' => $scan->status,
+                    'document_title' => $document->title, 'version_number' => 1,
+                    'category' => $document->category->value, 'scan_status' => $scan->status, 'status' => 'success',
                 ]);
+                $this->recordScanEvent($scan, $context, $user, $document, $version);
 
                 return $document;
             });
@@ -114,8 +116,10 @@ final class RegistryDocumentUploadService
                 $locked->update(['current_version_id' => $version->id, 'updated_by' => $user->id]);
                 $this->audit->record('document.version_uploaded', $context, $user, [
                     'document_public_id' => $locked->public_id, 'version_public_id' => $version->public_id,
-                    'version_number' => $version->version_number, 'scan_status' => $scan->status,
+                    'document_title' => $locked->title, 'version_number' => $version->version_number,
+                    'scan_status' => $scan->status, 'status' => 'success',
                 ]);
+                $this->recordScanEvent($scan, $context, $user, $locked, $version);
 
                 return $version;
             });
@@ -131,5 +135,25 @@ final class RegistryDocumentUploadService
         $name = preg_replace('/[\x00-\x1F\x7F]/u', '', $name) ?? '';
 
         return mb_substr(trim($name), 0, 255) ?: 'document.'.$file->getClientOriginalExtension();
+    }
+
+    private function recordScanEvent(MalwareScanResult $scan, Organization|Site|Department|System $context, User $user, RegistryDocument $document, RegistryDocumentVersion $version): void
+    {
+        $eventType = match ($scan->status) {
+            'failed' => 'document.scan_failed',
+            'infected' => 'document.scan_infected',
+            default => null,
+        };
+        if ($eventType === null) {
+            return;
+        }
+        $this->audit->record($eventType, $context, $user, [
+            'document_public_id' => $document->public_id,
+            'document_title' => $document->title,
+            'version_public_id' => $version->public_id,
+            'version_number' => $version->version_number,
+            'scan_status' => $scan->status,
+            'status' => $scan->status === 'infected' ? 'failed' : 'warning',
+        ]);
     }
 }

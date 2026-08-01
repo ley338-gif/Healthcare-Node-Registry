@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreRegistryDocumentRequest;
 use App\Http\Requests\StoreRegistryDocumentVersionRequest;
+use App\Http\Requests\UpdateRegistryDocumentRequest;
 use App\Models\Department;
 use App\Models\Organization;
 use App\Models\RegistryDocument;
@@ -12,7 +13,10 @@ use App\Models\Site;
 use App\Models\System;
 use App\Models\User;
 use App\Services\Documents\RegistryDocumentUploadService;
+use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -46,9 +50,69 @@ final class RegistryDocumentController extends Controller
         return back()->with('success', 'Neue Dokumentversion wurde gespeichert.');
     }
 
-    public function downloadVersion(RegistryDocumentVersion $registryDocumentVersion): StreamedResponse
+    public function update(UpdateRegistryDocumentRequest $request, RegistryDocument $registryDocument, RegistryAudit $audit): RedirectResponse
     {
-        Gate::authorize('documents.download');
+        $context = $this->context($registryDocument);
+        Gate::authorize('view', $context);
+        abort_if($registryDocument->archived_at !== null, 422, 'Archivierte Dokumente können nicht bearbeitet werden.');
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+        $validated = $request->validated();
+
+        DB::transaction(function () use ($registryDocument, $context, $user, $validated, $audit): void {
+            $before = $registryDocument->only(array_keys($validated));
+            $registryDocument->update([...$validated, 'updated_by' => $user->id]);
+            $after = $registryDocument->only(array_keys($validated));
+            $changed = array_keys(array_filter($after, fn (mixed $value, string $field): bool => $value !== $before[$field], ARRAY_FILTER_USE_BOTH));
+            if ($changed === []) {
+                return;
+            }
+            $audit->record('document.metadata_updated', $context, $user, [
+                'document_public_id' => $registryDocument->public_id,
+                'document_title' => $registryDocument->title,
+                'changed_fields' => $changed,
+                'before' => $this->auditMetadata($before, $changed),
+                'after' => $this->auditMetadata($after, $changed),
+                'status' => 'success',
+            ]);
+        });
+
+        return back()->with('success', 'Dokumentmetadaten wurden aktualisiert.');
+    }
+
+    public function archive(Request $request, RegistryDocument $registryDocument, RegistryAudit $audit): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->hasPermission('documents.archive'), 403);
+        $context = $this->context($registryDocument);
+        Gate::authorize('view', $context);
+        abort_if($registryDocument->archived_at !== null, 422, 'Dokument ist bereits archiviert.');
+        DB::transaction(function () use ($registryDocument, $context, $user, $audit): void {
+            $registryDocument->update(['status' => 'archived', 'archived_at' => now(), 'updated_by' => $user->id]);
+            $audit->record('document.archived', $context, $user, $this->auditIdentity($registryDocument));
+        });
+
+        return back()->with('success', 'Dokument wurde archiviert.');
+    }
+
+    public function restore(Request $request, RegistryDocument $registryDocument, RegistryAudit $audit): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->hasPermission('documents.archive'), 403);
+        $context = $this->context($registryDocument);
+        Gate::authorize('view', $context);
+        abort_if($registryDocument->archived_at === null, 422, 'Dokument ist nicht archiviert.');
+        DB::transaction(function () use ($registryDocument, $context, $user, $audit): void {
+            $registryDocument->update(['status' => 'active', 'archived_at' => null, 'updated_by' => $user->id]);
+            $audit->record('document.restored', $context, $user, $this->auditIdentity($registryDocument));
+        });
+
+        return back()->with('success', 'Dokument wurde wiederhergestellt.');
+    }
+
+    public function downloadVersion(Request $request, RegistryDocumentVersion $registryDocumentVersion): StreamedResponse
+    {
+        abort_unless($request->user()?->hasPermission('documents.download') ?? false, 403);
         $document = $registryDocumentVersion->document;
         abort_if($document->archived_at !== null, 404);
         $context = $document->documentable;
@@ -64,9 +128,9 @@ final class RegistryDocumentController extends Controller
         );
     }
 
-    public function previewVersion(RegistryDocumentVersion $registryDocumentVersion): BinaryFileResponse
+    public function previewVersion(Request $request, RegistryDocumentVersion $registryDocumentVersion): BinaryFileResponse
     {
-        Gate::authorize('documents.view');
+        abort_unless($request->user()?->hasPermission('documents.view') ?? false, 403);
         $document = $registryDocumentVersion->document;
         abort_if($document->archived_at !== null, 404);
         $context = $document->documentable;
@@ -98,5 +162,35 @@ final class RegistryDocumentController extends Controller
         };
 
         return $model::query()->where('public_id', $publicId)->firstOrFail();
+    }
+
+    private function context(RegistryDocument $document): Organization|Site|Department|System
+    {
+        $context = $document->documentable;
+        abort_unless($context instanceof Organization || $context instanceof Site || $context instanceof Department || $context instanceof System, 404);
+
+        return $context;
+    }
+
+    /**
+     * @param  array<string, mixed>  $values
+     * @param  list<string>  $changed
+     * @return array<string, mixed>
+     */
+    private function auditMetadata(array $values, array $changed): array
+    {
+        $result = array_intersect_key($values, array_flip($changed));
+        if (array_key_exists('description', $result)) {
+            $description = (string) $result['description'];
+            $result['description'] = ['length' => mb_strlen($description), 'sha256' => hash('sha256', $description)];
+        }
+
+        return $result;
+    }
+
+    /** @return array<string, mixed> */
+    private function auditIdentity(RegistryDocument $document): array
+    {
+        return ['document_public_id' => $document->public_id, 'document_title' => $document->title, 'status' => 'success'];
     }
 }

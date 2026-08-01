@@ -21,6 +21,8 @@ const props = defineProps<{
     canManageDocumentVersions?: boolean;
     canDownloadDocuments?: boolean;
     canViewDocuments?: boolean;
+    canUpdateDocuments?: boolean;
+    canArchiveDocuments?: boolean;
 }>();
 
 const selectedSection = ref<DocumentationSection | null>(null);
@@ -144,6 +146,8 @@ const save = (): void => {
             :can-manage-versions="canManageDocumentVersions ?? false"
             :can-download="canDownloadDocuments ?? false"
             :can-preview="canViewDocuments ?? false"
+            :can-update="canUpdateDocuments ?? false"
+            :can-archive="canArchiveDocuments ?? false"
         />
     </div>
 </template>
