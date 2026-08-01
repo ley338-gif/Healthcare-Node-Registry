@@ -1,4 +1,4 @@
-import type { DocumentationSection } from './DocumentationPanel.vue';
+import type { DocumentationSection } from './documentationTypes';
 
 export const systemDocumentationSections: DocumentationSection[] = [
     {

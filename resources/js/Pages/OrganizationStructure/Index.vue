@@ -21,9 +21,8 @@ import {
 import { computed, ref, watch } from 'vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 import AuditHistoryPanel, { type AuditEvent } from '../../Components/audit/AuditHistoryPanel.vue';
-import DocumentationPanel, {
-    type RegistryDocumentationItem,
-} from '../../Components/documentation/DocumentationPanel.vue';
+import DocumentationPanel from '../../Components/documentation/DocumentationPanel.vue';
+import type { RegistryDocumentationItem } from '../../Components/documentation/documentationTypes';
 import {
     departmentDocumentationSections,
     organizationDocumentationSections,

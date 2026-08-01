@@ -13,7 +13,8 @@
     "types:check": "vue-tsc --noEmit",
     "format": "prettier --write resources/",
     "format:check": "prettier --check resources/",
-    "check": "npm run lint:check && npm run format:check && npm run types:check && npm run build"
+    "test:unit": "node --test resources/js/**/*.test.ts",
+    "check": "npm run lint:check && npm run format:check && npm run types:check && npm run test:unit && npm run build"
   },
   "dependencies": {
     "@inertiajs/vue3": "^3.0.0",

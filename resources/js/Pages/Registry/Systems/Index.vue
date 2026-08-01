@@ -13,7 +13,7 @@ import type { NetworkConnection, NetworkNode } from '../../../Components/network
 import EmptyState from '../../../Components/ui/EmptyState.vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
-import type { RegistryDocumentationItem } from '../../../Components/documentation/DocumentationPanel.vue';
+import type { RegistryDocumentationItem } from '../../../Components/documentation/documentationTypes';
 
 type SelectOption = {
     value: string;

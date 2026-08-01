@@ -21,7 +21,8 @@ import DicomNodeManager, { type DicomNode } from '../dicom/DicomNodeManager.vue'
 import DicomNetworkMap, { type NetworkConnection, type NetworkNode } from '../../network/DicomNetworkMap.vue';
 import ContentCard from '../../ui/ContentCard.vue';
 import AuditHistoryPanel, { type AuditEvent } from '../../audit/AuditHistoryPanel.vue';
-import DocumentationPanel, { type RegistryDocumentationItem } from '../../documentation/DocumentationPanel.vue';
+import DocumentationPanel from '../../documentation/DocumentationPanel.vue';
+import type { RegistryDocumentationItem } from '../../documentation/documentationTypes';
 import { systemDocumentationSections } from '../../documentation/systemDocumentationSections';
 
 export type SelectOption = {

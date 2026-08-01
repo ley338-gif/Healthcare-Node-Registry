@@ -14,7 +14,7 @@ import SystemWorkspaceDetail, {
 import AppLayout from '../../../Layouts/AppLayout.vue';
 import { ref } from 'vue';
 import type { AuditEvent } from '../../../Components/audit/AuditHistoryPanel.vue';
-import type { RegistryDocumentationItem } from '../../../Components/documentation/DocumentationPanel.vue';
+import type { RegistryDocumentationItem } from '../../../Components/documentation/documentationTypes';
 
 defineProps<{
     system: SystemDetail;
