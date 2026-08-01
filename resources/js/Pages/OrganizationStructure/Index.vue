@@ -23,6 +23,7 @@ import AppLayout from '../../Layouts/AppLayout.vue';
 import AuditHistoryPanel, { type AuditEvent } from '../../Components/audit/AuditHistoryPanel.vue';
 import DocumentationPanel from '../../Components/documentation/DocumentationPanel.vue';
 import type { RegistryDocumentationItem } from '../../Components/documentation/documentationTypes';
+import type { RegistryDocumentItem } from '../../Components/documents/RegistryDocumentList.vue';
 import {
     departmentDocumentationSections,
     organizationDocumentationSections,
@@ -112,6 +113,7 @@ const props = defineProps<{
     historyEventTypes: string[];
     historyUsers: Array<{ public_id: string; name: string }>;
     documentation: RegistryDocumentationItem[];
+    documents: RegistryDocumentItem[];
     canManageDocumentation: boolean;
 }>();
 
@@ -1217,6 +1219,7 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                             :documentable-id="selectedContext.public_id"
                             :sections="documentationSections"
                             :documentation="documentation"
+                            :documents="documents"
                             :can-manage="canManageDocumentation"
                             :master-data="documentationMasterData"
                         />

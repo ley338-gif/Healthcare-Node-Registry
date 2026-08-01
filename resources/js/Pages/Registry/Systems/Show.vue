@@ -15,6 +15,7 @@ import AppLayout from '../../../Layouts/AppLayout.vue';
 import { ref } from 'vue';
 import type { AuditEvent } from '../../../Components/audit/AuditHistoryPanel.vue';
 import type { RegistryDocumentationItem } from '../../../Components/documentation/documentationTypes';
+import type { RegistryDocumentItem } from '../../../Components/documents/RegistryDocumentList.vue';
 
 defineProps<{
     system: SystemDetail;
@@ -39,6 +40,7 @@ defineProps<{
     historyEventTypes: string[];
     historyUsers: Array<{ public_id: string; name: string }>;
     documentation: RegistryDocumentationItem[];
+    documents: RegistryDocumentItem[];
 }>();
 
 const editPanelOpen = ref(false);
@@ -72,6 +74,7 @@ const editPanelOpen = ref(false);
             :history-event-types="historyEventTypes"
             :history-users="historyUsers"
             :documentation="documentation"
+            :documents="documents"
             @edit="editPanelOpen = true"
         />
 

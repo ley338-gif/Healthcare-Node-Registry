@@ -116,6 +116,7 @@ final class OrganizationStructureController extends Controller
             'historyUsers' => collect(),
         ];
         $documentation = collect();
+        $documents = collect();
         $canManageDocumentation = false;
         $includeDescendants = $request->query('history_scope', 'descendants') !== 'direct';
         $user = $request->user();
@@ -130,6 +131,7 @@ final class OrganizationStructureController extends Controller
                 ->orderBy('section')
                 ->get();
             $canManageDocumentation = Gate::forUser($user)->allows('update', $selectedContext);
+            $documents = $selectedContext->documents()->with(['currentVersion.uploadedByUser:id,public_id,name'])->latest('updated_at')->get()->each(fn ($document) => $document->setAttribute('category_label', $document->category->label()));
         }
 
         if (
@@ -161,6 +163,7 @@ final class OrganizationStructureController extends Controller
             ] : null,
             ...$historyView,
             'documentation' => $documentation,
+            'documents' => $documents,
             'canManageDocumentation' => $canManageDocumentation,
         ]);
     }

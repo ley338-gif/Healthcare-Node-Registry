@@ -23,6 +23,7 @@ import ContentCard from '../../ui/ContentCard.vue';
 import AuditHistoryPanel, { type AuditEvent } from '../../audit/AuditHistoryPanel.vue';
 import DocumentationPanel from '../../documentation/DocumentationPanel.vue';
 import type { RegistryDocumentationItem } from '../../documentation/documentationTypes';
+import type { RegistryDocumentItem } from '../../documents/RegistryDocumentList.vue';
 import { systemDocumentationSections } from '../../documentation/systemDocumentationSections';
 
 export type SelectOption = {
@@ -111,6 +112,7 @@ const props = withDefaults(
         historyEventTypes?: string[];
         historyUsers?: Array<{ public_id: string; name: string }>;
         documentation?: RegistryDocumentationItem[];
+        documents?: RegistryDocumentItem[];
     }>(),
     {
         topologyNodes: () => [],
@@ -121,6 +123,7 @@ const props = withDefaults(
         historyEventTypes: () => [],
         historyUsers: () => [],
         documentation: () => [],
+        documents: () => [],
     },
 );
 
@@ -542,6 +545,7 @@ const statusClass = (value: string): string => {
                     :documentable-id="system.public_id"
                     :sections="systemDocumentationSections"
                     :documentation="documentation"
+                    :documents="documents"
                     :can-manage="canManage"
                     :master-data="documentationMasterData"
                 />

@@ -14,6 +14,7 @@ import EmptyState from '../../../Components/ui/EmptyState.vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
 import type { RegistryDocumentationItem } from '../../../Components/documentation/documentationTypes';
+import type { RegistryDocumentItem } from '../../../Components/documents/RegistryDocumentList.vue';
 
 type SelectOption = {
     value: string;
@@ -91,6 +92,7 @@ const props = withDefaults(
         dicomConnections: DicomConnection[];
         dicomNodeOptions: DicomNodeOption[];
         documentation: RegistryDocumentationItem[];
+        documents: RegistryDocumentItem[];
         topologyNodes?: NetworkNode[];
         topologyConnections?: NetworkConnection[];
         canManage: boolean;
@@ -452,6 +454,7 @@ const closeEditPanel = (): void => {
                 :can-manage-dicom-nodes="canManageDicomNodes"
                 :can-manage-dicom-connections="canManageDicomConnections"
                 :documentation="documentation"
+                :documents="documents"
                 @edit="openEditPanel"
             />
         </div>

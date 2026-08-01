@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Department;
 use App\Models\Organization;
+use App\Models\RegistryDocument;
 use App\Models\RegistryDocumentation;
+use App\Models\RegistryDocumentVersion;
 use App\Models\Site;
 use App\Models\User;
 use App\Support\RbacBootstrapper;
@@ -94,6 +96,23 @@ final class OrganizationStructureDocumentationWorkspaceTest extends TestCase
         $this->actingAs($this->administrator)
             ->get("/structure?selected_type=organization&selected_id={$organization->public_id}&history_type=documentation.updated")
             ->assertInertia(fn ($page) => $page->has('history.data', 2));
+    }
+
+    public function test_structure_workspace_loads_documents_for_the_selected_context_only(): void
+    {
+        [$organization, $site] = $this->structure();
+        $document = RegistryDocument::factory()->for($site, 'documentable')->create(['title' => 'Standortplan']);
+        $version = RegistryDocumentVersion::factory()->for($document, 'document')->create();
+        $document->update(['current_version_id' => $version->id]);
+        RegistryDocument::factory()->for($organization, 'documentable')->create(['title' => 'Organisationsdokument']);
+
+        $this->actingAs($this->administrator)
+            ->get("/structure?selected_type=site&selected_id={$site->public_id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('documents', 1)
+                ->where('documents.0.title', 'Standortplan')
+                ->where('documents.0.current_version.original_filename', 'document.pdf'));
     }
 
     /** @return array{Organization, Site, Department} */

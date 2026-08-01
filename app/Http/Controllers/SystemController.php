@@ -221,10 +221,12 @@ final class SystemController extends Controller
         $selectedDicomNodes = collect();
         $selectedDicomConnections = collect();
         $selectedDocumentation = collect();
+        $selectedDocuments = collect();
 
         if ($selectedSystem !== null) {
             Gate::authorize('view', $selectedSystem);
             $selectedDocumentation = $selectedSystem->documentation;
+            $selectedDocuments = $selectedSystem->documents()->with(['currentVersion.uploadedByUser:id,public_id,name'])->latest('updated_at')->get()->each(fn ($document) => $document->setAttribute('category_label', $document->category->label()));
 
             $selectedDicomNodes = $selectedSystem
                 ->dicomNodes()
@@ -275,6 +277,7 @@ final class SystemController extends Controller
             'dicomNodes' => $selectedDicomNodes,
             'dicomConnections' => $selectedDicomConnections,
             'documentation' => $selectedDocumentation,
+            'documents' => $selectedDocuments,
             'dicomNodeOptions' => DicomNode::query()
                 ->active()
                 ->whereHas(
@@ -381,6 +384,7 @@ final class SystemController extends Controller
             'documentation' => fn ($query) => $query
                 ->with('updatedByUser:id,public_id,name')
                 ->orderBy('section'),
+            'documents' => fn ($query) => $query->with(['currentVersion.uploadedByUser:id,public_id,name'])->latest('updated_at'),
         ]);
 
         $user = $request->user();
@@ -395,6 +399,7 @@ final class SystemController extends Controller
         return Inertia::render('Registry/Systems/Show', [
             'system' => $system,
             'documentation' => $system->documentation,
+            'documents' => $system->documents->each(fn ($document) => $document->setAttribute('category_label', $document->category->label())),
             ...$historyView,
 
             'systemTypes' => [

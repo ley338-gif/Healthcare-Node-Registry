@@ -6,6 +6,7 @@ import DocumentationCompleteness from './DocumentationCompleteness.vue';
 import DocumentationEditorSlideover from './DocumentationEditorSlideover.vue';
 import DocumentationSectionCard from './DocumentationSectionCard.vue';
 import type { DocumentationSection, RegistryDocumentationItem } from './documentationTypes';
+import RegistryDocumentList, { type RegistryDocumentItem } from '../documents/RegistryDocumentList.vue';
 
 const props = defineProps<{
     documentableType: 'organizations' | 'sites' | 'departments' | 'systems';
@@ -14,6 +15,7 @@ const props = defineProps<{
     documentation: RegistryDocumentationItem[];
     canManage: boolean;
     masterData?: Array<{ label: string; value: string | null }>;
+    documents?: RegistryDocumentItem[];
 }>();
 
 const selectedSection = ref<DocumentationSection | null>(null);
@@ -128,5 +130,6 @@ const save = (): void => {
             @field-change="updateField"
             @visibility-change="(value) => (form.visibility = value)"
         />
+        <RegistryDocumentList :documents="documents ?? []" />
     </div>
 </template>

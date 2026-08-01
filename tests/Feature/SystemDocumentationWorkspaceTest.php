@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\RegistryDocument;
 use App\Models\RegistryDocumentation;
+use App\Models\RegistryDocumentVersion;
 use App\Models\Role;
 use App\Models\SecurityEvent;
 use App\Models\System;
@@ -97,6 +99,27 @@ final class SystemDocumentationWorkspaceTest extends TestCase
                 ->has('history.data', 1)
                 ->where('history.data.0.event_type', 'documentation.updated'));
         $this->assertSame(1, SecurityEvent::query()->where('event_type', 'documentation.updated')->count());
+    }
+
+    public function test_system_workspace_contains_only_documents_assigned_to_the_system(): void
+    {
+        $this->withoutVite();
+        $this->seed();
+        $user = $this->administrator();
+        $system = System::factory()->create();
+        $foreignSystem = System::factory()->create();
+        $document = RegistryDocument::factory()->for($system, 'documentable')->create(['title' => 'Systemhandbuch']);
+        $version = RegistryDocumentVersion::factory()->for($document, 'document')->create(['version_number' => 1]);
+        $document->update(['current_version_id' => $version->id]);
+        RegistryDocument::factory()->for($foreignSystem, 'documentable')->create(['title' => 'Fremdes Dokument']);
+
+        $this->actingAs($user)->get("/systems/{$system->public_id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('documents', 1)
+                ->where('documents.0.title', 'Systemhandbuch')
+                ->where('documents.0.category_label', 'Sonstiges')
+                ->where('documents.0.current_version.version_number', 1));
     }
 
     private function administrator(): User
