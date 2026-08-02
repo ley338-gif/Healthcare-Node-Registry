@@ -15,6 +15,7 @@ import {
     MonitorCog,
     Network,
     Pencil,
+    Plus,
     Search,
     UsersRound,
 } from '@lucide/vue';
@@ -124,6 +125,7 @@ const props = defineProps<{
     canUpdateDocuments: boolean;
     canArchiveDocuments: boolean;
     canManageDocumentation: boolean;
+    canManageStructure: boolean;
 }>();
 
 const search = ref('');
@@ -549,6 +551,29 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                         Organisationen, Standorte und Abteilungen zentral verwalten und im Zusammenhang betrachten.
                     </p>
                 </div>
+                <div v-if="canManageStructure" class="flex flex-wrap gap-2">
+                    <Link
+                        href="/organizations"
+                        class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                    >
+                        <Plus :size="16" />
+                        Organisation anlegen
+                    </Link>
+                    <Link
+                        href="/sites"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                    >
+                        <Plus :size="16" />
+                        Standort anlegen
+                    </Link>
+                    <Link
+                        href="/departments"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                    >
+                        <Plus :size="16" />
+                        Abteilung anlegen
+                    </Link>
+                </div>
             </header>
 
             <div class="grid min-h-[720px] gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
@@ -722,6 +747,7 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                             </div>
 
                             <Link
+                                v-if="canManageStructure"
                                 :href="editHref"
                                 class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
                             >
@@ -1284,10 +1310,28 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                 >
                     <div>
                         <Building2 :size="34" class="mx-auto text-slate-400" />
-                        <h2 class="mt-4 text-lg font-semibold text-slate-900">Keine Einheit ausgewählt</h2>
-                        <p class="mt-2 text-sm text-slate-500">
-                            Wähle links eine Organisation, einen Standort oder eine Abteilung aus.
+                        <h2 class="mt-4 text-lg font-semibold text-slate-900">
+                            {{
+                                summary.organizations === 0
+                                    ? 'Noch keine Organisation vorhanden'
+                                    : 'Keine Einheit ausgewählt'
+                            }}
+                        </h2>
+                        <p class="mx-auto mt-2 max-w-md text-sm text-slate-500">
+                            {{
+                                summary.organizations === 0
+                                    ? 'Lege zuerst eine Organisation an. Anschließend kannst du Standorte und Abteilungen zuordnen.'
+                                    : 'Wähle links eine Organisation, einen Standort oder eine Abteilung aus.'
+                            }}
                         </p>
+                        <Link
+                            v-if="canManageStructure && summary.organizations === 0"
+                            href="/organizations"
+                            class="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                        >
+                            <Plus :size="16" />
+                            Erste Organisation anlegen
+                        </Link>
                     </div>
                 </section>
             </div>
