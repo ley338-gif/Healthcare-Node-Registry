@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Maintenance
+
+- Removed accidentally committed backup and static-analysis output artifacts.
+- Added ignore rules for backup files and local PHPStan output.
+- Corrected the GitHub Actions repository-check job structure.
+
 - Globale, berechtigungsgepruefte Suche in der Kopfzeile fuer Registry-Struktur, Systeme, DICOM, Dokumente, Tests und Benutzer ergaenzt.
 - Einstellungen um eine berechtigungsgepruefte Benutzer-, Rollen- und Berechtigungsverwaltung mit Suche, Status- und Rollenfiltern erweitert.
 - Passwortvorgaben zentralisiert, Sitzungswiderruf bei Passwortwechsel und Deaktivierung sowie Schutz des letzten aktiven Systemadministrators ergaenzt.

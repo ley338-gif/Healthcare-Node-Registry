@@ -13,6 +13,8 @@
 !.env.example
 coverage/
 *.log
+*.bak
+phpstan-errors.txt
 .DS_Store
 Thumbs.db
 .idea/

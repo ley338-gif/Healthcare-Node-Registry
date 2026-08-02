@@ -10,26 +10,26 @@ permissions:
 
 jobs:
   repository:
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Reject committed runtime configuration
-      shell: bash
-      run: |
-        set -euo pipefail
+      - name: Reject committed runtime configuration
+        shell: bash
+        run: |
+          set -euo pipefail
 
-        if git ls-files --error-unmatch .env >/dev/null 2>&1; then
-          echo ".env must not be committed."
-          exit 1
-        fi
+          if git ls-files --error-unmatch .env >/dev/null 2>&1; then
+            echo ".env must not be committed."
+            exit 1
+          fi
 
-    - name: Prepare CI environment file
-      shell: bash
-      run: cp .env.example .env
+      - name: Prepare CI environment file
+        shell: bash
+        run: cp .env.example .env
 
-    - name: Validate Docker Compose
-      run: docker compose config --quiet
+      - name: Validate Docker Compose
+        run: docker compose config --quiet
 
   backend:
     runs-on: ubuntu-latest
