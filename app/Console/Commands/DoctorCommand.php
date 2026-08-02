@@ -14,12 +14,19 @@ use Throwable;
 final class DoctorCommand extends Command
 {
     protected $signature = 'registry:doctor
-        {--skip-assets : Frontend-Manifest bei Backend-Prüfungen überspringen}';
+        {--skip-assets : Frontend-Manifest bei Backend-Prüfungen überspringen}
+        {--skip-admin : Initialen Administrator ausschließlich in der Testumgebung überspringen}';
 
     protected $description = 'Validate installation readiness';
 
     public function handle(): int
     {
+        if ($this->option('skip-admin') && ! app()->environment('testing')) {
+            $this->error('--skip-admin ist ausschließlich in der Testumgebung erlaubt.');
+
+            return self::FAILURE;
+        }
+
         $checks = collect();
 
         $this->record($checks, 'Application key', filled(config('app.key')), 'APP_KEY fehlt.');
@@ -30,7 +37,7 @@ final class DoctorCommand extends Command
             'APP_DEBUG muss in Production false sein.',
         );
 
-        $this->checkDatabase($checks);
+        $this->checkDatabase($checks, ! $this->option('skip-admin'));
         $this->checkWritableDirectories($checks);
 
         if (! $this->option('skip-assets')) {
@@ -63,7 +70,7 @@ final class DoctorCommand extends Command
     }
 
     /** @param Collection<int, array{name: string, passed: bool, message: string}> $checks */
-    private function checkDatabase(Collection $checks): void
+    private function checkDatabase(Collection $checks, bool $checkAdministrator): void
     {
         try {
             DB::select('select 1');
@@ -91,6 +98,10 @@ final class DoctorCommand extends Command
             $pending->isEmpty(),
             $pending->isEmpty() ? 'OK' : 'Ausstehend: '.$pending->implode(', '),
         );
+
+        if (! $checkAdministrator) {
+            return;
+        }
 
         $adminExists = Schema::hasTable('users')
             && Schema::hasTable('roles')

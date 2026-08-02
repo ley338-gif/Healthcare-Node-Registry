@@ -13,6 +13,14 @@ final class DoctorCommandTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_it_can_skip_the_initial_administrator_in_the_test_environment(): void
+    {
+        $this->artisan('registry:doctor', [
+            '--skip-assets' => true,
+            '--skip-admin' => true,
+        ])->assertSuccessful();
+    }
+
     public function test_it_passes_for_an_initialized_backend_environment(): void
     {
         $role = app(RbacBootstrapper::class)->ensureSystemAdministratorRole();

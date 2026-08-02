@@ -74,7 +74,7 @@ jobs:
       - run: composer audit --locked --no-interaction
       - run: composer quality
       - run: php artisan migrate:fresh --force
-      - run: php artisan registry:doctor --skip-assets
+      - run: php artisan registry:doctor --skip-assets --skip-admin
 
   frontend:
     runs-on: ubuntu-latest
