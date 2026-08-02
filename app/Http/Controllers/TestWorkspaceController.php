@@ -59,6 +59,7 @@ final class TestWorkspaceController extends Controller
                 'supports_retrieve',
                 'supports_worklist',
                 'supports_mpps',
+                'supports_storage_commitment',
                 'last_verified_at',
                 'last_verification_status',
                 'last_verification_duration_ms',
@@ -86,6 +87,7 @@ final class TestWorkspaceController extends Controller
 
                 'supports_worklist' => $node->supports_worklist,
                 'supports_mpps' => $node->supports_mpps,
+                'supports_storage_commitment' => $node->supports_storage_commitment,
                 'last_verified_at' => $node->last_verified_at?->toIso8601String(),
                 'last_verification_status' => $node->last_verification_status,
                 'last_verification_duration_ms' => $node->last_verification_duration_ms,

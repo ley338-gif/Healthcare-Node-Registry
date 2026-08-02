@@ -130,6 +130,7 @@ type TestNode = {
     supports_retrieve: boolean;
     supports_worklist: boolean;
     supports_mpps: boolean;
+    supports_storage_commitment: boolean;
     last_verified_at: string | null;
     last_verification_status: string | null;
     last_verification_duration_ms: number | null;
@@ -192,6 +193,7 @@ const selectedHistoryRun = ref<HistoryRun | null>(
 );
 const worklistDialogOpen = ref(false);
 const mppsDialogOpen = ref(false);
+const storageCommitmentDialogOpen = ref(false);
 const pacsDialogOpen = ref(false);
 const profileDialogOpen = ref(false);
 const storageDialogOpen = ref(false);
@@ -250,6 +252,11 @@ const mppsForm = useForm({
     calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
     called_ae_title: props.connectionPrefill.called_ae_title ?? '',
 });
+const storageCommitmentForm = useForm({
+    confirmed: false,
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    called_ae_title: props.connectionPrefill.called_ae_title ?? '',
+});
 const capabilityForm = useForm({
     calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
     called_ae_title: props.connectionPrefill.called_ae_title ?? '',
@@ -296,6 +303,7 @@ const configuredServices = computed(() => {
         node.supports_retrieve ? 'Retrieve' : null,
         node.supports_worklist ? 'Worklist' : null,
         node.supports_mpps ? 'MPPS' : null,
+        node.supports_storage_commitment ? 'Storage Commitment' : null,
     ].filter((service): service is string => service !== null);
 });
 
@@ -491,6 +499,24 @@ const runMppsTest = (): void => {
     });
 };
 
+const openStorageCommitmentTest = (): void => {
+    if (!selectedNode.value?.supports_storage_commitment || !props.canRunStorage) return;
+    storageCommitmentForm.called_ae_title = selectedNode.value.ae_title;
+    storageCommitmentForm.confirmed = false;
+    storageCommitmentDialogOpen.value = true;
+};
+
+const runStorageCommitmentTest = (): void => {
+    if (selectedNode.value === null) return;
+    storageCommitmentForm.post(`/tests/storage-commitment/${selectedNode.value.public_id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            storageCommitmentDialogOpen.value = false;
+            resultExpanded.value = true;
+        },
+    });
+};
+
 const openPacsQuery = (): void => {
     if (!selectedNode.value?.supports_query || !props.canRunPacsQuery) return;
     pacsForm.called_ae_title = selectedNode.value.ae_title;
@@ -616,6 +642,7 @@ const testTypeLabel = (type: string): string =>
         dicom_move: 'C-MOVE',
         dicom_get: 'C-GET',
         dicom_mpps: 'MPPS',
+        dicom_storage_commitment: 'Storage Commitment',
     })[type] ?? type;
 
 const applyHistoryFilters = (): void => {
@@ -1030,6 +1057,31 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                                 <Activity :size="16" />MPPS testen
                             </button>
                         </article>
+
+                        <article
+                            class="flex min-h-[220px] flex-col rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm"
+                        >
+                            <div class="self-start rounded-xl bg-emerald-50 p-2.5 text-emerald-700">
+                                <Archive :size="20" />
+                            </div>
+                            <h3 class="mt-5 font-semibold text-slate-950">Storage Commitment</h3>
+                            <p class="mt-2 flex-1 text-sm leading-6 text-slate-500">
+                                Synthetisches Objekt speichern und sichere Verwahrung per N-ACTION/N-EVENT-REPORT
+                                prüfen.
+                            </p>
+                            <button
+                                type="button"
+                                :disabled="
+                                    !canRunStorage ||
+                                    !selectedNode.supports_storage_commitment ||
+                                    storageCommitmentForm.processing
+                                "
+                                class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                                @click="openStorageCommitmentTest"
+                            >
+                                <Archive :size="16" />Commitment testen
+                            </button>
+                        </article>
                     </div>
                 </section>
 
@@ -1284,6 +1336,7 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                                 <option value="dicom_move">C-MOVE</option>
                                 <option value="dicom_get">C-GET</option>
                                 <option value="dicom_mpps">MPPS</option>
+                                <option value="dicom_storage_commitment">Storage Commitment</option>
                             </select>
                             <select
                                 v-model="historyStatus"
@@ -1459,6 +1512,81 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                         <Download :size="16" />CSV
                     </button>
                 </div>
+            </aside>
+        </div>
+
+        <div
+            v-if="storageCommitmentDialogOpen && selectedNode"
+            class="fixed inset-0 z-50"
+            role="dialog"
+            aria-modal="true"
+        >
+            <button
+                class="absolute inset-0 bg-slate-950/40"
+                aria-label="Storage-Commitment-Dialog schließen"
+                @click="storageCommitmentDialogOpen = false"
+            />
+            <aside class="absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto bg-white p-6 shadow-2xl">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold text-emerald-600 uppercase">Autorisierter DICOM-Test</p>
+                        <h2 class="mt-2 text-xl font-semibold text-slate-950">Storage Commitment testen</h2>
+                        <p class="mt-1 text-sm text-slate-500">{{ selectedNode.name }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                        @click="storageCommitmentDialogOpen = false"
+                    >
+                        <X :size="20" />
+                    </button>
+                </div>
+                <form class="mt-6 space-y-5" @submit.prevent="runStorageCommitmentTest">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <label class="text-sm font-medium text-slate-700"
+                            >Calling AE Title<input
+                                v-model="storageCommitmentForm.calling_ae_title"
+                                maxlength="16"
+                                required
+                                class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                        /></label>
+                        <label class="text-sm font-medium text-slate-700"
+                            >Called AE Title<input
+                                v-model="storageCommitmentForm.called_ae_title"
+                                maxlength="16"
+                                required
+                                class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                        /></label>
+                    </div>
+                    <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                        Der Test speichert ein synthetisches Secondary-Capture-Objekt. Das Zielsystem muss den Calling
+                        AE Title für N-EVENT-REPORT auf den Docker-Host und Callback-Port 11113 zurückrouten.
+                    </div>
+                    <label class="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm text-slate-700"
+                        ><input v-model="storageCommitmentForm.confirmed" type="checkbox" class="mt-0.5" /><span
+                            >Ich bin zum Test autorisiert und bestätige Speicherung sowie Commitment-Anfrage für das
+                            synthetische Testobjekt.</span
+                        ></label
+                    >
+                    <p v-if="storageCommitmentForm.errors.confirmed" class="text-sm text-red-600">
+                        {{ storageCommitmentForm.errors.confirmed }}
+                    </p>
+                    <div class="flex justify-end gap-2">
+                        <button
+                            type="button"
+                            class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold"
+                            @click="storageCommitmentDialogOpen = false"
+                        >
+                            Abbrechen</button
+                        ><button
+                            type="submit"
+                            :disabled="!storageCommitmentForm.confirmed || storageCommitmentForm.processing"
+                            class="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                        >
+                            C-STORE und Commitment starten
+                        </button>
+                    </div>
+                </form>
             </aside>
         </div>
 
