@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Autorisierten C-MOVE-Diagnosetest mit `movescu`, synthetischer serverseitiger Study-UID, Pflichtbestätigung, Testhistorie und Audit-Protokollierung ergänzt.
 - Globale, serverseitig filter- und sortierbare Übersicht aller DICOM-Verbindungen unter `/connections` ergänzt.
 - Bestehenden DICOM-Verbindungsmanager um Details, Duplizieren und Übergabe an den Test-Arbeitsbereich erweitert.
 - Navigation, Berechtigungsprüfungen, Audit-Ereignis für Duplikate, Tests und Funktionsdokumentation ergänzt.

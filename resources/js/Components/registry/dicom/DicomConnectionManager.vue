@@ -52,6 +52,7 @@ const createOpen = ref(false);
 const editOpen = ref(false);
 const archiveOpen = ref(false);
 const detailsOpen = ref(false);
+const moveOpen = ref(false);
 const archiveProcessing = ref(false);
 const selected = ref<DicomConnection | null>(null);
 
@@ -89,6 +90,11 @@ const emptyForm = () => ({
 
 const createForm = useForm(emptyForm());
 const editForm = useForm(emptyForm());
+const moveForm = useForm({
+    confirmed: false,
+    calling_ae_title: '',
+    called_ae_title: '',
+});
 
 const nodeLabel = (node: DicomNodeOption): string => `${node.system.name} · ${node.name} · ${node.ae_title}`;
 
@@ -178,6 +184,17 @@ const duplicate = (connection: DicomConnection): void => {
 };
 
 const openTest = (connection: DicomConnection): void => {
+    if (connection.service === 'move') {
+        selected.value = connection;
+        moveForm.confirmed = false;
+        moveForm.calling_ae_title = effectiveCallingAe(connection);
+        moveForm.called_ae_title = effectiveCalledAe(connection);
+        moveForm.clearErrors();
+        moveOpen.value = true;
+
+        return;
+    }
+
     const parameters = new URLSearchParams({
         node: connection.target_node.public_id,
         service: connection.service,
@@ -185,6 +202,21 @@ const openTest = (connection: DicomConnection): void => {
         called_ae_title: effectiveCalledAe(connection),
     });
     router.visit(`/tests?${parameters.toString()}`);
+};
+
+const closeMove = (): void => {
+    if (moveForm.processing) return;
+    moveOpen.value = false;
+    moveForm.reset();
+    moveForm.clearErrors();
+};
+
+const runMove = (): void => {
+    if (!selected.value) return;
+    moveForm.post(`/tests/move/${selected.value.public_id}`, {
+        preserveScroll: true,
+        onSuccess: closeMove,
+    });
 };
 
 const closeArchive = (): void => {
@@ -390,6 +422,102 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
     </section>
 
     <Teleport to="body">
+        <div v-if="moveOpen && selected" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
+            <button
+                type="button"
+                class="absolute inset-0 bg-slate-950/50"
+                aria-label="C-MOVE-Dialog schließen"
+                @click="closeMove"
+            />
+            <aside class="absolute inset-y-0 right-0 flex w-full max-w-xl flex-col bg-white shadow-2xl">
+                <header class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+                    <div>
+                        <p class="text-xs font-semibold text-rose-600 uppercase">Autorisierter DICOM-Test</p>
+                        <h2 class="mt-1 text-xl font-semibold text-slate-950">C-MOVE ausführen</h2>
+                        <p class="mt-1 text-sm text-slate-500">{{ selected.name }}</p>
+                    </div>
+                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100" @click="closeMove">
+                        <X :size="20" />
+                    </button>
+                </header>
+                <form class="flex min-h-0 flex-1 flex-col" @submit.prevent="runMove">
+                    <div class="flex-1 space-y-5 overflow-y-auto px-6 py-6">
+                        <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-900">
+                            <p class="font-semibold">Dieser Test kann reale Studien zwischen Systemen verschieben.</p>
+                            <p class="mt-1">
+                                Nur mit Testdaten oder nach Freigabe ausführen. Die Anwendung verwendet ausschließlich
+                                die serverseitig konfigurierte synthetische Test-Study-UID; Patientenkennungen können
+                                nicht eingegeben werden.
+                            </p>
+                        </div>
+                        <dl class="rounded-xl border border-slate-200 text-sm">
+                            <div class="grid grid-cols-3 gap-3 border-b border-slate-100 px-4 py-3">
+                                <dt class="text-slate-500">Query/Retrieve SCP</dt>
+                                <dd class="col-span-2 font-medium">
+                                    {{ selected.target_node.system.name }} · {{ selected.target_node.name }}
+                                </dd>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 px-4 py-3">
+                                <dt class="text-slate-500">Move-Destination</dt>
+                                <dd class="col-span-2 font-medium">
+                                    {{ selected.destination_node?.system.name }} ·
+                                    {{ selected.destination_node?.name }} · {{ selected.destination_node?.ae_title }}
+                                </dd>
+                            </div>
+                        </dl>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <label
+                                ><span class="text-sm font-medium text-slate-700">Calling AE Title</span
+                                ><input
+                                    v-model="moveForm.calling_ae_title"
+                                    required
+                                    maxlength="16"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                            /></label>
+                            <label
+                                ><span class="text-sm font-medium text-slate-700">Called AE Title</span
+                                ><input
+                                    v-model="moveForm.called_ae_title"
+                                    required
+                                    maxlength="16"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                            /></label>
+                        </div>
+                        <label class="flex items-start gap-3 rounded-xl border border-rose-200 p-4 text-sm"
+                            ><input
+                                v-model="moveForm.confirmed"
+                                type="checkbox"
+                                class="mt-1 rounded border-slate-300"
+                            /><span
+                                ><strong>Ich bestätige, dass dies ein autorisierter Test ist.</strong><br />Die
+                                Ausführung und meine Bestätigung werden im Audit protokolliert.</span
+                            ></label
+                        >
+                        <div
+                            v-if="Object.keys(moveForm.errors).length"
+                            class="rounded-xl bg-red-50 p-3 text-sm text-red-700"
+                        >
+                            <p v-for="message in moveForm.errors" :key="message">{{ message }}</p>
+                        </div>
+                    </div>
+                    <footer class="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
+                        <button
+                            type="button"
+                            class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium"
+                            @click="closeMove"
+                        >
+                            Abbrechen</button
+                        ><button
+                            type="submit"
+                            :disabled="!moveForm.confirmed || moveForm.processing"
+                            class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                        >
+                            {{ moveForm.processing ? 'C-MOVE läuft …' : 'Autorisierten C-MOVE starten' }}
+                        </button>
+                    </footer>
+                </form>
+            </aside>
+        </div>
         <div v-if="detailsOpen && selected" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
             <button
                 type="button"
