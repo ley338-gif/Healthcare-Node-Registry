@@ -15,6 +15,7 @@ use App\Http\Controllers\DicomNodeController;
 use App\Http\Controllers\GetDiagnosticController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\MoveDiagnosticController;
+use App\Http\Controllers\MppsDiagnosticController;
 use App\Http\Controllers\NetworkDiagnosticController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
@@ -146,6 +147,8 @@ Route::middleware('auth')->group(function (): void {
 
     Route::post('/tests/worklist/{dicomNode}', WorklistDiagnosticController::class)
         ->name('tests.worklist.run');
+    Route::post('/tests/mpps/{dicomNode}', MppsDiagnosticController::class)
+        ->name('tests.mpps.run');
 
     Route::post('/tests/pacs-query/{dicomNode}', PacsQueryDiagnosticController::class)
         ->name('tests.pacs-query.run');

@@ -129,6 +129,7 @@ type TestNode = {
     supports_query: boolean;
     supports_retrieve: boolean;
     supports_worklist: boolean;
+    supports_mpps: boolean;
     last_verified_at: string | null;
     last_verification_status: string | null;
     last_verification_duration_ms: number | null;
@@ -157,6 +158,7 @@ const props = defineProps<{
     canRunEcho: boolean;
     canRunNetwork: boolean;
     canRunWorklist: boolean;
+    canRunMpps: boolean;
     canRunPacsQuery: boolean;
     canRunStorage: boolean;
     canAnalyzeFile: boolean;
@@ -189,6 +191,7 @@ const selectedHistoryRun = ref<HistoryRun | null>(
     props.history.data.find((run) => run.public_id === props.historyFilters.run) ?? null,
 );
 const worklistDialogOpen = ref(false);
+const mppsDialogOpen = ref(false);
 const pacsDialogOpen = ref(false);
 const profileDialogOpen = ref(false);
 const storageDialogOpen = ref(false);
@@ -242,6 +245,11 @@ const storageForm = useForm({
     calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
     called_ae_title: props.connectionPrefill.called_ae_title ?? '',
 });
+const mppsForm = useForm({
+    confirmed: false,
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    called_ae_title: props.connectionPrefill.called_ae_title ?? '',
+});
 const capabilityForm = useForm({
     calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
     called_ae_title: props.connectionPrefill.called_ae_title ?? '',
@@ -287,6 +295,7 @@ const configuredServices = computed(() => {
         node.supports_query ? 'Query' : null,
         node.supports_retrieve ? 'Retrieve' : null,
         node.supports_worklist ? 'Worklist' : null,
+        node.supports_mpps ? 'MPPS' : null,
     ].filter((service): service is string => service !== null);
 });
 
@@ -464,6 +473,24 @@ const runWorklistTest = (): void => {
     });
 };
 
+const openMppsTest = (): void => {
+    if (!selectedNode.value?.supports_mpps || !props.canRunMpps) return;
+    mppsForm.called_ae_title = selectedNode.value.ae_title;
+    mppsForm.confirmed = false;
+    mppsDialogOpen.value = true;
+};
+
+const runMppsTest = (): void => {
+    if (selectedNode.value === null) return;
+    mppsForm.post(`/tests/mpps/${selectedNode.value.public_id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            mppsDialogOpen.value = false;
+            resultExpanded.value = true;
+        },
+    });
+};
+
 const openPacsQuery = (): void => {
     if (!selectedNode.value?.supports_query || !props.canRunPacsQuery) return;
     pacsForm.called_ae_title = selectedNode.value.ae_title;
@@ -586,6 +613,9 @@ const testTypeLabel = (type: string): string =>
         pacs_query: 'PACS Query',
         dicom_storage: 'DICOM Storage',
         dicom_capability_matrix: 'Capability-Matrix',
+        dicom_move: 'C-MOVE',
+        dicom_get: 'C-GET',
+        dicom_mpps: 'MPPS',
     })[type] ?? type;
 
 const applyHistoryFilters = (): void => {
@@ -980,6 +1010,26 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                                 <Database :size="16" />PACS abfragen
                             </button>
                         </article>
+
+                        <article
+                            class="flex min-h-[220px] flex-col rounded-2xl border border-indigo-200 bg-white p-5 shadow-sm"
+                        >
+                            <div class="self-start rounded-xl bg-indigo-50 p-2.5 text-indigo-700">
+                                <Activity :size="20" />
+                            </div>
+                            <h3 class="mt-5 font-semibold text-slate-950">MPPS</h3>
+                            <p class="mt-2 flex-1 text-sm leading-6 text-slate-500">
+                                Synthetischen Procedure Step per N-CREATE anlegen und per N-SET abschließen.
+                            </p>
+                            <button
+                                type="button"
+                                :disabled="!canRunMpps || !selectedNode.supports_mpps || mppsForm.processing"
+                                class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                                @click="openMppsTest"
+                            >
+                                <Activity :size="16" />MPPS testen
+                            </button>
+                        </article>
                     </div>
                 </section>
 
@@ -1228,6 +1278,12 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                                 <option value="">Alle Testtypen</option>
                                 <option value="network">Netzwerk</option>
                                 <option value="dicom_echo">C-ECHO</option>
+                                <option value="worklist">Worklist</option>
+                                <option value="pacs_query">PACS Query</option>
+                                <option value="dicom_storage">DICOM Storage</option>
+                                <option value="dicom_move">C-MOVE</option>
+                                <option value="dicom_get">C-GET</option>
+                                <option value="dicom_mpps">MPPS</option>
                             </select>
                             <select
                                 v-model="historyStatus"
@@ -1403,6 +1459,80 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                         <Download :size="16" />CSV
                     </button>
                 </div>
+            </aside>
+        </div>
+
+        <div v-if="mppsDialogOpen && selectedNode" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
+            <button
+                class="absolute inset-0 bg-slate-950/40"
+                aria-label="MPPS-Dialog schließen"
+                @click="mppsDialogOpen = false"
+            />
+            <aside class="absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto bg-white p-6 shadow-2xl">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold text-indigo-600 uppercase">Autorisierter DICOM-Test</p>
+                        <h2 class="mt-2 text-xl font-semibold text-slate-950">MPPS testen</h2>
+                        <p class="mt-1 text-sm text-slate-500">{{ selectedNode.name }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                        @click="mppsDialogOpen = false"
+                    >
+                        <X :size="20" />
+                    </button>
+                </div>
+                <form class="mt-6 space-y-5" @submit.prevent="runMppsTest">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <label class="text-sm font-medium text-slate-700"
+                            >Calling AE Title
+                            <input
+                                v-model="mppsForm.calling_ae_title"
+                                maxlength="16"
+                                required
+                                class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                            />
+                        </label>
+                        <label class="text-sm font-medium text-slate-700"
+                            >Called AE Title
+                            <input
+                                v-model="mppsForm.called_ae_title"
+                                maxlength="16"
+                                required
+                                class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                            />
+                        </label>
+                    </div>
+                    <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                        Der Test legt im Zielsystem eine ausschließlich synthetische MPPS-Instanz an und setzt sie
+                        anschließend auf COMPLETED.
+                    </div>
+                    <label class="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm text-slate-700">
+                        <input v-model="mppsForm.confirmed" type="checkbox" class="mt-0.5" />
+                        <span
+                            >Ich bin zum Test dieses Zielsystems autorisiert und bestätige die Erzeugung des
+                            synthetischen MPPS-Datensatzes.</span
+                        >
+                    </label>
+                    <p v-if="mppsForm.errors.confirmed" class="text-sm text-red-600">{{ mppsForm.errors.confirmed }}</p>
+                    <div class="flex justify-end gap-2">
+                        <button
+                            type="button"
+                            class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold"
+                            @click="mppsDialogOpen = false"
+                        >
+                            Abbrechen
+                        </button>
+                        <button
+                            type="submit"
+                            :disabled="!mppsForm.confirmed || mppsForm.processing"
+                            class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                        >
+                            N-CREATE/N-SET starten
+                        </button>
+                    </div>
+                </form>
             </aside>
         </div>
 
