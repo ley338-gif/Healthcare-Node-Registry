@@ -1,104 +1,481 @@
-# Healthcare Node Registry 0.1.0
+# Healthcare Node Registry
 
-Technisches Grundgerüst der On-Premise-Registry für Healthcare-IT-Systeme und Kommunikationsbeziehungen.
+Healthcare Node Registry (HNR) ist eine proprietäre On-Premises-Webanwendung zur strukturierten Verwaltung von Healthcare-IT-Systemen, DICOM-Knoten und deren Kommunikationsbeziehungen. Sie bündelt technische Stammdaten, Organisationszuordnung, Betriebsdokumentation, Dokumente, Diagnoseergebnisse und Auditinformationen in einer zentralen Registry.
 
-## Enthalten
+Die Anwendung richtet sich an Healthcare-IT-Administration, PACS-/RIS-Verantwortliche, Systembetrieb, Informationssicherheit und technische Dienstleister. Sie verarbeitet Infrastruktur- und Konfigurationsdaten; sie ist kein PACS, kein Patientenakten-System und kein kontinuierliches Monitoring-System.
 
-- Laravel 13 / PHP 8.4
-- Vue 3 / TypeScript / Inertia 3
-- Tailwind CSS 4
+## Architektur und Entwicklungsstatus
+
+HNR ist als modularer Monolith umgesetzt:
+
+- Backend: PHP 8.4, Laravel 13, Inertia Laravel und sessionbasierte Authentifizierung
+- Frontend: Vue 3, TypeScript, Inertia 3, Tailwind CSS 4 und Vite
+- Datenbank: PostgreSQL 18
+- Betrieb: Nginx 1.28 vor PHP-FPM, bereitgestellt mit Docker Compose
+- DICOM-Werkzeuge: DCMTK im PHP-Container
+- Speicherung: PostgreSQL für Fachdaten sowie ein privates Laravel-Dateisystem für Registry-Dokumente
+
+Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten Funktionen sind implementiert und durch automatisierte Tests abgedeckt. Eine öffentliche REST-API, OpenAPI-/Swagger-Dokumentation, DICOM-TLS, MFA, LDAP/Active Directory, Redis und ein Queue-Worker sind derzeit nicht Bestandteil des Stacks.
+
+## Features
+
+- Dashboard mit Registry-Übersicht, letzten Änderungen, Diagnosekennzahlen und Aufgabenhinweisen
+- Organisationsstruktur aus Organisationen, Standorten und Abteilungen
+- Registry für Healthcare-IT-Systeme mit Zuordnung zur Organisationsstruktur und Archivierung
+- DICOM-Knoten mit AE Title, Host, Port, Rolle, Status und Verifikation
+- DICOM-Verbindungen zwischen registrierten Knoten sowie grafische Netzwerkansicht
+- Globale, berechtigungsgeprüfte Suche
+- Strukturierte Betriebsdokumentation für Organisationen, Standorte, Abteilungen und Systeme
+- Private Dokumentenablage mit Metadaten, Versionen, SHA-256-Prüfung, Duplikaterkennung, Archivierung und PDF-Vorschau
+- Datei-Allowlist und Signaturprüfung für PDF, PNG, JPEG, DOCX, XLSX, TXT und ZIP
+- Sessionbasierter Login sowie Benutzer-, Rollen- und Berechtigungsverwaltung
+- RBAC mit einer initialen Rolle `system-administrator` und serverseitigen Policies/Gates
+- Audit-Arbeitsbereich mit Filtern, Detailansicht und CSV-Export
+- Diagnose-Workspace mit Verlauf, Profilen und JSON-/CSV-Ergebnisexport
+- Netzwerkprüfung und DICOM C-ECHO
+- Modality-Worklist-C-FIND und PACS-Study-Root-C-FIND
+- Kontrollierter C-STORE eines synthetischen Secondary-Capture-Objekts
+- DICOM Capability-Matrix auf Basis der Association-Aushandlung
+- DICOM-Dateianalyse mit `dcmdump`
+- Öffentlicher, detailarmer Health-Endpunkt unter `/up`
+- Backup- und Restore-Skripte für PostgreSQL und privaten Dokumentenspeicher
+
+Der standardmäßig gebundene Malware-Scanner meldet `unavailable`. Uploads werden gespeichert, aber Download und Vorschau bleiben fail-closed gesperrt, solange eine Dokumentversion nicht den Scanstatus `clean` besitzt. Für einen produktiven Dokumentenbetrieb muss daher eine konkrete `MalwareScanner`-Implementierung angebunden werden.
+
+## Verzeichnisstruktur
+
+| Pfad | Inhalt |
+| --- | --- |
+| `app/` | Laravel-Controller, Requests, Models, Policies, Services, Konsolenbefehle und Modulbeschreibungen |
+| `bootstrap/` | Laravel-Bootstrap und Providerregistrierung |
+| `config/` | Anwendungs-, Datenbank-, Session-, Logging-, Diagnose- und Dokumentkonfiguration |
+| `database/` | Migrationen, Factories und lokaler Development-Seeder |
+| `docker/` | PHP-FPM-Image, Entrypoint, PHP-Konfiguration und Nginx-Konfiguration |
+| `docs/` | Architektur-, Betriebs-, Sicherheits-, Entwickler-, Benutzer- und Fachdokumentation |
+| `public/` | Web-Einstiegspunkt und generierter Frontend-Build |
+| `resources/` | Vue-/TypeScript-Frontend, CSS und Blade-Shell |
+| `routes/` | Web- und Konsolenrouten |
+| `scripts/` | PowerShell-Skripte für Qualität, Tests, Backup und Restore |
+| `specification/` | Produkt-, Scope-, UI- und Netzwerkreferenzen |
+| `storage/` | Laufzeitdaten, Logs und private Dokumentablage; nicht versioniert |
+| `tests/` | PHPUnit Feature- und Unit-Tests |
+
+## Voraussetzungen
+
+### Empfohlen: Docker
+
+- Git
+- Docker Engine mit Compose-Plugin (`docker compose`)
+- PowerShell nur für die mitgelieferten `.ps1`-Skripte
+
+PHP, Composer, PostgreSQL, Node.js und DCMTK müssen bei dieser Variante nicht auf dem Host installiert sein.
+
+### Native Entwicklung ohne Docker
+
+- PHP 8.4 mit mindestens den im Container aktivierten Erweiterungen `intl`, `opcache`, `pcntl`, `pdo_pgsql` und `zip`
+- Composer 2
 - PostgreSQL 18
-- Docker Compose
-- Nginx + PHP-FPM
-- sessionbasierte Anmeldung
-- native RBAC-Grundlage
-- webbasierte Benutzer-, Rollen- und Berechtigungsverwaltung unter Einstellungen
-- globale berechtigungsgepruefte Suche mit direkten Workspace-Links
-- modularer Monolith
-- Health Endpoint
-- strukturierte Logs
-- GitHub Actions für Backend, Frontend und Container
-- Dashboard-Basislayout gemäß Enterprise-Admin-Richtung
-- Diagnose-Workspace für Netzwerk, C-ECHO, Worklist, PACS Query und kontrollierten C-STORE
-- Diagnoseverlauf, Testprofile, Capability-Matrix, DICOM-Dateianalyse und Ergebnisexport
+- Node.js 24 und npm
+- DCMTK für native DICOM-Diagnosen (`echoscu`, `findscu`, `img2dcm`, `storescu`, `dcmdump`)
 
-## Noch nicht enthalten
+Für einen reproduzierbaren Betrieb wird Docker empfohlen.
 
-- produktive Registry-Fachmodule
-- HL7-Kommunikation
-- Monitoring und Discovery
-- Dokumenten-Uploads
-- MFA oder externe Verzeichnisanbindung
+## Installation mit Docker
 
-## Lokaler Start
+Die folgenden Befehle werden im Repository-Stamm ausgeführt.
 
-Voraussetzungen: Docker Engine und Docker Compose Plugin.
+1. Repository klonen und in das Verzeichnis wechseln:
+
+   ```bash
+   git clone <repository-url>
+   cd Healthcare-Node-Registry
+   ```
+
+2. Lokale Konfiguration anlegen:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Unter PowerShell:
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+   Vor einem produktionsnahen Start mindestens `DB_PASSWORD`, `POSTGRES_PASSWORD`, `APP_URL` und die Session-/TLS-Einstellungen prüfen. `DB_PASSWORD` und `POSTGRES_PASSWORD` müssen übereinstimmen.
+
+3. PHP-Image bauen und Abhängigkeiten installieren:
+
+   ```bash
+   docker compose build app
+   docker compose run --rm app composer install --no-interaction
+   docker compose run --rm node npm ci
+   ```
+
+4. Laravel-Anwendungsschlüssel erzeugen:
+
+   ```bash
+   docker compose run --rm app php artisan key:generate
+   ```
+
+5. PostgreSQL starten und Migrationen ausführen:
+
+   ```bash
+   docker compose up -d db
+   docker compose run --rm app php artisan migrate
+   ```
+
+6. Frontend für den Nginx-Betrieb bauen:
+
+   ```bash
+   docker compose run --rm node npm run build
+   ```
+
+7. Ersten Administrator interaktiv anlegen:
+
+   ```bash
+   docker compose run --rm app php artisan registry:create-admin
+   ```
+
+   Der Befehl fragt Name, E-Mail-Adresse und Passwort ab. Das Passwort muss mindestens 14 Zeichen sowie Groß- und Kleinbuchstaben, Zahlen und Sonderzeichen enthalten. Es wird weder ausgegeben noch protokolliert. Der Befehl verweigert ein zweites initiales Administratorkonto.
+
+8. Anwendung starten und prüfen:
+
+   ```bash
+   docker compose up -d app web
+   docker compose exec app php artisan registry:doctor
+   docker compose ps
+   ```
+
+9. Im Browser öffnen:
+
+   - Anwendung und Login: `http://localhost:8080`
+   - Health-Endpunkt: `http://localhost:8080/up`
+
+### Development-Seeder und erster Login
+
+Für ausschließlich lokale Entwicklung kann statt der interaktiven Admin-Erstellung der Seeder verwendet werden:
+
+```bash
+docker compose run --rm app php artisan migrate --seed
+```
+
+Bei `APP_ENV=local` erzeugt er:
+
+| Feld | Wert |
+| --- | --- |
+| Name | `Synthetic Development Admin` |
+| E-Mail | `admin@example.test` |
+| Passwort | `ChangeMe-Development-Only!` |
+| Rolle | `system-administrator` |
+| Login | `http://localhost:8080/login` |
+
+Dieser Zugang ist synthetisch und darf nicht in produktiven oder gemeinsam erreichbaren Installationen verwendet werden. Das Passwort muss bei jeder längerlebigen Entwicklungsinstallation sofort geändert werden. In anderen Umgebungen legt der Seeder nur die Systemadministratorrolle und deren Berechtigungen an, aber keinen Benutzer.
+
+## Docker-Stack
+
+Es gibt genau eine Compose-Datei: `docker-compose.yml`.
+
+| Dienst | Zweck | Host-Port | Profil | Restart Policy |
+| --- | --- | --- | --- | --- |
+| `web` | Nginx, statische Assets und Weiterleitung an PHP-FPM | `8080` | Standard | `unless-stopped` |
+| `app` | Laravel auf PHP-FPM, Port 9000 nur im Compose-Netz | keiner | Standard | `unless-stopped` |
+| `db` | PostgreSQL 18.4 | keiner | Standard | `unless-stopped` |
+| `node` | npm-/Vite-Werkzeugcontainer | keiner | `tools` | keine |
+| `app-test` | isolierte Backend-Testausführung | keiner | `test` | keine |
+| `db-test` | isolierte PostgreSQL-Testdatenbank | keiner | `test` | keine |
+
+Nur Nginx wird auf dem Host veröffentlicht. PostgreSQL und PHP-FPM sind nicht direkt vom Host erreichbar.
+
+Netzwerke:
+
+- `frontend`: Kommunikation zwischen `web` und `app`
+- `backend`: internes Netz zwischen `app` und `db`
+- `test_backend`: internes Netz zwischen `app-test` und `db-test`
+
+Persistente Volumes:
+
+- `postgres_data`: produktive/lokale PostgreSQL-Daten
+- `app_storage`: Laravel-Laufzeitdaten und private Registry-Dokumente
+- `postgres_test_data`: Daten des isolierten Testprofils
+- `app_test_storage`: Storage des isolierten Testprofils
+
+`web` läuft mit schreibgeschütztem Root-Dateisystem und temporären Dateisystemen für Nginx-Cache und PID-Dateien. `app`, `web` und `db` verwenden `no-new-privileges`.
+
+Stoppen ohne Datenverlust:
+
+```bash
+docker compose down
+```
+
+`docker compose down -v` löscht die benannten Volumes und damit Datenbank- und Dokumentdaten. Dieser Befehl darf nur für bewusst verworfene Entwicklungsinstallationen verwendet werden.
+
+## Standard-Ports
+
+| Komponente | Port | Erreichbarkeit |
+| --- | --- | --- |
+| HNR über Nginx | `8080/tcp` | Host und Browser |
+| PHP-FPM | `9000/tcp` | nur Compose-Netz `frontend` |
+| PostgreSQL | `5432/tcp` | nur internes Compose-Netz `backend` |
+| PostgreSQL Test | `5432/tcp` | nur internes Compose-Netz `test_backend` |
+| Vite Development Server | `5173/tcp` standardmäßig | nur bei nativem `npm run dev`; im Compose-Dienst nicht veröffentlicht |
+
+DICOM-Zielports werden pro registriertem Knoten gespeichert und sind keine eingehenden Ports der Anwendung.
+
+## Konfiguration
+
+`.env.example` enthält sichere Entwicklungsbeispiele. Echte `.env`-Dateien werden durch `.gitignore` ausgeschlossen.
+
+### Zentrale Variablen
+
+| Variable | Bedeutung | Beispiel/Standard |
+| --- | --- | --- |
+| `APP_NAME` | Anzeigename der Anwendung | `Healthcare Node Registry` |
+| `APP_ENV` | Laravel-Umgebung; steuert unter anderem den Development-Seeder | `local` |
+| `APP_KEY` | Laravel-Schlüssel für Verschlüsselung; mit `key:generate` erzeugen | kein Vorgabewert |
+| `APP_DEBUG` | Laravel-Debugausgabe | `false` |
+| `APP_URL` | Externe Basis-URL | `http://localhost:8080` |
+| `APP_LOCALE` | In `.env.example` vorhanden, aktuell jedoch nicht ausgewertet; `de` ist in `config/app.php` fest gesetzt | `de` |
+| `APP_FALLBACK_LOCALE` | In `.env.example` vorhanden, aktuell jedoch nicht ausgewertet; `en` ist in `config/app.php` fest gesetzt | `en` |
+| `LOG_CHANNEL` | Laravel-Logkanal | `stderr` |
+| `LOG_LEVEL` | Mindest-Loglevel | `info` |
+| `DB_CONNECTION` | Datenbanktreiber | `pgsql` |
+| `DB_HOST` | PostgreSQL-Host | `db` |
+| `DB_PORT` | PostgreSQL-Port | `5432` |
+| `DB_DATABASE` | Datenbankname | `healthcare_node_registry` |
+| `DB_USERNAME` | Datenbankbenutzer | `registry` |
+| `DB_PASSWORD` | Passwort der Laravel-Datenbankverbindung | Entwicklungswert in `.env.example`; produktiv ersetzen |
+| `DB_SSLMODE` | PostgreSQL-SSL-Modus | `prefer` |
+| `POSTGRES_DB` | Initiale Datenbank des Compose-Containers | muss zu `DB_DATABASE` passen |
+| `POSTGRES_USER` | Initialer PostgreSQL-Benutzer | muss zu `DB_USERNAME` passen |
+| `POSTGRES_PASSWORD` | Initiales PostgreSQL-Passwort | muss zu `DB_PASSWORD` passen |
+| `SESSION_DRIVER` | Session-Speicher | `database` |
+| `SESSION_LIFETIME` | Session-Laufzeit in Minuten | `120` |
+| `SESSION_ENCRYPT` | In `.env.example` vorhanden, aktuell jedoch nicht ausgewertet; Sessions werden in `config/session.php` immer verschlüsselt | `true` |
+| `SESSION_SECURE_COOKIE` | Cookie nur über HTTPS senden | lokal `false`, mit HTTPS `true` |
+| `CACHE_STORE` | Laravel-Cache | `database` |
+| `QUEUE_CONNECTION` | Laravel-Queue-Backend; kein Worker-Dienst ist definiert | `database` |
+| `FILESYSTEM_DISK` | Standard-Dateisystem | `local` |
+| `REGISTRY_DOCUMENT_EXPIRY_WARNING_DAYS` | Vorlauf für Ablaufwarnungen | `60` |
+| `MAIL_MAILER` | Mail-Transport | `log` |
+| `MAIL_FROM_ADDRESS` | Absenderadresse | `noreply@example.test` |
+| `MAIL_FROM_NAME` | Absendername | `Healthcare Node Registry` |
+
+Zusätzlich unterstützt die Implementierung bei Bedarf `DIAGNOSTIC_NETWORK_TIMEOUT` (1 bis 10 Sekunden, Standard 5), `REGISTRY_DOCUMENT_DISK` (Standard `registry_documents`) und `REGISTRY_DOCUMENT_MAX_UPLOAD_KB` (Standard 25 MiB). Nginx begrenzt Requests derzeit auf 10 MiB; ohne Anpassung von `docker/nginx/default.conf` ist daher das kleinere Nginx-Limit wirksam.
+
+Laravel unterstützt darüber hinaus optionale Verbindungs-, Session-, Cache-, Queue- und Mailvariablen aus den Dateien unter `config/`. Für den bereitgestellten Compose-Stack genügen die Variablen aus `.env.example`.
+
+## Native lokale Entwicklung
+
+Nach Installation der nativen Voraussetzungen:
 
 ```bash
 cp .env.example .env
-docker compose build
-docker compose run --rm app composer install --no-interaction
-docker compose run --rm node npm ci
-docker compose run --rm app php artisan key:generate
-docker compose up -d db
-docker compose run --rm app php artisan migrate --seed
+composer install
+npm ci
+php artisan key:generate
+php artisan migrate
+php artisan registry:create-admin
+npm run build
+php artisan serve
+```
+
+Für eine native PostgreSQL-Instanz müssen insbesondere `DB_HOST`, Datenbankname, Benutzer und Passwort in `.env` angepasst werden; `DB_HOST=db` funktioniert nur im Compose-Netz.
+Außerdem sollte `APP_URL` für den unten gezeigten Artisan-Server auf `http://127.0.0.1:8000` gesetzt werden.
+
+Backend-Server: `http://127.0.0.1:8000`. Für Hot Reload in einem zweiten Terminal:
+
+```bash
+npm run dev
+```
+
+Der Vite-Development-Server verwendet standardmäßig Port 5173. Der Compose-Dienst `node` veröffentlicht diesen Port nicht und wird deshalb im dokumentierten Docker-Betrieb für Installations-, Build- und Prüfkommandos verwendet.
+
+## Entwicklung und Qualitätssicherung
+
+Backend-Kommandos im Docker-Stack:
+
+```bash
+docker compose exec app php artisan migrate
+docker compose exec app php artisan migrate:status
+docker compose exec app php artisan registry:doctor
+docker compose exec app php artisan registry:about
+```
+
+Frontend:
+
+```bash
+docker compose run --rm node npm run lint:check
+docker compose run --rm node npm run format:check
+docker compose run --rm node npm run types:check
+docker compose run --rm node npm run test:unit
 docker compose run --rm node npm run build
-docker compose up -d
-```
-
-Anwendung: `http://localhost:8080`
-
-Synthetischer Entwicklungszugang:
-
-- E-Mail: `admin@example.test`
-- Passwort: `ChangeMe-Development-Only!`
-
-Der Seeder ist nur für lokale Entwicklung gedacht. Produktive Installationen müssen ein eigenes initiales Administratorkonto über einen kontrollierten Setup-Prozess anlegen.
-
-## Entwicklung
-
-```bash
-docker compose up -d db app web
-docker compose run --rm node npm run dev -- --host 0.0.0.0
-```
-
-## Tests
-
-```bash
-docker compose run --rm app composer test
 docker compose run --rm node npm run check
+```
+
+Isolierte Backend-Tests und Qualitätsprüfung:
+
+```bash
+docker compose --profile test run --rm app-test composer test
+docker compose --profile test run --rm app-test composer lint:check
+docker compose --profile test run --rm app-test composer analyse
 docker compose --profile test run --rm app-test composer quality
-docker compose run --rm node npm run build
 ```
 
-Die DICOM-Diagnosefunktionen sowie ihre Sicherheits- und Firewallvoraussetzungen sind im [Diagnostic Test Workspace](docs/Healthcare/DiagnosticTestWorkspace.md) dokumentiert.
+Unter PowerShell stehen zusätzlich zur Verfügung:
 
-## Modulstruktur
-
-```text
-app/Modules/
-├── Identity/
-├── Organizations/
-├── Assets/
-├── Endpoints/
-├── Dicom/
-├── Connections/
-├── Topology/
-├── Documents/
-├── Taxonomy/
-├── Audit/
-├── ImportExport/
-└── Administration/
+```powershell
+.\scripts\test.ps1
+.\scripts\test.ps1 -Filter AuthenticationTest
+.\scripts\quality.ps1
 ```
 
-Jedes Modul erhält bei fachlicher Implementierung eigene Application-, Domain-, Infrastructure- und Presentation-Bereiche. Das Grundgerüst führt noch keine unnötigen Abstraktionen ein.
+Backend-Tests sollen nicht gegen den normalen `app`-/`db`-Stack ausgeführt werden, sondern gegen das isolierte Testprofil.
+
+## Datenbank, Migrationen und Seeds
+
+Die Anwendung verwendet ausschließlich PostgreSQL. Migrationen verwalten Benutzer, Sessions, Cache, Jobs, RBAC, Security Events, Organisationsstruktur, Systeme, DICOM-Knoten und -Verbindungen, Diagnoseverläufe und -profile sowie Registry-Dokumentation und Dokumentversionen.
+
+Migrationen:
+
+```bash
+docker compose exec app php artisan migrate
+docker compose exec app php artisan migrate:status
+```
+
+Der einzige Seeder ist `DatabaseSeeder`. Er stellt immer die Rolle `system-administrator` und deren Berechtigungen sicher. Nur in `APP_ENV=local` erzeugt er zusätzlich den oben dokumentierten synthetischen Entwicklungsadministrator.
+
+```bash
+docker compose exec app php artisan db:seed
+```
+
+### Backup
+
+Bei laufenden Diensten `app` und `db`:
+
+```powershell
+.\scripts\backup.ps1
+```
+
+Optional kann mit `-OutputDirectory` ein anderes Ziel gewählt werden. Das Skript sichert PostgreSQL als Custom-Format-Dump, `storage/app/private` als TAR.GZ und erzeugt ein Manifest mit SHA-256-Prüfsummen. Es verschlüsselt das Backup nicht automatisch.
+
+### Restore
+
+Ein Restore ist destruktiv und erfordert die explizite Bestätigung:
+
+```powershell
+.\scripts\restore.ps1 -BackupDirectory .\backups\registry-YYYYMMDD-HHMMSS -ConfirmRestore
+```
+
+Das Skript prüft die im Manifest gespeicherten SHA-256-Werte, stoppt während des Restores den Webdienst, stellt Datenbank und privaten Storage wieder her, leert Laravel-Caches und führt anschließend `registry:doctor` aus.
+
+## API
+
+Es gibt derzeit keine freigegebene öffentliche REST-API, keine OpenAPI-Spezifikation und keine Swagger-Oberfläche. Die vorhandenen HTTP-Routen bilden die Inertia-Webanwendung ab und benötigen – mit Ausnahme von `/login` und `/up` – eine authentifizierte Sitzung. Diagnoseexporte sind als berechtigungsgeprüfte JSON-/CSV-Downloads verfügbar; der Auditexport unterstützt CSV.
 
 ## Sicherheit
 
-- keine echten Patientendaten in Seeds, Tests oder Logs
-- Debug standardmäßig deaktiviert
-- Session-Cookies HttpOnly und SameSite=Lax
-- serverseitige Autorisierung
-- keine verpflichtende Telemetrie
-- keine externen CDN-Abhängigkeiten
-- Datenbank nicht auf Host-Port veröffentlicht
+- Produktive Passwörter und `APP_KEY` niemals aus `.env.example` übernehmen oder versionieren.
+- Den Development-Administrator nicht produktiv verwenden; initiale Administratoren mit `registry:create-admin` anlegen.
+- `APP_DEBUG=false` beibehalten.
+- Für produktiven Betrieb HTTPS an einem vorgeschalteten Reverse Proxy terminieren, `APP_URL` auf die HTTPS-URL setzen und `SESSION_SECURE_COOKIE=true` verwenden. Der mitgelieferte Nginx-Dienst terminiert selbst kein TLS.
+- PostgreSQL und PHP-FPM nicht zusätzlich auf Host-Ports veröffentlichen.
+- Ausgehenden Netzwerkzugriff des App-Containers auf ausdrücklich freigegebene DICOM-Ziele begrenzen.
+- DICOM-Diagnosen verwenden aktuell kein TLS; `tls_enabled` ist für diese Runner nur Registry-Metadatum.
+- Das strengere Recht `tests.run.storage` und die ausdrückliche Bestätigung für C-STORE beachten; das synthetische Objekt kann im Zielsystem dauerhaft gespeichert werden.
+- Einen produktiven Malware-Scanner anbinden, bevor Registry-Dokumente zum Download freigegeben werden.
+- Datenbank und `app_storage` gemeinsam, regelmäßig und verschlüsselt sichern; Restore-Tests durchführen.
+- Benutzer, Rollen, Auditereignisse und Logs regelmäßig prüfen.
+- Keine Patientendaten, echten Zugangsdaten oder privaten Schlüssel in Tests, Logs oder Dokumentation speichern.
+
+## Dokumentation
+
+Der Einstieg in die Projektdokumentation befindet sich unter [`docs/README.md`](docs/README.md). Besonders relevant sind:
+
+- [`docs/admin-guide/README.md`](docs/admin-guide/README.md) – Administration und Betrieb
+- [`docs/developer-guide/README.md`](docs/developer-guide/README.md) – Entwicklung und Qualitätssicherung
+- [`docs/Architecture/Overview.md`](docs/Architecture/Overview.md) – Architekturüberblick
+- [`docs/Database/DataDictionary.md`](docs/Database/DataDictionary.md) – Datenmodell
+- [`docs/Healthcare/DiagnosticTestWorkspace.md`](docs/Healthcare/DiagnosticTestWorkspace.md) – DICOM-Diagnosen und Einschränkungen
+- [`docs/Security/AccessControl.md`](docs/Security/AccessControl.md) – Rollen und Autorisierung
+- [`docs/Security/FileUploadSecurity.md`](docs/Security/FileUploadSecurity.md) – Dokumenten-Uploadschutz
+- [`docs/Deployment/BackupRestore.md`](docs/Deployment/BackupRestore.md) – Backup und Restore
+- [`docs/maintenance/repository-cleanup.md`](docs/maintenance/repository-cleanup.md) – letzter Repository-Cleanup
+
+Dokumente mit Status `draft` sind Arbeitsstände. Bei Widersprüchen sind Code, Migrationen und Konfiguration des aktuellen Branches maßgeblich.
+
+## Troubleshooting
+
+### `docker compose` kann die Docker Engine nicht erreichen
+
+Docker Desktop bzw. Docker Engine starten und mit `docker info` prüfen. Unter Windows muss Docker Desktop Zugriff auf das Projektlaufwerk haben.
+
+### Port 8080 ist belegt
+
+Den Host-Port links in `docker-compose.yml` ändern, zum Beispiel `8081:8080`, und `APP_URL` entsprechend anpassen. Danach `docker compose up -d web` erneut ausführen.
+
+### PostgreSQL wird nicht gesund
+
+```bash
+docker compose ps
+docker compose logs db
+```
+
+Prüfen, dass `POSTGRES_DB`, `POSTGRES_USER` und `POSTGRES_PASSWORD` zu `DB_DATABASE`, `DB_USERNAME` und `DB_PASSWORD` passen. Geänderte Initialwerte wirken nicht rückwirkend auf ein bereits initialisiertes `postgres_data`-Volume.
+
+### Migrationen fehlen oder schlagen fehl
+
+```bash
+docker compose exec app php artisan migrate:status
+docker compose exec app php artisan migrate
+docker compose logs app
+```
+
+Produktive Daten nicht mit `migrate:fresh` löschen. Vor Migrationen ein geprüftes Backup erstellen.
+
+### Login funktioniert nicht
+
+Installation prüfen:
+
+```bash
+docker compose exec app php artisan registry:doctor
+```
+
+Fehlt der initiale Administrator, `registry:create-admin` ausführen. Existiert bereits ein Administrator, Passwörter über die berechtigte Benutzerverwaltung zurücksetzen; der Initialbefehl legt bewusst keinen zweiten Administrator an.
+
+### Frontend ist leer oder das Manifest fehlt
+
+```bash
+docker compose run --rm node npm ci
+docker compose run --rm node npm run build
+docker compose exec app php artisan optimize:clear
+```
+
+Anschließend Browser-Cache leeren und `docker compose logs web app` prüfen.
+
+### Healthcheck `/up` schlägt fehl
+
+```bash
+docker compose ps
+docker compose logs web app db
+docker compose exec app php artisan registry:doctor
+```
+
+`/up` bestätigt den Laravel-Health-Endpunkt; `registry:doctor` prüft zusätzlich Schlüssel, Datenbank, Migrationen, initialen Administrator, Verzeichnisrechte und Frontend-Manifest.
+
+### DICOM-Test schlägt fehl
+
+Host, Port, Called/Calling AE Title und Dienstkonfiguration des registrierten Knotens prüfen. Der App-Container benötigt DNS-Auflösung und ausgehenden TCP-Zugriff zum Ziel. Zielsystem-, Firewall- und Containerlogs gemeinsam auswerten. Details stehen im [Diagnose-Workspace](docs/Healthcare/DiagnosticTestWorkspace.md).
+
+### Dokument kann nicht heruntergeladen oder angezeigt werden
+
+Downloads und PDF-Vorschau erfordern den Malware-Scanstatus `clean`. Die Standardimplementierung liefert `unavailable` und sperrt den Zugriff. Eine betriebsfähige Scannerintegration ist erforderlich.
+
+## Mitwirken
+
+Der Beitragsprozess und die Qualitätsanforderungen stehen in [`CONTRIBUTING.md`](CONTRIBUTING.md). Änderungen benötigen Tests, aktualisierte Dokumentation, serverseitige Autorisierung und dürfen keine realen Gesundheitsdaten oder Secrets enthalten.
+
+## Lizenz
+
+Copyright © 2026. Alle Rechte vorbehalten. Das Repository ist derzeit für private Produktentwicklung vorgesehen; Details stehen in [`LICENSE.md`](LICENSE.md).
