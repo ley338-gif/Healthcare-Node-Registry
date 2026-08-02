@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import {
     ArrowRight,
     Building2,
@@ -18,6 +18,7 @@ import {
     Plus,
     Search,
     UsersRound,
+    X,
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
@@ -156,6 +157,25 @@ const initialSelection = (): SelectedUnit | null => {
     return null;
 };
 const selected = ref<SelectedUnit | null>(initialSelection());
+const createPanel = ref<'site' | 'department' | null>(null);
+const siteForm = useForm({
+    organization_id: 0,
+    name: '',
+    code: '',
+    street: '',
+    postal_code: '',
+    city: '',
+    country_code: 'DE',
+    timezone: 'Europe/Berlin',
+    description: '',
+});
+const departmentForm = useForm({
+    site_id: 0,
+    name: '',
+    code: '',
+    specialty: '',
+    description: '',
+});
 watch(selected, () => {
     activeTab.value = 'overview';
 });
@@ -525,6 +545,44 @@ const selectChild = (row: (typeof children.value)[number]): void => {
     expandedSites.value = new Set([...expandedSites.value, row.site.public_id]);
 };
 
+const openSiteCreate = (): void => {
+    if (selected.value?.type !== 'organization') return;
+
+    siteForm.reset();
+    siteForm.clearErrors();
+    siteForm.organization_id = selected.value.organization.id;
+    createPanel.value = 'site';
+};
+
+const openDepartmentCreate = (): void => {
+    if (selected.value?.type !== 'site') return;
+
+    departmentForm.reset();
+    departmentForm.clearErrors();
+    departmentForm.site_id = selected.value.site.id;
+    createPanel.value = 'department';
+};
+
+const closeCreatePanel = (): void => {
+    createPanel.value = null;
+    siteForm.clearErrors();
+    departmentForm.clearErrors();
+};
+
+const submitSite = (): void => {
+    siteForm.post('/sites', {
+        preserveScroll: true,
+        onSuccess: closeCreatePanel,
+    });
+};
+
+const submitDepartment = (): void => {
+    departmentForm.post('/departments', {
+        preserveScroll: true,
+        onSuccess: closeCreatePanel,
+    });
+};
+
 const toggle = (set: Set<string>, publicId: string): Set<string> => {
     const next = new Set(set);
 
@@ -558,20 +616,6 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                     >
                         <Plus :size="16" />
                         Organisation anlegen
-                    </Link>
-                    <Link
-                        href="/sites"
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                    >
-                        <Plus :size="16" />
-                        Standort anlegen
-                    </Link>
-                    <Link
-                        href="/departments"
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                    >
-                        <Plus :size="16" />
-                        Abteilung anlegen
                     </Link>
                 </div>
             </header>
@@ -746,14 +790,33 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                 </div>
                             </div>
 
-                            <Link
-                                v-if="canManageStructure"
-                                :href="editHref"
-                                class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                            >
-                                <Pencil :size="16" />
-                                Bearbeiten
-                            </Link>
+                            <div v-if="canManageStructure" class="flex shrink-0 flex-wrap gap-2">
+                                <button
+                                    v-if="selected.type === 'organization'"
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                                    @click="openSiteCreate"
+                                >
+                                    <Plus :size="16" />
+                                    Standort anlegen
+                                </button>
+                                <button
+                                    v-if="selected.type === 'site'"
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                                    @click="openDepartmentCreate"
+                                >
+                                    <Plus :size="16" />
+                                    Abteilung anlegen
+                                </button>
+                                <Link
+                                    :href="editHref"
+                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                                >
+                                    <Pencil :size="16" />
+                                    Bearbeiten
+                                </Link>
+                            </div>
                         </div>
                     </div>
 
@@ -1334,6 +1397,215 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                         </Link>
                     </div>
                 </section>
+            </div>
+
+            <div v-if="createPanel" class="fixed inset-0 z-50">
+                <button
+                    type="button"
+                    class="absolute inset-0 bg-slate-950/30"
+                    aria-label="Dialog schließen"
+                    @click="closeCreatePanel"
+                />
+                <aside class="absolute inset-y-0 right-0 flex w-full max-w-xl flex-col bg-white shadow-2xl">
+                    <header class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+                        <div>
+                            <p class="text-xs font-semibold tracking-wider text-blue-600 uppercase">
+                                {{ createPanel === 'site' ? 'Standort' : 'Abteilung' }}
+                            </p>
+                            <h2 class="mt-2 text-xl font-semibold">
+                                {{ createPanel === 'site' ? 'Neuer Standort' : 'Neue Abteilung' }}
+                            </h2>
+                            <p class="mt-1 text-sm text-slate-500">
+                                {{
+                                    createPanel === 'site'
+                                        ? selected?.organization.name
+                                        : selected?.type === 'site'
+                                          ? selected.site.name
+                                          : ''
+                                }}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            class="rounded-xl p-2 text-slate-500 hover:bg-slate-100"
+                            aria-label="Dialog schließen"
+                            @click="closeCreatePanel"
+                        >
+                            <X :size="20" />
+                        </button>
+                    </header>
+
+                    <form
+                        v-if="createPanel === 'site'"
+                        class="flex min-h-0 flex-1 flex-col"
+                        @submit.prevent="submitSite"
+                    >
+                        <div class="flex-1 space-y-5 overflow-y-auto px-6 py-6">
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label for="site-name" class="text-sm font-semibold">Name *</label>
+                                    <input
+                                        id="site-name"
+                                        v-model="siteForm.name"
+                                        required
+                                        autofocus
+                                        class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                                    />
+                                    <p v-if="siteForm.errors.name" class="mt-1 text-sm text-red-700">
+                                        {{ siteForm.errors.name }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="site-code" class="text-sm font-semibold">Code</label>
+                                    <input
+                                        id="site-code"
+                                        v-model="siteForm.code"
+                                        class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label for="site-street" class="text-sm font-semibold">Straße</label>
+                                <input
+                                    id="site-street"
+                                    v-model="siteForm.street"
+                                    class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                                />
+                            </div>
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label for="site-postal-code" class="text-sm font-semibold">PLZ</label>
+                                    <input
+                                        id="site-postal-code"
+                                        v-model="siteForm.postal_code"
+                                        class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                                    />
+                                </div>
+                                <div>
+                                    <label for="site-city" class="text-sm font-semibold">Ort</label>
+                                    <input
+                                        id="site-city"
+                                        v-model="siteForm.city"
+                                        class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                                    />
+                                </div>
+                            </div>
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label for="site-country" class="text-sm font-semibold">Ländercode *</label>
+                                    <input
+                                        id="site-country"
+                                        v-model="siteForm.country_code"
+                                        required
+                                        maxlength="2"
+                                        class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 uppercase"
+                                    />
+                                </div>
+                                <div>
+                                    <label for="site-timezone" class="text-sm font-semibold">Zeitzone *</label>
+                                    <input
+                                        id="site-timezone"
+                                        v-model="siteForm.timezone"
+                                        required
+                                        class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label for="site-description" class="text-sm font-semibold">Beschreibung</label>
+                                <textarea
+                                    id="site-description"
+                                    v-model="siteForm.description"
+                                    rows="5"
+                                    class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                                />
+                            </div>
+                            <p v-if="Object.keys(siteForm.errors).length" class="text-sm text-red-700">
+                                Bitte prüfe die Eingaben.
+                            </p>
+                        </div>
+                        <footer class="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
+                            <button
+                                type="button"
+                                class="rounded-xl border px-4 py-2.5 text-sm font-semibold"
+                                @click="closeCreatePanel"
+                            >
+                                Abbrechen
+                            </button>
+                            <button
+                                type="submit"
+                                :disabled="siteForm.processing"
+                                class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                            >
+                                Standort anlegen
+                            </button>
+                        </footer>
+                    </form>
+
+                    <form v-else class="flex min-h-0 flex-1 flex-col" @submit.prevent="submitDepartment">
+                        <div class="flex-1 space-y-5 overflow-y-auto px-6 py-6">
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label for="department-name" class="text-sm font-semibold">Name *</label>
+                                    <input
+                                        id="department-name"
+                                        v-model="departmentForm.name"
+                                        required
+                                        autofocus
+                                        class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                                    />
+                                    <p v-if="departmentForm.errors.name" class="mt-1 text-sm text-red-700">
+                                        {{ departmentForm.errors.name }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="department-code" class="text-sm font-semibold">Code</label>
+                                    <input
+                                        id="department-code"
+                                        v-model="departmentForm.code"
+                                        class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label for="department-specialty" class="text-sm font-semibold">Fachbereich</label>
+                                <input
+                                    id="department-specialty"
+                                    v-model="departmentForm.specialty"
+                                    class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                                />
+                            </div>
+                            <div>
+                                <label for="department-description" class="text-sm font-semibold">Beschreibung</label>
+                                <textarea
+                                    id="department-description"
+                                    v-model="departmentForm.description"
+                                    rows="6"
+                                    class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                                />
+                            </div>
+                            <p v-if="Object.keys(departmentForm.errors).length" class="text-sm text-red-700">
+                                Bitte prüfe die Eingaben.
+                            </p>
+                        </div>
+                        <footer class="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
+                            <button
+                                type="button"
+                                class="rounded-xl border px-4 py-2.5 text-sm font-semibold"
+                                @click="closeCreatePanel"
+                            >
+                                Abbrechen
+                            </button>
+                            <button
+                                type="submit"
+                                :disabled="departmentForm.processing"
+                                class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                            >
+                                Abteilung anlegen
+                            </button>
+                        </footer>
+                    </form>
+                </aside>
             </div>
         </div>
     </AppLayout>
