@@ -180,6 +180,7 @@ final class OrganizationStructureController extends Controller
             'canUpdateDocuments' => $user?->hasPermission('documents.update') ?? false,
             'canArchiveDocuments' => $user?->hasPermission('documents.archive') ?? false,
             'canManageDocumentation' => $canManageDocumentation,
+            'canManageStructure' => $user?->can('create', Organization::class) ?? false,
         ]);
     }
 
