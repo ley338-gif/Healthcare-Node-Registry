@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Globale, serverseitig filter- und sortierbare Übersicht aller DICOM-Verbindungen unter `/connections` ergänzt.
+- Bestehenden DICOM-Verbindungsmanager um Details, Duplizieren und Übergabe an den Test-Arbeitsbereich erweitert.
+- Navigation, Berechtigungsprüfungen, Audit-Ereignis für Duplikate, Tests und Funktionsdokumentation ergänzt.
+
+## Unreleased
+
 ### Maintenance
 
 - Removed accidentally committed backup and static-analysis output artifacts.

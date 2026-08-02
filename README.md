@@ -391,6 +391,8 @@ Es gibt derzeit keine freigegebene öffentliche REST-API, keine OpenAPI-Spezifik
 
 ## Dokumentation
 
+Die globale [DICOM-Verbindungsübersicht](docs/Features/global-dicom-connections.md) dokumentiert alle Kommunikationspfade zentral. Sie verwendet dieselben Verbindungsdatensätze wie die DICOM-Bereiche der Systemdetailseiten und unterstützt serverseitige Suche, Filterung, Sortierung und Pagination.
+
 Der Einstieg in die Projektdokumentation befindet sich unter [`docs/README.md`](docs/README.md). Besonders relevant sind:
 
 - [`docs/admin-guide/README.md`](docs/admin-guide/README.md) – Administration und Betrieb

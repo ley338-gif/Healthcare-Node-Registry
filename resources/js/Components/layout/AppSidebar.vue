@@ -1,9 +1,22 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { Boxes, Building2, FileText, FlaskConical, LayoutDashboard, Map, Settings, ShieldCheck } from '@lucide/vue';
+import {
+    Boxes,
+    Building2,
+    Cable,
+    FileText,
+    FlaskConical,
+    LayoutDashboard,
+    Map,
+    Settings,
+    ShieldCheck,
+} from '@lucide/vue';
 import type { PageProps } from '../../types';
 const page = usePage<PageProps>();
 const canViewAudit = ((page.props.auth as { permissions?: string[] })?.permissions ?? []).includes('audit.view');
+const canViewConnections = page.props.auth.permissions.some((permission) =>
+    ['registry.view', 'registry.manage'].includes(permission),
+);
 const canViewSettings = page.props.auth.permissions.some((permission) =>
     ['users.manage', 'roles.manage', 'settings.manage'].includes(permission),
 );
@@ -45,6 +58,13 @@ const groups = [
                 paths: ['/network'],
                 icon: Map,
                 enabled: true,
+            },
+            {
+                label: 'Verbindungen',
+                href: '/connections',
+                paths: ['/connections'],
+                icon: Cable,
+                enabled: canViewConnections,
             },
             {
                 label: 'Tests',
