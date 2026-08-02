@@ -10,3 +10,4 @@ Das Produktbuch beschreibt Vision, Mission, Zielgruppen, Produktprinzipien und f
 4. [Fachliches Datenmodell](04-fachliches-datenmodell.md) — Entwurf
 5. [Sicherheits- und Datenschutzkonzept](05-sicherheits-und-datenschutzkonzept.md) — Entwurf
 6. [Betriebs- und Bereitstellungsmodell](06-betriebs-und-bereitstellungsmodell.md) — Entwurf
+7. [Produktlebenszyklus und Roadmap](07-produktlebenszyklus-und-roadmap.md) — Entwurf
