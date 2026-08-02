@@ -36,7 +36,20 @@ const props = defineProps<{
     services: string[];
     canManage: boolean;
 }>();
-const form = reactive<Filters>({ ...props.filters });
+const defaultFilters = (): Filters => ({
+    search: '',
+    source_system: '',
+    target_system: '',
+    service: '',
+    site: '',
+    department: '',
+    status: '',
+    port: '',
+    ae_title: '',
+    sort: 'name',
+    direction: 'asc',
+});
+const form = reactive<Filters>({ ...defaultFilters(), ...props.filters });
 const sites = Array.from(
     new Map(props.systems.filter((item) => item.site).map((item) => [item.site!.public_id, item.site!])).values(),
 );
@@ -47,7 +60,7 @@ const departments = Array.from(
 );
 const applyFilters = (): void => router.get('/connections', form, { preserveState: true, replace: true });
 const resetFilters = (): void => {
-    Object.keys(form).forEach((key) => delete form[key as keyof Filters]);
+    Object.assign(form, defaultFilters());
     applyFilters();
 };
 const serviceLabels: Record<string, string> = {
