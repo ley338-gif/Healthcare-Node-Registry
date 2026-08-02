@@ -67,6 +67,8 @@ jobs:
           extensions: intl, pdo_pgsql, zip
           coverage: none
           tools: composer:v2
+      - name: Install DICOM test tools
+        run: sudo apt-get update && sudo apt-get install --yes dcmtk
       - run: composer validate --strict --no-check-publish
       - run: composer install --no-interaction --prefer-dist
       - run: composer audit --locked --no-interaction
