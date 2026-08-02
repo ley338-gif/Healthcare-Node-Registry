@@ -11,6 +11,9 @@ RUN apt-get update \
         libicu-dev \
         libpq-dev \
         libzip-dev \
+        python3 \
+        python3-pip \
+        python3-venv \
         unzip \
     && docker-php-ext-install -j"$(nproc)" \
         intl \
@@ -19,6 +22,12 @@ RUN apt-get update \
         pdo_pgsql \
         zip \
     && rm -rf /var/lib/apt/lists/*
+
+COPY docker/php/requirements-dicom.txt /tmp/requirements-dicom.txt
+
+RUN python3 -m venv /opt/registry-dicom \
+    && /opt/registry-dicom/bin/pip install --no-cache-dir --require-hashes -r /tmp/requirements-dicom.txt \
+    && rm /tmp/requirements-dicom.txt
 
 RUN curl -fsSL "https://getcomposer.org/download/${COMPOSER_VERSION}/composer.phar" \
         -o /usr/local/bin/composer \

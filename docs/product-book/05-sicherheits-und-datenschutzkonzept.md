@@ -194,7 +194,7 @@ Der Betreiber muss ausgehenden Netzwerkzugriff auf erforderliche DICOM-Ziele beg
 
 Eine konfigurierbare CIDR-Allowlist, zentrale Parallelitätssteuerung und DICOM-TLS in den Diagnose-Runnern sind nicht vorhanden. Das Feld `tls_enabled` dokumentiert eine Konfiguration, stellt aber keine aktive TLS-Unterstützung der aktuellen Runner sicher.
 
-C-MOVE, C-GET, Storage Commitment und MPPS werden nicht aktiv getestet. Ihre spätere Umsetzung benötigt ein gesondertes Sicherheitsdesign.
+C-MOVE und C-GET verwenden ausschließlich eine serverseitig konfigurierte synthetische Study UID. MPPS erzeugt nach ausdrücklicher Autorisierungsbestätigung ausschließlich synthetische Identifikatoren und führt N-CREATE sowie N-SET aus. Storage Commitment wird nicht aktiv getestet.
 
 ## Datei- und Dokumentensicherheit
 

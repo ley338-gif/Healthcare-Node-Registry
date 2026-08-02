@@ -16,6 +16,9 @@ Alle Verbindungen und externen Prozesse werden im Laravel-Backend ausgeführt. D
 | PACS Query | DCMTK `findscu`, Study Root | C-FIND auf Studienebene; kein C-MOVE/C-GET |
 | DICOM Storage | `img2dcm` und `storescu` | tatsächlicher C-STORE eines synthetischen Secondary Capture |
 | Capability-Matrix | native A-ASSOCIATE-Negotiation | SOP-Class-/Transfer-Syntax-Kontexte; kein C-STORE |
+| C-MOVE | DCMTK `movescu`, Study Root | kontrollierter Abruf einer serverseitig konfigurierten synthetischen Study UID |
+| C-GET | DCMTK `getscu`, Study Root | kontrollierter Abruf; empfangene lokale Dateien werden immer gelöscht |
+| MPPS | `pynetdicom`, MPPS SOP Class | synthetisches N-CREATE mit anschließendem N-SET auf `COMPLETED` |
 | Dateianalyse | DCMTK `dcmdump` | UIDs, Transfer Syntax, Pixel Data, private Tags, bereinigter Dump |
 
 Testprofile speichern wiederverwendbare Parameter. Testläufe erscheinen paginiert im Verlauf und können als JSON oder, für tabellarische Ergebnisse, als CSV exportiert werden.
@@ -42,6 +45,7 @@ Alle Endpunkte benötigen eine authentifizierte Sitzung.
 | POST | `/tests/network/{dicomNode}` | `tests.network.run` |
 | POST | `/dicom-nodes/{dicomNode}/verify` | `dicom-nodes.verify` |
 | POST | `/tests/worklist/{dicomNode}` | `tests.worklist.run` |
+| POST | `/tests/mpps/{dicomNode}` | `tests.mpps.run` |
 | POST | `/tests/pacs-query/{dicomNode}` | `tests.pacs-query.run` |
 | POST | `/tests/storage/{dicomNode}` | `tests.storage.run` |
 | POST | `/tests/capabilities/{dicomNode}` | `tests.capabilities.run` |
@@ -58,7 +62,7 @@ Das vorhandene RBAC-System bleibt maßgeblich.
 | Funktion | Aktuelle Prüfung |
 |---|---|
 | Workspace und Verlauf | `registry.view` oder `registry.manage` über Policies |
-| Netzwerk, C-ECHO, Worklist, PACS Query | `registry.manage` und Knoten-Policy |
+| Netzwerk, C-ECHO, Worklist, PACS Query und MPPS | `registry.manage` und Knoten-Policy |
 | Testprofile verwalten | `registry.manage` |
 | C-STORE und Capability-Matrix | `tests.run.storage` und Knoten-Policy |
 | DICOM-Datei analysieren | `tests.analyze_file` |
@@ -94,6 +98,7 @@ Aktuelle defensive Grenzen:
 - Netzwerk: kurzer begrenzter Socket-Timeout
 - `echoscu`/`findscu`: begrenzte Association-, DIMSE- und Gesamtprozesszeit
 - Storage: 5 Sekunden Connect/ACSE, 15 Sekunden Socket/DIMSE, 25 Sekunden Gesamtprozess
+- MPPS: 5 Sekunden Netzwerk/ACSE, 20 Sekunden DIMSE, 30 Sekunden Gesamtprozess
 - Dateianalyse: 20 Sekunden Gesamtprozess
 
 Bei Prozess-Timeout wird der Prozess beendet und kontrolliert als Timeout gemeldet. Eine installationsweite Timeout-Konfiguration ist noch nicht vorhanden.
@@ -122,9 +127,13 @@ Das Objekt kann im Zielsystem gespeichert, weitergeleitet oder archiviert werden
 
 Die Matrix prüft 49 Kombinationen aus sieben Storage SOP Classes und sieben Transfer Syntaxes über Presentation Contexts. `accepted` beweist nur die Association-Aushandlung, keinen erfolgreichen C-STORE.
 
-## DCMTK-Voraussetzungen
+### MPPS
 
-Das PHP-Containerimage installiert DCMTK. Benötigt werden `echoscu`, `findscu`, `img2dcm`, `storescu`, `dcmdump` sowie `dump2dcm` für Integrationstests. Getestet ist DCMTK 3.6.7. Nach Upgrades sind Parser- und Integrationsfälle erneut auszuführen.
+MPPS benötigt eine ausdrückliche Autorisierungsbestätigung. Der Test erzeugt eine synthetische MPPS-Instanz per N-CREATE und schließt sie per N-SET ab. Patientenschlüssel und UIDs werden ausschließlich serverseitig synthetisch erzeugt; Benutzereingaben für Patientendaten werden nicht akzeptiert. Details stehen in `docs/Healthcare/DicomMppsDiagnostic.md`.
+
+## DCMTK- und Python-Voraussetzungen
+
+Das PHP-Containerimage installiert DCMTK sowie die hashgebundenen Python-Pakete `pynetdicom==3.0.4` und `pydicom==3.0.1`. Benötigt werden `echoscu`, `findscu`, `movescu`, `getscu`, `img2dcm`, `storescu`, `dcmdump` sowie `dump2dcm` für Integrationstests. Getestet ist DCMTK 3.6.7. Nach Upgrades sind Parser- und Integrationsfälle erneut auszuführen.
 
 ## Firewall und Netzwerk
 
@@ -140,7 +149,7 @@ Empfohlen:
 
 ## Bekannte Einschränkungen
 
-- kein C-MOVE, C-GET, Storage Commitment oder MPPS-Test
+- kein Storage-Commitment-Test
 - Storage nur als Secondary Capture; kein CT, MR, PDF oder SR
 - Capability-Matrix ist Association-only
 - keine zentrale Abbruchfunktion, Queue oder Parallelitätssteuerung
@@ -165,6 +174,5 @@ Feature-Tests decken Berechtigungen, Erfolg, Timeout, Protokollfehler, Maskierun
 - konfigurierbare Zielnetz-Allowlist, Timeouts und Parallelitätsgrenzen
 - DICOM-TLS mit kontrolliertem Zertifikatsmanagement
 - weitere synthetische Storage-Objekttypen
-- C-MOVE/C-GET erst nach separatem Sicherheitsdesign
 - Aufbewahrungs- und Löschregeln für Diagnoseverläufe
 - PDF-Bericht, sobald eine projektweite PDF-Infrastruktur existiert
