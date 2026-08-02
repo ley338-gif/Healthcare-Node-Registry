@@ -27,6 +27,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SettingsRoleController;
 use App\Http\Controllers\SettingsUserController;
 use App\Http\Controllers\SiteController;
+use App\Http\Controllers\StorageCommitmentDiagnosticController;
 use App\Http\Controllers\StorageDiagnosticController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\TestWorkspaceController;
@@ -154,6 +155,8 @@ Route::middleware('auth')->group(function (): void {
         ->name('tests.pacs-query.run');
     Route::post('/tests/storage/{dicomNode}', StorageDiagnosticController::class)
         ->name('tests.storage.run');
+    Route::post('/tests/storage-commitment/{dicomNode}', StorageCommitmentDiagnosticController::class)
+        ->name('tests.storage-commitment.run');
     Route::post('/tests/move/{dicomConnection}', MoveDiagnosticController::class)
         ->name('tests.move.run');
     Route::post('/tests/get/{dicomConnection}', GetDiagnosticController::class)

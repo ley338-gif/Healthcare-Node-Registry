@@ -19,6 +19,7 @@ Alle Verbindungen und externen Prozesse werden im Laravel-Backend ausgeführt. D
 | C-MOVE | DCMTK `movescu`, Study Root | kontrollierter Abruf einer serverseitig konfigurierten synthetischen Study UID |
 | C-GET | DCMTK `getscu`, Study Root | kontrollierter Abruf; empfangene lokale Dateien werden immer gelöscht |
 | MPPS | `pynetdicom`, MPPS SOP Class | synthetisches N-CREATE mit anschließendem N-SET auf `COMPLETED` |
+| Storage Commitment | `storescu` und `pynetdicom`, Push Model | synthetisches C-STORE, N-ACTION und korrelierter N-EVENT-REPORT |
 | Dateianalyse | DCMTK `dcmdump` | UIDs, Transfer Syntax, Pixel Data, private Tags, bereinigter Dump |
 
 Testprofile speichern wiederverwendbare Parameter. Testläufe erscheinen paginiert im Verlauf und können als JSON oder, für tabellarische Ergebnisse, als CSV exportiert werden.
@@ -46,6 +47,7 @@ Alle Endpunkte benötigen eine authentifizierte Sitzung.
 | POST | `/dicom-nodes/{dicomNode}/verify` | `dicom-nodes.verify` |
 | POST | `/tests/worklist/{dicomNode}` | `tests.worklist.run` |
 | POST | `/tests/mpps/{dicomNode}` | `tests.mpps.run` |
+| POST | `/tests/storage-commitment/{dicomNode}` | `tests.storage-commitment.run` |
 | POST | `/tests/pacs-query/{dicomNode}` | `tests.pacs-query.run` |
 | POST | `/tests/storage/{dicomNode}` | `tests.storage.run` |
 | POST | `/tests/capabilities/{dicomNode}` | `tests.capabilities.run` |
@@ -149,7 +151,6 @@ Empfohlen:
 
 ## Bekannte Einschränkungen
 
-- kein Storage-Commitment-Test
 - Storage nur als Secondary Capture; kein CT, MR, PDF oder SR
 - Capability-Matrix ist Association-only
 - keine zentrale Abbruchfunktion, Queue oder Parallelitätssteuerung

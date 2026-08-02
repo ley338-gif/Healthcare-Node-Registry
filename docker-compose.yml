@@ -6,6 +6,8 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
     restart: unless-stopped
+    ports:
+      - "${DIAGNOSTIC_STORAGE_COMMITMENT_HOST_PORT:-11113}:${DIAGNOSTIC_STORAGE_COMMITMENT_CALLBACK_PORT:-11113}"
     env_file: .env
     volumes:
       - ./:/var/www/html
