@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
-import { Archive, ArrowRight, Pencil, Plus, Route, X } from '@lucide/vue';
+import { Archive, ArrowRight, Copy, Eye, FlaskConical, Pencil, Plus, Route, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 
 type SystemOption = { id: number; name: string };
@@ -13,6 +13,8 @@ export type DicomNodeOption = {
     ae_title: string;
     host: string;
     port: number;
+    last_verified_at?: string | null;
+    last_verification_status?: string | null;
     system: SystemOption;
 };
 
@@ -31,6 +33,8 @@ export type DicomConnection = {
     test_enabled: boolean;
     description: string | null;
     notes: string | null;
+    created_at?: string;
+    updated_at?: string;
     source_node: DicomNodeOption;
     target_node: DicomNodeOption;
     destination_node: DicomNodeOption | null;
@@ -40,11 +44,14 @@ const props = defineProps<{
     connections: DicomConnection[];
     nodeOptions: DicomNodeOption[];
     canManage: boolean;
+    emptyTitle?: string;
+    emptyText?: string;
 }>();
 
 const createOpen = ref(false);
 const editOpen = ref(false);
 const archiveOpen = ref(false);
+const detailsOpen = ref(false);
 const archiveProcessing = ref(false);
 const selected = ref<DicomConnection | null>(null);
 
@@ -161,6 +168,25 @@ const openArchive = (connection: DicomConnection): void => {
     archiveOpen.value = true;
 };
 
+const openDetails = (connection: DicomConnection): void => {
+    selected.value = connection;
+    detailsOpen.value = true;
+};
+
+const duplicate = (connection: DicomConnection): void => {
+    router.post(`/dicom-connections/${connection.public_id}/duplicate`, {}, { preserveScroll: true });
+};
+
+const openTest = (connection: DicomConnection): void => {
+    const parameters = new URLSearchParams({
+        node: connection.target_node.public_id,
+        service: connection.service,
+        calling_ae_title: effectiveCallingAe(connection),
+        called_ae_title: effectiveCalledAe(connection),
+    });
+    router.visit(`/tests?${parameters.toString()}`);
+};
+
 const closeArchive = (): void => {
     if (archiveProcessing.value) return;
     archiveOpen.value = false;
@@ -205,14 +231,16 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                 class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
                 @click="createOpen = true"
             >
-                <Plus :size="17" /> Verbindung
+                <Plus :size="17" /> Neue Verbindung
             </button>
         </header>
 
         <div v-if="connections.length === 0" class="px-5 py-12 text-center">
             <Route :size="34" class="mx-auto text-slate-300" />
-            <p class="mt-4 font-medium text-slate-900">Noch keine DICOM-Verbindungen</p>
-            <p class="mt-1 text-sm text-slate-500">Lege den ersten Kommunikationspfad an.</p>
+            <p class="mt-4 font-medium text-slate-900">{{ emptyTitle ?? 'Noch keine Verbindungen dokumentiert' }}</p>
+            <p class="mt-1 text-sm text-slate-500">
+                {{ emptyText ?? 'Erfasse den ersten DICOM-Kommunikationspfad zwischen einem Quell- und Zielsystem.' }}
+            </p>
         </div>
 
         <div v-else class="overflow-x-auto">
@@ -226,12 +254,7 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                             Konfiguration
                         </th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
-                        <th
-                            v-if="canManage"
-                            class="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase"
-                        >
-                            Aktionen
-                        </th>
+                        <th class="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Aktionen</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -249,6 +272,7 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                         <td class="px-5 py-4">
                             <div class="flex min-w-72 items-center gap-2">
                                 <div>
+                                    <p class="text-xs text-slate-500">{{ connection.source_node.system.name }}</p>
                                     <p class="text-sm font-medium text-slate-900">{{ connection.source_node.name }}</p>
                                     <p class="font-mono text-xs text-slate-500">
                                         {{ connection.source_node.ae_title }}
@@ -256,6 +280,7 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                                 </div>
                                 <ArrowRight :size="18" class="shrink-0 text-slate-400" />
                                 <div>
+                                    <p class="text-xs text-slate-500">{{ connection.target_node.system.name }}</p>
                                     <p class="text-sm font-medium text-slate-900">{{ connection.target_node.name }}</p>
                                     <p class="font-mono text-xs text-slate-500">
                                         {{ connection.target_node.ae_title }}
@@ -300,10 +325,46 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                             >
                                 {{ connection.test_enabled ? 'Tests aktiviert' : 'Tests deaktiviert' }}
                             </p>
+                            <p class="mt-1 text-xs text-slate-500">
+                                {{
+                                    connection.target_node.last_verification_status === 'success'
+                                        ? 'Letzter Test erfolgreich'
+                                        : connection.target_node.last_verification_status === 'failed'
+                                          ? 'Letzter Test fehlgeschlagen'
+                                          : 'Noch nicht geprüft'
+                                }}
+                            </p>
                         </td>
-                        <td v-if="canManage" class="px-5 py-4 text-right">
+                        <td class="px-5 py-4 text-right">
                             <div class="flex justify-end gap-1">
                                 <button
+                                    type="button"
+                                    :aria-label="`${connection.name} anzeigen`"
+                                    class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                    @click="openDetails(connection)"
+                                >
+                                    <Eye :size="17" />
+                                </button>
+                                <button
+                                    v-if="connection.test_enabled"
+                                    type="button"
+                                    :aria-label="`${connection.name} testen`"
+                                    class="rounded-lg p-2 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700"
+                                    @click="openTest(connection)"
+                                >
+                                    <FlaskConical :size="17" />
+                                </button>
+                                <button
+                                    v-if="canManage"
+                                    type="button"
+                                    :aria-label="`${connection.name} duplizieren`"
+                                    class="rounded-lg p-2 text-slate-500 hover:bg-violet-50 hover:text-violet-700"
+                                    @click="duplicate(connection)"
+                                >
+                                    <Copy :size="17" />
+                                </button>
+                                <button
+                                    v-if="canManage"
                                     type="button"
                                     :aria-label="`${connection.name} bearbeiten`"
                                     class="rounded-lg p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-700"
@@ -312,6 +373,7 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                                     <Pencil :size="17" />
                                 </button>
                                 <button
+                                    v-if="canManage"
                                     type="button"
                                     :aria-label="`${connection.name} archivieren`"
                                     class="rounded-lg p-2 text-slate-500 hover:bg-amber-50 hover:text-amber-700"
@@ -328,6 +390,47 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
     </section>
 
     <Teleport to="body">
+        <div v-if="detailsOpen && selected" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
+            <button
+                type="button"
+                class="absolute inset-0 bg-slate-950/40"
+                aria-label="Details schließen"
+                @click="detailsOpen = false"
+            />
+            <aside class="absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto bg-white p-6 shadow-2xl">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold text-blue-600 uppercase">DICOM-Verbindung</p>
+                        <h2 class="mt-1 text-xl font-semibold text-slate-950">{{ selected.name }}</h2>
+                    </div>
+                    <button type="button" class="rounded-lg p-2 hover:bg-slate-100" @click="detailsOpen = false">
+                        <X :size="20" />
+                    </button>
+                </div>
+                <dl class="mt-6 divide-y divide-slate-100 rounded-xl border border-slate-200">
+                    <div
+                        v-for="item in [
+                            ['Quelle', `${selected.source_node.system.name} · ${selected.source_node.name}`],
+                            ['Calling AE', effectiveCallingAe(selected)],
+                            ['Ziel', `${selected.target_node.system.name} · ${selected.target_node.name}`],
+                            ['Called AE', effectiveCalledAe(selected)],
+                            ['Dienst', serviceLabels[selected.service]],
+                            ['Zieladresse', `${selected.target_node.host}:${effectivePort(selected)}`],
+                            ['Status', statusLabels[selected.status]],
+                            ['Letzte Prüfung', selected.target_node.last_verified_at || 'Noch nicht geprüft'],
+                            ['Erstellt am', selected.created_at || '—'],
+                            ['Geändert am', selected.updated_at || '—'],
+                            ['Notizen', selected.notes || '—'],
+                        ]"
+                        :key="item[0]"
+                        class="grid grid-cols-3 gap-4 px-4 py-3 text-sm"
+                    >
+                        <dt class="text-slate-500">{{ item[0] }}</dt>
+                        <dd class="col-span-2 font-medium text-slate-900">{{ item[1] }}</dd>
+                    </div>
+                </dl>
+            </aside>
+        </div>
         <div v-if="createOpen" class="fixed inset-0 z-50" role="dialog" aria-modal="true">
             <button
                 type="button"

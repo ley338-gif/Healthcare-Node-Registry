@@ -48,6 +48,16 @@ const form = useForm({
     hostname: '',
     fqdn: '',
     ip_address: '',
+    vendor: '',
+    product: '',
+    model: '',
+    version: '',
+    operating_system: '',
+    operating_system_version: '',
+    serial_number: '',
+    inventory_number: '',
+    description: '',
+    notes: '',
 });
 
 const availableSites = computed(() => props.sites.filter((site) => site.organization_id === form.organization_id));
@@ -281,6 +291,103 @@ const submit = (): void => {
                                         v-model="form.fqdn"
                                         type="text"
                                         placeholder="pacs01.example.local"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                    />
+                                </label>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h3 class="text-sm font-semibold text-slate-950">Produkt und Plattform</h3>
+                            <p class="mt-1 text-xs text-slate-500">
+                                Hersteller-, Produkt- und Betriebssysteminformationen.
+                            </p>
+                            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                                <label
+                                    ><span class="text-sm font-medium text-slate-700">Hersteller</span
+                                    ><input
+                                        v-model="form.vendor"
+                                        type="text"
+                                        maxlength="160"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                /></label>
+                                <label
+                                    ><span class="text-sm font-medium text-slate-700">Produkt</span
+                                    ><input
+                                        v-model="form.product"
+                                        type="text"
+                                        maxlength="160"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                /></label>
+                                <label
+                                    ><span class="text-sm font-medium text-slate-700">Modell</span
+                                    ><input
+                                        v-model="form.model"
+                                        type="text"
+                                        maxlength="160"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                /></label>
+                                <label
+                                    ><span class="text-sm font-medium text-slate-700">Produktversion</span
+                                    ><input
+                                        v-model="form.version"
+                                        type="text"
+                                        maxlength="120"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                /></label>
+                                <label
+                                    ><span class="text-sm font-medium text-slate-700">Betriebssystem</span
+                                    ><input
+                                        v-model="form.operating_system"
+                                        type="text"
+                                        maxlength="160"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                /></label>
+                                <label
+                                    ><span class="text-sm font-medium text-slate-700">Betriebssystemversion</span
+                                    ><input
+                                        v-model="form.operating_system_version"
+                                        type="text"
+                                        maxlength="120"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                /></label>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h3 class="text-sm font-semibold text-slate-950">Inventar und Notizen</h3>
+                            <div class="mt-4 space-y-4">
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <label
+                                        ><span class="text-sm font-medium text-slate-700">Seriennummer</span
+                                        ><input
+                                            v-model="form.serial_number"
+                                            type="text"
+                                            maxlength="160"
+                                            class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                    /></label>
+                                    <label
+                                        ><span class="text-sm font-medium text-slate-700">Inventarnummer</span
+                                        ><input
+                                            v-model="form.inventory_number"
+                                            type="text"
+                                            maxlength="160"
+                                            class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                    /></label>
+                                </div>
+                                <label class="block"
+                                    ><span class="text-sm font-medium text-slate-700">Beschreibung</span
+                                    ><textarea
+                                        v-model="form.description"
+                                        rows="3"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                    />
+                                </label>
+                                <label class="block"
+                                    ><span class="text-sm font-medium text-slate-700">Interne Notizen</span
+                                    ><textarea
+                                        v-model="form.notes"
+                                        rows="3"
                                         class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                                     />
                                 </label>

@@ -121,11 +121,17 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/dicom-connections', [DicomConnectionController::class, 'store'])
         ->name('dicom-connections.store');
 
+    Route::get('/connections', [DicomConnectionController::class, 'index'])
+        ->name('connections.index');
+
     Route::put('/dicom-connections/{dicomConnection}', [DicomConnectionController::class, 'update'])
         ->name('dicom-connections.update');
 
     Route::post('/dicom-connections/{dicomConnection}/archive', [DicomConnectionController::class, 'archive'])
         ->name('dicom-connections.archive');
+
+    Route::post('/dicom-connections/{dicomConnection}/duplicate', [DicomConnectionController::class, 'duplicate'])
+        ->name('dicom-connections.duplicate');
 
     Route::get('/network', DicomNetworkMapController::class)
         ->name('network.index');

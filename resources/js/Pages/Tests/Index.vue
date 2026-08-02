@@ -27,7 +27,7 @@ import {
     TableProperties,
     X,
 } from '@lucide/vue';
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import Pagination from '../../Components/Pagination.vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 
@@ -172,10 +172,16 @@ const props = defineProps<{
     historyUsers: NamedContext[];
     profiles: TestProfile[];
     canManageProfiles: boolean;
+    connectionPrefill: {
+        node: string | null;
+        service: string | null;
+        calling_ae_title: string | null;
+        called_ae_title: string | null;
+    };
 }>();
 
 const search = ref('');
-const selectedNodeId = ref<string | null>(props.nodes[0]?.public_id ?? null);
+const selectedNodeId = ref<string | null>(props.connectionPrefill.node ?? props.nodes[0]?.public_id ?? null);
 const echoProcessing = ref(false);
 const networkProcessing = ref(false);
 const resultExpanded = ref(true);
@@ -199,8 +205,8 @@ const historyStatus = ref(props.historyFilters.history_status ?? '');
 const historyUser = ref(props.historyFilters.history_user ?? '');
 const today = new Intl.DateTimeFormat('en-CA').format(new Date());
 const worklistForm = useForm({
-    calling_ae_title: 'NODE_REGISTRY',
-    called_ae_title: '',
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    called_ae_title: props.connectionPrefill.called_ae_title ?? '',
     scheduled_station_ae_title: '',
     examination_date: today,
     examination_date_to: '',
@@ -210,8 +216,8 @@ const worklistForm = useForm({
     accession_number: '',
 });
 const pacsForm = useForm({
-    calling_ae_title: 'NODE_REGISTRY',
-    called_ae_title: '',
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    called_ae_title: props.connectionPrefill.called_ae_title ?? '',
     patient_name: '',
     patient_id: '',
     accession_number: '',
@@ -231,11 +237,25 @@ const profileForm = useForm({
     timeout_seconds: 15,
     enabled: true,
 });
-const storageForm = useForm({ confirmed: false, calling_ae_title: 'NODE_REGISTRY', called_ae_title: '' });
-const capabilityForm = useForm({ calling_ae_title: 'NODE_REGISTRY', called_ae_title: '' });
+const storageForm = useForm({
+    confirmed: false,
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    called_ae_title: props.connectionPrefill.called_ae_title ?? '',
+});
+const capabilityForm = useForm({
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    called_ae_title: props.connectionPrefill.called_ae_title ?? '',
+});
 const fileAnalysisForm = useForm<{ dicom_file: File | null }>({ dicom_file: null });
 
 const selectedNode = computed(() => props.nodes.find((node) => node.public_id === selectedNodeId.value) ?? null);
+
+onMounted(() => {
+    if (!props.connectionPrefill.node) return;
+    if (props.connectionPrefill.service === 'store') storageDialogOpen.value = true;
+    if (props.connectionPrefill.service === 'worklist') worklistDialogOpen.value = true;
+    if (['query', 'move', 'get'].includes(props.connectionPrefill.service ?? '')) pacsDialogOpen.value = true;
+});
 
 const filteredNodes = computed(() => {
     const term = search.value.trim().toLocaleLowerCase('de-DE');

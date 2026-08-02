@@ -52,6 +52,14 @@ type SystemItem = {
     ip_address: string | null;
     vendor: string | null;
     product: string | null;
+    model: string | null;
+    version: string | null;
+    operating_system: string | null;
+    operating_system_version: string | null;
+    serial_number: string | null;
+    inventory_number: string | null;
+    description: string | null;
+    notes: string | null;
     dicom_nodes_count: number;
     failed_dicom_nodes_count: number;
     organization: {

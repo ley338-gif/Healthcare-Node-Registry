@@ -27,6 +27,10 @@ final class TestWorkspaceController extends Controller
             'history_status' => ['nullable', 'string', 'max:30'],
             'history_user' => ['nullable', 'uuid'],
             'run' => ['nullable', 'uuid'],
+            'node' => ['nullable', 'uuid'],
+            'service' => ['nullable', 'string', 'in:echo,store,worklist,query,move,get'],
+            'calling_ae_title' => ['nullable', 'string', 'max:16'],
+            'called_ae_title' => ['nullable', 'string', 'max:16'],
         ]);
 
         $nodeModels = DicomNode::query()
@@ -217,6 +221,12 @@ final class TestWorkspaceController extends Controller
                     ],
                 ]),
             'canManageProfiles' => $request->user()?->hasPermission('registry.manage') ?? false,
+            'connectionPrefill' => [
+                'node' => $filters['node'] ?? null,
+                'service' => $filters['service'] ?? null,
+                'calling_ae_title' => $filters['calling_ae_title'] ?? null,
+                'called_ae_title' => $filters['called_ae_title'] ?? null,
+            ],
         ]);
     }
 }
