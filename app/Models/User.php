@@ -40,6 +40,11 @@ final class User extends Authenticatable
         });
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
+    }
+
     protected function casts(): array
     {
         return [

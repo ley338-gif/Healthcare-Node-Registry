@@ -12,6 +12,7 @@ Technisches Grundgerüst der On-Premise-Registry für Healthcare-IT-Systeme und 
 - Nginx + PHP-FPM
 - sessionbasierte Anmeldung
 - native RBAC-Grundlage
+- webbasierte Benutzer-, Rollen- und Berechtigungsverwaltung unter Einstellungen
 - modularer Monolith
 - Health Endpoint
 - strukturierte Logs
@@ -26,7 +27,6 @@ Technisches Grundgerüst der On-Premise-Registry für Healthcare-IT-Systeme und 
 - HL7-Kommunikation
 - Monitoring und Discovery
 - Dokumenten-Uploads
-- vollständige Benutzerverwaltung
 - MFA oder externe Verzeichnisanbindung
 
 ## Lokaler Start

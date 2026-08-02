@@ -5,12 +5,12 @@ namespace App\Console\Commands;
 use App\Models\SecurityEvent;
 use App\Models\User;
 use App\Support\RbacBootstrapper;
+use App\Support\RegistryPasswordPolicy;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password;
 use Throwable;
 
 final class CreateInitialAdminCommand extends Command
@@ -60,7 +60,7 @@ final class CreateInitialAdminCommand extends Command
 
         $passwordCheck = Validator::make(
             ['password' => $password],
-            ['password' => ['required', 'string', Password::min(14)->mixedCase()->numbers()->symbols()]],
+            ['password' => RegistryPasswordPolicy::rules(false)],
         );
 
         if ($passwordCheck->fails()) {

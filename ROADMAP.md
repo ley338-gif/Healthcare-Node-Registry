@@ -35,7 +35,7 @@ Abgeschlossen.
 - [x] Dashboard-Integration
 - [x] Tests
 - [ ] Verantwortlichkeiten
-- [ ] webbasierte Benutzerverwaltung
+- [x] webbasierte Benutzer- und Rollenverwaltung unter Einstellungen
 
 ## Nächster Sprint
 

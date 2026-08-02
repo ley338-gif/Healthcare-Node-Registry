@@ -4,6 +4,9 @@ import { Boxes, Building2, FileText, FlaskConical, LayoutDashboard, Map, Setting
 import type { PageProps } from '../../types';
 const page = usePage<PageProps>();
 const canViewAudit = ((page.props.auth as { permissions?: string[] })?.permissions ?? []).includes('audit.view');
+const canViewSettings = page.props.auth.permissions.some((permission) =>
+    ['users.manage', 'roles.manage', 'settings.manage'].includes(permission),
+);
 const isActive = (paths: string[]) =>
     paths.some((path) => (path === '/' ? page.url === '/' : page.url.startsWith(path)));
 const groups = [
@@ -64,11 +67,10 @@ const groups = [
             },
             {
                 label: 'Einstellungen',
-                href: '#',
-                paths: [],
+                href: '/settings',
+                paths: ['/settings'],
                 icon: Settings,
-                enabled: false,
-                badge: 'später',
+                enabled: canViewSettings,
             },
         ],
     },

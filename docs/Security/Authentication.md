@@ -29,4 +29,8 @@ Ein initiales Administratorkonto wird durch einen dokumentierten, einmaligen Set
 - SAML nur bei realem Bedarf
 - MFA
 
+## Lokale Kontoverwaltung
+
+Administratoren verwalten lokale Konten unter `Einstellungen > Benutzerverwaltung`. Neue und administrativ gesetzte Passwoerter folgen derselben zentralen Passwortregel. Beim Deaktivieren eines Kontos oder beim Setzen eines neuen Passworts werden dessen vorhandene Datenbanksitzungen widerrufen. Erfolgreiche An- und Abmeldungen sowie administrative Kontoaenderungen werden auditiert.
+
 Externe Provider werden über Adapter integriert. Lokale Break-Glass-Verfahren benötigen eine dokumentierte organisatorische Freigabe.

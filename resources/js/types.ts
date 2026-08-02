@@ -8,6 +8,7 @@ export interface PageProps extends Record<string, unknown> {
     auth: {
         user: AuthUser | null;
         roles: string[];
+        permissions: string[];
     };
     flash: {
         success?: string;

@@ -19,6 +19,9 @@ use App\Http\Controllers\PacsQueryDiagnosticController;
 use App\Http\Controllers\RegistryDocumentationController;
 use App\Http\Controllers\RegistryDocumentController;
 use App\Http\Controllers\RegistryDocumentIndexController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\SettingsRoleController;
+use App\Http\Controllers\SettingsUserController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\StorageDiagnosticController;
 use App\Http\Controllers\SystemController;
@@ -36,6 +39,13 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
     Route::get('/audit/export/{format}', [AuditController::class, 'export'])->whereIn('format', ['csv'])->name('audit.export');
+    Route::get('/settings', SettingsController::class)->name('settings.index');
+    Route::post('/settings/users', [SettingsUserController::class, 'store'])->name('settings.users.store');
+    Route::put('/settings/users/{user}', [SettingsUserController::class, 'update'])->name('settings.users.update');
+    Route::put('/settings/users/{user}/password', [SettingsUserController::class, 'resetPassword'])->name('settings.users.password');
+    Route::post('/settings/roles', [SettingsRoleController::class, 'store'])->name('settings.roles.store');
+    Route::put('/settings/roles/{role}', [SettingsRoleController::class, 'update'])->name('settings.roles.update');
+    Route::delete('/settings/roles/{role}', [SettingsRoleController::class, 'destroy'])->name('settings.roles.destroy');
 
     Route::get('/structure', OrganizationStructureController::class)->name('structure.index');
     Route::get('/documents', RegistryDocumentIndexController::class)->name('documents.index');

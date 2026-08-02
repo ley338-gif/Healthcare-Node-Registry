@@ -22,6 +22,12 @@ RBAC mit serverseitiger Durchsetzung, Default Deny und optionalen Ressourcen-Sco
 | Rollen verwalten | ja | nein | nein | nein | nein | nein |
 | Systemeinstellungen | ja | nein | nein | nein | nein | nein |
 
+## Verwaltung
+
+Die vorhandenen Rollen und Berechtigungen werden im Bereich `Einstellungen > Benutzerverwaltung` gepflegt. Benutzer mit `users.manage` koennen Konten anlegen, bearbeiten, deaktivieren und Passwoerter setzen. Die Zuweisung und Pflege von Rollen erfordert zusaetzlich `roles.manage`.
+
+Die Rolle `system-administrator` ist technisch geschuetzt. Das eigene Konto kann nicht deaktiviert werden; ausserdem verhindert die Anwendung, dass der letzte aktive Systemadministrator deaktiviert oder aus dieser Rolle entfernt wird. Alle Aenderungen verwenden die vorhandenen Policies und die zentrale Audit-Infrastruktur.
+
 ## Scopes
 
 - installationsweit

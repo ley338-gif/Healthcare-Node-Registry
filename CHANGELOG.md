@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Einstellungen um eine berechtigungsgepruefte Benutzer-, Rollen- und Berechtigungsverwaltung mit Suche, Status- und Rollenfiltern erweitert.
+- Passwortvorgaben zentralisiert, Sitzungswiderruf bei Passwortwechsel und Deaktivierung sowie Schutz des letzten aktiven Systemadministrators ergaenzt.
+- Benutzer-, Rollen-, Login- und Logout-Aktionen in die bestehende Audit-Infrastruktur und die Ereignisgruppe Benutzer integriert.
+
 - Audit-Tabelle um kompakte Vorher-/Nachher-Werte, zentrale Ereignisgruppen und zustandsabhängige Deep Links in Registry-, DICOM-, Dokument- und Test-Workspaces erweitert.
 - Zentralen, read-only Audit-Arbeitsbereich mit Berechtigungsprüfung, serverseitiger Filterung, 50er-Paginierung, Slide-over-Details und CSV-Export ergänzt.
 

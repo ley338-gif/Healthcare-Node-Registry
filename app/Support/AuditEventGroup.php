@@ -38,6 +38,7 @@ enum AuditEventGroup: string
             str_starts_with($eventType, 'diagnostics.'), str_contains($eventType, '.test') => self::Tests,
             str_starts_with($eventType, 'registry.dicom_') => self::Dicom,
             str_starts_with($eventType, 'user.'), str_starts_with($eventType, 'account.') => self::Users,
+            str_starts_with($eventType, 'identity.') => self::Users,
             str_starts_with($eventType, 'admin.'), str_starts_with($eventType, 'settings.'),
             str_starts_with($eventType, 'role.'), str_starts_with($eventType, 'permission.') => self::Administration,
             str_starts_with($eventType, 'auth.'), str_starts_with($eventType, 'security.'),
@@ -64,7 +65,7 @@ enum AuditEventGroup: string
                 self::Documents => $group->where('event_type', 'like', 'document.%'),
                 self::Tests => $group->where('event_type', 'like', 'diagnostics.%')->orWhere('event_type', 'like', '%.test%'),
                 self::Dicom => $group->where('event_type', 'like', 'registry.dicom\_%'),
-                self::Users => $group->where('event_type', 'like', 'user.%')->orWhere('event_type', 'like', 'account.%'),
+                self::Users => $group->where('event_type', 'like', 'user.%')->orWhere('event_type', 'like', 'account.%')->orWhere('event_type', 'like', 'identity.%'),
                 self::Administration => $group->where('event_type', 'like', 'admin.%')->orWhere('event_type', 'like', 'settings.%')->orWhere('event_type', 'like', 'role.%')->orWhere('event_type', 'like', 'permission.%'),
                 self::Security => $group->where('event_type', 'like', 'auth.%')->orWhere('event_type', 'like', 'security.%')->orWhereIn('event_type', ['login', 'logout']),
                 self::Registry => $this->applyRegistryFallback($group),
@@ -80,7 +81,7 @@ enum AuditEventGroup: string
             ->where('event_type', 'not like', 'diagnostics.%')
             ->where('event_type', 'not like', '%.test%')
             ->where('event_type', 'not like', 'registry.dicom\_%')
-            ->where('event_type', 'not like', 'user.%')->where('event_type', 'not like', 'account.%')
+            ->where('event_type', 'not like', 'user.%')->where('event_type', 'not like', 'account.%')->where('event_type', 'not like', 'identity.%')
             ->where('event_type', 'not like', 'admin.%')->where('event_type', 'not like', 'settings.%')
             ->where('event_type', 'not like', 'role.%')->where('event_type', 'not like', 'permission.%')
             ->where('event_type', 'not like', 'auth.%')->where('event_type', 'not like', 'security.%')
