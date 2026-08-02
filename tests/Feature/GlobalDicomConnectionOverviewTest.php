@@ -108,6 +108,7 @@ final class GlobalDicomConnectionOverviewTest extends TestCase
         $this->seed();
         $user = User::factory()->create();
         $user->roles()->attach(Role::query()->where('name', 'system-administrator')->firstOrFail());
+
         return $user;
     }
 

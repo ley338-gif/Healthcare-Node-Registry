@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -216,7 +217,7 @@ final class DicomConnectionController extends Controller
 
         $copy = DB::transaction(function () use ($request, $dicomConnection, $audit): DicomConnection {
             $copy = $dicomConnection->replicate();
-            $copy->public_id = (string) \Illuminate\Support\Str::uuid7();
+            $copy->public_id = (string) Str::uuid7();
             $copy->name = $dicomConnection->name.' (Kopie)';
             $copy->service = collect(DicomConnection::SERVICES)->first(fn (string $service) => ! DicomConnection::query()->where('source_dicom_node_id', $copy->source_dicom_node_id)->where('target_dicom_node_id', $copy->target_dicom_node_id)->where('service', $service)->exists());
             abort_if($copy->service === null, 422, 'Für diesen Pfad sind bereits alle Dienste dokumentiert.');
