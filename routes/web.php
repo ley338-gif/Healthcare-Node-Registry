@@ -23,6 +23,7 @@ use App\Http\Controllers\PacsQueryDiagnosticController;
 use App\Http\Controllers\RegistryDocumentationController;
 use App\Http\Controllers\RegistryDocumentController;
 use App\Http\Controllers\RegistryDocumentIndexController;
+use App\Http\Controllers\RegistryImportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SettingsRoleController;
 use App\Http\Controllers\SettingsUserController;
@@ -106,6 +107,9 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/systems', [SystemController::class, 'index'])
         ->name('systems.index');
+    Route::get('/systems/import', [RegistryImportController::class, 'index'])->name('systems.import.index');
+    Route::post('/systems/import/preview', [RegistryImportController::class, 'preview'])->name('systems.import.preview');
+    Route::post('/systems/import/{token}', [RegistryImportController::class, 'store'])->name('systems.import.store');
 
     Route::get('/systems/{system}', [SystemController::class, 'show'])
         ->name('systems.show');

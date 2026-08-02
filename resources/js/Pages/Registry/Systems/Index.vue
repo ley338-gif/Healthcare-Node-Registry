@@ -289,6 +289,13 @@ const closeEditPanel = (): void => {
             description="Systeme durchsuchen, einordnen und im Kontext ihrer DICOM-Kommunikation prüfen."
         >
             <template #actions>
+                <a
+                    v-if="canManage"
+                    href="/systems/import"
+                    class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700"
+                >
+                    CSV importieren
+                </a>
                 <button
                     type="button"
                     :disabled="!canManage"
