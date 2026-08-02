@@ -13,6 +13,7 @@ Technisches Grundgerüst der On-Premise-Registry für Healthcare-IT-Systeme und 
 - sessionbasierte Anmeldung
 - native RBAC-Grundlage
 - webbasierte Benutzer-, Rollen- und Berechtigungsverwaltung unter Einstellungen
+- globale berechtigungsgepruefte Suche mit direkten Workspace-Links
 - modularer Monolith
 - Health Endpoint
 - strukturierte Logs

@@ -12,6 +12,7 @@ use App\Http\Controllers\DicomConnectionController;
 use App\Http\Controllers\DicomFileAnalysisController;
 use App\Http\Controllers\DicomNetworkMapController;
 use App\Http\Controllers\DicomNodeController;
+use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\NetworkDiagnosticController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
@@ -37,6 +38,7 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    Route::get('/search', GlobalSearchController::class)->middleware('throttle:60,1')->name('search');
     Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
     Route::get('/audit/export/{format}', [AuditController::class, 'export'])->whereIn('format', ['csv'])->name('audit.export');
     Route::get('/settings', SettingsController::class)->name('settings.index');

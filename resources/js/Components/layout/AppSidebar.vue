@@ -83,7 +83,7 @@ const groups = [
             <div>
                 <p class="text-sm font-semibold">Healthcare Node Registry</p>
 
-                <p class="text-xs text-slate-400">PACS Administration Suite</p>
+                <p class="text-xs text-slate-400">Healthcare Infrastructure Registry</p>
             </div>
         </div>
         <nav class="space-y-6 p-4">
@@ -125,12 +125,12 @@ const groups = [
             <div class="rounded-xl border border-slate-800 p-3 text-xs text-slate-400">
                 <div class="mb-2 flex items-center gap-2">
                     <Settings :size="15" />
-                    Version 0.2.0-dev
+                    Version 0.3.0-dev
                 </div>
 
-                <p>Healthcare Infrastructure Registry</p>
+                <p>Healthcare Node Registry</p>
 
-                <p class="mt-1 text-slate-500">Systeme · DICOM · Topologie</p>
+                <p class="mt-1 leading-5 text-slate-500">Registry · DICOM · Dokumente · Tests · Audit</p>
             </div>
         </div>
     </aside>

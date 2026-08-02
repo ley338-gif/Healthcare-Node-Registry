@@ -635,9 +635,13 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
             </div>
         </div>
 
-        <div class="mt-6 grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
-            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70 shadow-sm">
-                <div class="border-b border-slate-200 bg-slate-950 p-4 text-white">
+        <div class="mt-6 grid items-start gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
+            <aside
+                class="overflow-hidden rounded-2xl border border-slate-300 bg-slate-50/70 shadow-sm xl:sticky xl:top-24 xl:flex xl:max-h-[calc(100vh-7rem)] xl:flex-col xl:border-r-2 xl:border-r-slate-300"
+            >
+                <div
+                    class="max-h-[36vh] shrink-0 overflow-y-auto border-b border-slate-200 bg-slate-950 p-4 text-white"
+                >
                     <div class="flex items-center justify-between gap-3">
                         <div>
                             <h2 class="text-sm font-semibold">Testprofile</h2>
@@ -689,7 +693,7 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                     </div>
                     <p v-else class="mt-3 text-xs text-slate-400">Noch keine Profile angelegt.</p>
                 </div>
-                <header class="border-b border-slate-200 bg-white p-4">
+                <header class="shrink-0 border-b border-slate-300 bg-white p-4">
                     <h2 class="font-semibold text-slate-950">DICOM-Knoten auswählen</h2>
                     <p class="mt-1 text-xs text-slate-500">Tests werden ausschließlich durch das Backend ausgeführt.</p>
 
@@ -704,7 +708,7 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                     </div>
                 </header>
 
-                <div class="max-h-[690px] space-y-2 overflow-y-auto p-3">
+                <div class="max-h-[690px] space-y-2 overflow-y-auto p-3 xl:min-h-0 xl:flex-1">
                     <button
                         v-for="node in filteredNodes"
                         :key="node.public_id"
@@ -751,7 +755,7 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                         </div>
                     </button>
                 </div>
-            </section>
+            </aside>
 
             <div v-if="selectedNode" class="space-y-5">
                 <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
