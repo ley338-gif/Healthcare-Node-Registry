@@ -6,7 +6,7 @@ Diese Dokumentation beschreibt die Healthcare Node Registry (HNR) als proprietä
 
 | Bereich | Zweck | Status |
 |---|---|---|
-| [Produktbuch](product-book/README.md) | Vision, Zielgruppen, Produktprinzipien und fachliche Abgrenzung | Kapitel 1 im Entwurf |
+| [Produktbuch](product-book/README.md) | Vision, Zielgruppen, Produktprinzipien, Produktkonzept und Funktionsumfang | Kapitel 1 und 2 im Entwurf |
 | [Benutzerhandbuch](user-guide/README.md) | Aufgabenbezogene Bedienung der freigegebenen Funktionen | geplant |
 | [Administratorhandbuch](admin-guide/README.md) | Konfiguration, Betrieb, Sicherung und administrative Verfahren | geplant; bestehende Betriebsdokumente sind verlinkt |
 | [Entwicklerhandbuch](developer-guide/README.md) | Entwicklungsumgebung, Tests und Beitragsprozess für das private Repository | geplant; bestehende Entwicklungsdokumente sind verlinkt |
@@ -24,6 +24,8 @@ Diese Dokumentation beschreibt die Healthcare Node Registry (HNR) als proprietä
 
 Die gewachsene technische Dokumentation bleibt erhalten. Bis zu ihrer kontrollierten Überführung in die neue Struktur gelten insbesondere:
 
+- [Dokumentations-Masterspezifikation](DOCUMENTATION_MASTER_SPECIFICATION.md)
+- [Produktvision](product-book/01-product-vision.md) und [Produktkonzept](product-book/02-produktkonzept-und-funktionsumfang.md)
 - [Architekturüberblick](Architecture/Overview.md)
 - [Modulübersicht](Architecture/Modules.md)
 - [Architecture Decision Records](Decisions/README.md)
