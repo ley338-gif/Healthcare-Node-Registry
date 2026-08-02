@@ -1,3 +1,13 @@
+---
+title: Produktdokumentation
+description: Einstieg und Statusübersicht der Dokumentation der Healthcare Node Registry.
+document_type: Dokumentationsindex
+chapter: Übersicht
+status: draft
+version: 0.1
+last_updated: 2026-08-02
+---
+
 # Produktdokumentation der Healthcare Node Registry
 
 Diese Dokumentation beschreibt die Healthcare Node Registry (HNR) als proprietäres, kommerzielles On-Premises-Produkt. Sie dient als gemeinsame, versionierbare Informationsbasis für Anwender, Administratoren, Entwicklung, Betrieb und Architekturarbeit. Der private Quellcode und eine möglicherweise später veröffentlichte Produktdokumentation bleiben organisatorisch und rechtlich getrennt.
@@ -7,17 +17,17 @@ Diese Dokumentation beschreibt die Healthcare Node Registry (HNR) als proprietä
 | Bereich | Zweck | Status |
 |---|---|---|
 | [Produktbuch](product-book/README.md) | Vision, Zielgruppen, Produktkonzept, Datenmodell, Sicherheit, Betrieb, Produktlebenszyklus, Integration, Qualität und Governance | Kapitel 1 bis 10 im Entwurf |
-| [Benutzerhandbuch](user-guide/README.md) | Aufgabenbezogene Bedienung der freigegebenen Funktionen | geplant |
-| [Administratorhandbuch](admin-guide/README.md) | Konfiguration, Betrieb, Sicherung und administrative Verfahren | geplant; bestehende Betriebsdokumente sind verlinkt |
-| [Entwicklerhandbuch](developer-guide/README.md) | Entwicklungsumgebung, Tests und Beitragsprozess für das private Repository | geplant; bestehende Entwicklungsdokumente sind verlinkt |
+| [Benutzerhandbuch](user-guide/README.md) | Aufgabenbezogene Bedienung der freigegebenen Funktionen | sieben Kapitel im Entwurf |
+| [Administratorhandbuch](admin-guide/README.md) | Konfiguration, Betrieb, Sicherung und administrative Verfahren | fünf Kapitel im Entwurf |
+| [Entwicklerhandbuch](developer-guide/README.md) | Entwicklungsumgebung, Tests und Beitragsprozess für das private Repository | vier Kapitel im Entwurf |
 | [Architekturhandbuch](architecture/README.md) | Architekturübersichten, Entscheidungen und technische Leitplanken | bestehende Dokumente verfügbar |
-| [DICOM-Referenz](dicom-reference/README.md) | DICOM-Begriffe, Rollen, Dienste und Diagnoseverhalten | bestehende Referenzen verfügbar |
-| [API](api/README.md) | Dokumentation freigegebener Schnittstellen | geplant |
-| [Fehlerbehebung](troubleshooting/README.md) | Symptomorientierte Diagnose- und Lösungswege | geplant |
-| [Best Practices](best-practices/README.md) | Bewährte Vorgehensweisen für Dokumentation und Betrieb | geplant |
-| [FAQ](faq/README.md) | Kurze Antworten auf wiederkehrende Produktfragen | geplant |
-| [Glossar](glossary/README.md) | Verbindliche Terminologie der HNR | bestehende Grundlage verfügbar |
-| [Versionshinweise](release-notes/README.md) | Einer Softwareversion zugeordnete Änderungen und Hinweise | geplant; Vorlage verfügbar |
+| [DICOM-Referenz](dicom-reference/README.md) | DICOM-Begriffe, Rollen, Dienste und Diagnoseverhalten | konsolidierter Entwurf vorhanden |
+| [API](api/README.md) | Dokumentation freigegebener Schnittstellen | Status und Freigaberegeln dokumentiert; keine öffentliche API |
+| [Fehlerbehebung](troubleshooting/README.md) | Symptomorientierte Diagnose- und Lösungswege | Entwurf vorhanden |
+| [Best Practices](best-practices/README.md) | Bewährte Vorgehensweisen für Dokumentation und Betrieb | Entwurf vorhanden |
+| [FAQ](faq/README.md) | Kurze Antworten auf wiederkehrende Produktfragen | Entwurf vorhanden |
+| [Glossar](glossary/README.md) | Verbindliche Terminologie der HNR | konsolidierter Entwurf vorhanden |
+| [Versionshinweise](release-notes/README.md) | Einer Softwareversion zugeordnete Änderungen und Hinweise | Struktur und Vorlage vorhanden |
 | [Medien](assets/README.md) | Freigegebene Abbildungen und weitere Dokumentationsmedien | vorgesehen |
 
 ## Aktuell vorhandene Dokumentation
