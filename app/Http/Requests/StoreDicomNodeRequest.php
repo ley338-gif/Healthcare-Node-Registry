@@ -20,6 +20,13 @@ final class StoreDicomNodeRequest extends FormRequest
     {
         $systemId = $this->route('system')?->getKey();
 
+        return $this->rulesForSystem(is_int($systemId) ? $systemId : null, $this->input('host'), $this->input('port'));
+    }
+
+    /** @return array<string, array<int, mixed>> */
+    public function rulesForSystem(?int $systemId, mixed $host = null, mixed $port = null): array
+    {
+
         return [
             'name' => [
                 'required',
@@ -33,8 +40,8 @@ final class StoreDicomNodeRequest extends FormRequest
                 'regex:/^[A-Za-z0-9 _-]+$/',
                 Rule::unique('dicom_nodes', 'ae_title')
                     ->where('system_id', $systemId)
-                    ->where('host', $this->input('host'))
-                    ->where('port', $this->input('port')),
+                    ->where('host', $host)
+                    ->where('port', $port),
             ],
             'host' => [
                 'required',
