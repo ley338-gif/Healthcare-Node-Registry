@@ -13,3 +13,4 @@ Das Produktbuch beschreibt Vision, Mission, Zielgruppen, Produktprinzipien und f
 7. [Produktlebenszyklus und Roadmap](07-produktlebenszyklus-und-roadmap.md) — Entwurf
 8. [Integrations- und API-Strategie](08-integrations-und-api-strategie.md) — Entwurf
 9. [Qualitäts- und Compliance-Rahmen](09-qualitaets-und-compliance-rahmen.md) — Entwurf
+10. [Produktgovernance und Verantwortlichkeiten](10-produktgovernance-und-verantwortlichkeiten.md) — Entwurf
