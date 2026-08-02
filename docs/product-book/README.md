@@ -11,3 +11,5 @@ Das Produktbuch beschreibt Vision, Mission, Zielgruppen, Produktprinzipien und f
 5. [Sicherheits- und Datenschutzkonzept](05-sicherheits-und-datenschutzkonzept.md) — Entwurf
 6. [Betriebs- und Bereitstellungsmodell](06-betriebs-und-bereitstellungsmodell.md) — Entwurf
 7. [Produktlebenszyklus und Roadmap](07-produktlebenszyklus-und-roadmap.md) — Entwurf
+8. [Integrations- und API-Strategie](08-integrations-und-api-strategie.md) — Entwurf
+9. [Qualitäts- und Compliance-Rahmen](09-qualitaets-und-compliance-rahmen.md) — Entwurf

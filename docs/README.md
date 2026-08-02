@@ -6,7 +6,7 @@ Diese Dokumentation beschreibt die Healthcare Node Registry (HNR) als proprietä
 
 | Bereich | Zweck | Status |
 |---|---|---|
-| [Produktbuch](product-book/README.md) | Vision, Zielgruppen, Produktprinzipien, Produktkonzept, Funktionsumfang, Datenmodell, Sicherheit, Betrieb und Produktlebenszyklus | Kapitel 1 bis 7 im Entwurf |
+| [Produktbuch](product-book/README.md) | Vision, Zielgruppen, Produktkonzept, Datenmodell, Sicherheit, Betrieb, Produktlebenszyklus, Integration und Qualität | Kapitel 1 bis 9 im Entwurf |
 | [Benutzerhandbuch](user-guide/README.md) | Aufgabenbezogene Bedienung der freigegebenen Funktionen | geplant |
 | [Administratorhandbuch](admin-guide/README.md) | Konfiguration, Betrieb, Sicherung und administrative Verfahren | geplant; bestehende Betriebsdokumente sind verlinkt |
 | [Entwicklerhandbuch](developer-guide/README.md) | Entwicklungsumgebung, Tests und Beitragsprozess für das private Repository | geplant; bestehende Entwicklungsdokumente sind verlinkt |
@@ -25,7 +25,7 @@ Diese Dokumentation beschreibt die Healthcare Node Registry (HNR) als proprietä
 Die gewachsene technische Dokumentation bleibt erhalten. Bis zu ihrer kontrollierten Überführung in die neue Struktur gelten insbesondere:
 
 - [Dokumentations-Masterspezifikation](DOCUMENTATION_MASTER_SPECIFICATION.md)
-- [Produktvision](product-book/01-product-vision.md), [Produktkonzept](product-book/02-produktkonzept-und-funktionsumfang.md), [Nutzungsszenarien](product-book/03-zielgruppen-und-nutzungsszenarien.md), [fachliches Datenmodell](product-book/04-fachliches-datenmodell.md), [Sicherheits- und Datenschutzkonzept](product-book/05-sicherheits-und-datenschutzkonzept.md), [Betriebs- und Bereitstellungsmodell](product-book/06-betriebs-und-bereitstellungsmodell.md) sowie [Produktlebenszyklus und Roadmap](product-book/07-produktlebenszyklus-und-roadmap.md)
+- [Produktvision](product-book/01-product-vision.md), [Produktkonzept](product-book/02-produktkonzept-und-funktionsumfang.md), [Nutzungsszenarien](product-book/03-zielgruppen-und-nutzungsszenarien.md), [fachliches Datenmodell](product-book/04-fachliches-datenmodell.md), [Sicherheits- und Datenschutzkonzept](product-book/05-sicherheits-und-datenschutzkonzept.md), [Betriebs- und Bereitstellungsmodell](product-book/06-betriebs-und-bereitstellungsmodell.md), [Produktlebenszyklus und Roadmap](product-book/07-produktlebenszyklus-und-roadmap.md), [Integrations- und API-Strategie](product-book/08-integrations-und-api-strategie.md) sowie [Qualitäts- und Compliance-Rahmen](product-book/09-qualitaets-und-compliance-rahmen.md)
 - [Architekturüberblick](Architecture/Overview.md)
 - [Modulübersicht](Architecture/Modules.md)
 - [Architecture Decision Records](Decisions/README.md)
