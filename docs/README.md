@@ -6,7 +6,7 @@ Diese Dokumentation beschreibt die Healthcare Node Registry (HNR) als proprietä
 
 | Bereich | Zweck | Status |
 |---|---|---|
-| [Produktbuch](product-book/README.md) | Vision, Zielgruppen, Produktprinzipien, Produktkonzept und Funktionsumfang | Kapitel 1 bis 3 im Entwurf |
+| [Produktbuch](product-book/README.md) | Vision, Zielgruppen, Produktprinzipien, Produktkonzept, Funktionsumfang, Datenmodell, Sicherheit, Datenschutz und Betrieb | Kapitel 1 bis 6 im Entwurf |
 | [Benutzerhandbuch](user-guide/README.md) | Aufgabenbezogene Bedienung der freigegebenen Funktionen | geplant |
 | [Administratorhandbuch](admin-guide/README.md) | Konfiguration, Betrieb, Sicherung und administrative Verfahren | geplant; bestehende Betriebsdokumente sind verlinkt |
 | [Entwicklerhandbuch](developer-guide/README.md) | Entwicklungsumgebung, Tests und Beitragsprozess für das private Repository | geplant; bestehende Entwicklungsdokumente sind verlinkt |
@@ -25,7 +25,7 @@ Diese Dokumentation beschreibt die Healthcare Node Registry (HNR) als proprietä
 Die gewachsene technische Dokumentation bleibt erhalten. Bis zu ihrer kontrollierten Überführung in die neue Struktur gelten insbesondere:
 
 - [Dokumentations-Masterspezifikation](DOCUMENTATION_MASTER_SPECIFICATION.md)
-- [Produktvision](product-book/01-product-vision.md), [Produktkonzept](product-book/02-produktkonzept-und-funktionsumfang.md) und [Nutzungsszenarien](product-book/03-zielgruppen-und-nutzungsszenarien.md)
+- [Produktvision](product-book/01-product-vision.md), [Produktkonzept](product-book/02-produktkonzept-und-funktionsumfang.md), [Nutzungsszenarien](product-book/03-zielgruppen-und-nutzungsszenarien.md), [fachliches Datenmodell](product-book/04-fachliches-datenmodell.md), [Sicherheits- und Datenschutzkonzept](product-book/05-sicherheits-und-datenschutzkonzept.md) sowie [Betriebs- und Bereitstellungsmodell](product-book/06-betriebs-und-bereitstellungsmodell.md)
 - [Architekturüberblick](Architecture/Overview.md)
 - [Modulübersicht](Architecture/Modules.md)
 - [Architecture Decision Records](Decisions/README.md)
