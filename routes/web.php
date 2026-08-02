@@ -12,6 +12,7 @@ use App\Http\Controllers\DicomConnectionController;
 use App\Http\Controllers\DicomFileAnalysisController;
 use App\Http\Controllers\DicomNetworkMapController;
 use App\Http\Controllers\DicomNodeController;
+use App\Http\Controllers\GetDiagnosticController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\MoveDiagnosticController;
 use App\Http\Controllers\NetworkDiagnosticController;
@@ -152,6 +153,8 @@ Route::middleware('auth')->group(function (): void {
         ->name('tests.storage.run');
     Route::post('/tests/move/{dicomConnection}', MoveDiagnosticController::class)
         ->name('tests.move.run');
+    Route::post('/tests/get/{dicomConnection}', GetDiagnosticController::class)
+        ->name('tests.get.run');
     Route::post('/tests/capabilities/{dicomNode}', CapabilityMatrixDiagnosticController::class)
         ->name('tests.capabilities.run');
     Route::post('/tests/dicom-file-analysis', DicomFileAnalysisController::class)
