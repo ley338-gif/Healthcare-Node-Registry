@@ -12,6 +12,7 @@ use App\Http\Controllers\DicomConnectionController;
 use App\Http\Controllers\DicomFileAnalysisController;
 use App\Http\Controllers\DicomNetworkMapController;
 use App\Http\Controllers\DicomNodeController;
+use App\Http\Controllers\FirewallMatrixReportController;
 use App\Http\Controllers\GetDiagnosticController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\MoveDiagnosticController;
@@ -131,6 +132,8 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/connections', [DicomConnectionController::class, 'index'])
         ->name('connections.index');
+    Route::get('/reports/firewall-matrix', [FirewallMatrixReportController::class, 'index'])->name('reports.firewall-matrix.index');
+    Route::get('/reports/firewall-matrix/export/{format}', [FirewallMatrixReportController::class, 'export'])->whereIn('format', ['csv', 'pdf'])->name('reports.firewall-matrix.export');
 
     Route::put('/dicom-connections/{dicomConnection}', [DicomConnectionController::class, 'update'])
         ->name('dicom-connections.update');

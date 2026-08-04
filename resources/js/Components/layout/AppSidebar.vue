@@ -8,6 +8,7 @@ import {
     FlaskConical,
     LayoutDashboard,
     Map,
+    TableProperties,
     Settings,
     ShieldCheck,
 } from '@lucide/vue';
@@ -64,6 +65,13 @@ const groups = [
                 href: '/connections',
                 paths: ['/connections'],
                 icon: Cable,
+                enabled: canViewConnections,
+            },
+            {
+                label: 'Firewall-Matrix',
+                href: '/reports/firewall-matrix',
+                paths: ['/reports/firewall-matrix'],
+                icon: TableProperties,
                 enabled: canViewConnections,
             },
             {
