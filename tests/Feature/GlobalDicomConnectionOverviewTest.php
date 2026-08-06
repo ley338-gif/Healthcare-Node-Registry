@@ -115,6 +115,6 @@ final class GlobalDicomConnectionOverviewTest extends TestCase
     /** @return array<string, mixed> */
     private function payload(DicomNode $source, DicomNode $target, string $name): array
     {
-        return ['source_dicom_node_id' => $source->id, 'target_dicom_node_id' => $target->id, 'destination_dicom_node_id' => null, 'name' => $name, 'service' => 'echo', 'status' => 'active', 'calling_ae_title' => null, 'called_ae_title' => null, 'port_override' => null, 'tls_enabled' => false, 'test_enabled' => true, 'description' => null, 'notes' => null];
+        return ['source_dicom_node_id' => $source->id, 'target_dicom_node_id' => $target->id, 'destination_dicom_node_id' => null, 'name' => $name, 'service' => 'echo', 'status' => 'active', 'evidence_status' => 'manually_documented', 'calling_ae_title' => null, 'called_ae_title' => null, 'port_override' => null, 'tls_enabled' => false, 'test_enabled' => true, 'description' => null, 'notes' => null];
     }
 }

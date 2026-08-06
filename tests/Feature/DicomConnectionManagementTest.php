@@ -343,6 +343,7 @@ final class DicomConnectionManagementTest extends TestCase
             'name' => 'DICOM-Verbindung',
             'service' => DicomConnection::SERVICE_ECHO,
             'status' => 'active',
+            'evidence_status' => 'manually_documented',
             'calling_ae_title' => null,
             'called_ae_title' => null,
             'port_override' => null,

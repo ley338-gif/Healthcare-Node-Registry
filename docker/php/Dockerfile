@@ -8,6 +8,7 @@ RUN apt-get update \
         curl \
         dcmtk \
         git \
+        iputils-ping \
         libicu-dev \
         libpq-dev \
         libzip-dev \

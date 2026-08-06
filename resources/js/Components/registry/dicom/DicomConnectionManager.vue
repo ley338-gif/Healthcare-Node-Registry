@@ -26,6 +26,7 @@ export type DicomConnection = {
     name: string;
     service: 'echo' | 'store' | 'worklist' | 'query' | 'move' | 'get';
     status: 'active' | 'planned' | 'maintenance' | 'inactive';
+    evidence_status: 'confirmed' | 'technically_tested' | 'suspected' | 'manually_documented' | 'failed_last_test';
     calling_ae_title: string | null;
     called_ae_title: string | null;
     port_override: number | null;
@@ -73,6 +74,14 @@ const statusLabels: Record<DicomConnection['status'], string> = {
     inactive: 'Inaktiv',
 };
 
+const evidenceStatusLabels: Record<DicomConnection['evidence_status'], string> = {
+    confirmed: 'Bestätigt',
+    technically_tested: 'Technisch getestet',
+    suspected: 'Vermutet',
+    manually_documented: 'Manuell dokumentiert',
+    failed_last_test: 'Letzter Test fehlgeschlagen',
+};
+
 const emptyForm = () => ({
     source_dicom_node_id: null as number | null,
     target_dicom_node_id: null as number | null,
@@ -80,6 +89,7 @@ const emptyForm = () => ({
     name: '',
     service: 'echo' as DicomConnection['service'],
     status: 'active' as DicomConnection['status'],
+    evidence_status: 'manually_documented' as DicomConnection['evidence_status'],
     calling_ae_title: '',
     called_ae_title: '',
     port_override: null as number | null,
@@ -144,6 +154,7 @@ const openEdit = (connection: DicomConnection): void => {
     editForm.name = connection.name;
     editForm.service = connection.service;
     editForm.status = connection.status;
+    editForm.evidence_status = connection.evidence_status;
     editForm.calling_ae_title = connection.calling_ae_title ?? '';
     editForm.called_ae_title = connection.called_ae_title ?? '';
     editForm.port_override = connection.port_override;
@@ -375,6 +386,9 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                             <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{{
                                 statusLabels[connection.status]
                             }}</span>
+                            <p class="mt-2 text-xs text-slate-500">
+                                {{ evidenceStatusLabels[connection.evidence_status] }}
+                            </p>
                             <p
                                 class="mt-2 text-xs"
                                 :class="connection.test_enabled ? 'text-emerald-700' : 'text-slate-400'"
@@ -658,6 +672,7 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                             ['Dienst', serviceLabels[selected.service]],
                             ['Zieladresse', `${selected.target_node.host}:${effectivePort(selected)}`],
                             ['Status', statusLabels[selected.status]],
+                            ['Nachweis-Status', evidenceStatusLabels[selected.evidence_status]],
                             ['Letzte Prüfung', selected.target_node.last_verified_at || 'Noch nicht geprüft'],
                             ['Erstellt am', selected.created_at || '—'],
                             ['Geändert am', selected.updated_at || '—'],
@@ -759,6 +774,23 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                                     <option value="maintenance">Wartung</option>
                                     <option value="inactive">Inaktiv</option>
                                 </select></label
+                            >
+                            <label
+                                ><span class="text-sm font-medium text-slate-700">Nachweis-Status *</span
+                                ><select
+                                    v-model="createForm.evidence_status"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                >
+                                    <option value="manually_documented">Manuell dokumentiert</option>
+                                    <option value="confirmed">Bestätigt</option>
+                                    <option value="technically_tested">Technisch getestet</option>
+                                    <option value="suspected">Vermutet</option>
+                                    <option value="failed_last_test">Letzter Test fehlgeschlagen</option>
+                                </select>
+                                <span class="mt-1 block text-xs text-slate-400"
+                                    >Steuert nur die Darstellung in der Topologie (Linienstil), kein automatischer
+                                    Nachweis.</span
+                                ></label
                             >
                         </div>
                         <label v-if="createForm.service === 'move'" class="block"
@@ -923,6 +955,23 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                                     <option value="maintenance">Wartung</option>
                                     <option value="inactive">Inaktiv</option>
                                 </select></label
+                            >
+                            <label
+                                ><span class="text-sm font-medium text-slate-700">Nachweis-Status *</span
+                                ><select
+                                    v-model="editForm.evidence_status"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                >
+                                    <option value="manually_documented">Manuell dokumentiert</option>
+                                    <option value="confirmed">Bestätigt</option>
+                                    <option value="technically_tested">Technisch getestet</option>
+                                    <option value="suspected">Vermutet</option>
+                                    <option value="failed_last_test">Letzter Test fehlgeschlagen</option>
+                                </select>
+                                <span class="mt-1 block text-xs text-slate-400"
+                                    >Steuert nur die Darstellung in der Topologie (Linienstil), kein automatischer
+                                    Nachweis.</span
+                                ></label
                             >
                         </div>
                         <label v-if="editForm.service === 'move'" class="block"

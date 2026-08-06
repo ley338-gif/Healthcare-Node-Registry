@@ -12,6 +12,12 @@ use App\Http\Controllers\DicomConnectionController;
 use App\Http\Controllers\DicomFileAnalysisController;
 use App\Http\Controllers\DicomNetworkMapController;
 use App\Http\Controllers\DicomNodeController;
+use App\Http\Controllers\Discovery\DiscoveredHostController;
+use App\Http\Controllers\Discovery\DiscoveryAllowedNetworkController;
+use App\Http\Controllers\Discovery\DiscoveryDashboardController;
+use App\Http\Controllers\Discovery\DiscoveryPromotionController;
+use App\Http\Controllers\Discovery\DiscoveryRunController;
+use App\Http\Controllers\Discovery\DiscoveryRunWizardController;
 use App\Http\Controllers\FirewallMatrixReportController;
 use App\Http\Controllers\GetDiagnosticController;
 use App\Http\Controllers\GlobalSearchController;
@@ -146,6 +152,24 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/network', DicomNetworkMapController::class)
         ->name('network.index');
+
+    Route::get('/discovery', DiscoveryDashboardController::class)->name('discovery.index');
+    Route::get('/discovery/runs/create', [DiscoveryRunWizardController::class, 'create'])->name('discovery.runs.create');
+    Route::post('/discovery/runs', [DiscoveryRunController::class, 'store'])->name('discovery.runs.store');
+    Route::get('/discovery/runs/{discoveryRun}', [DiscoveryRunController::class, 'show'])->name('discovery.runs.show');
+    Route::get('/discovery/runs/{discoveryRun}/status', [DiscoveryRunController::class, 'status'])->name('discovery.runs.status');
+    Route::post('/discovery/runs/{discoveryRun}/cancel', [DiscoveryRunController::class, 'cancel'])->name('discovery.runs.cancel');
+
+    Route::get('/discovery/hosts/{discoveredHost}/promotion-data', [DiscoveredHostController::class, 'promotionData'])->name('discovery.hosts.promotion-data');
+    Route::post('/discovery/hosts/{discoveredHost}/confirm', [DiscoveredHostController::class, 'confirm'])->name('discovery.hosts.confirm');
+    Route::post('/discovery/hosts/{discoveredHost}/ignore', [DiscoveredHostController::class, 'ignore'])->name('discovery.hosts.ignore');
+    Route::post('/discovery/hosts/{discoveredHost}/retest', [DiscoveredHostController::class, 'retest'])->name('discovery.hosts.retest');
+    Route::post('/discovery/hosts/{discoveredHost}/promote', [DiscoveryPromotionController::class, 'store'])->name('discovery.hosts.promote');
+
+    Route::get('/settings/discovery', [DiscoveryAllowedNetworkController::class, 'index'])->name('settings.discovery.index');
+    Route::post('/settings/discovery', [DiscoveryAllowedNetworkController::class, 'store'])->name('settings.discovery.store');
+    Route::put('/settings/discovery/{discoveryAllowedNetwork}', [DiscoveryAllowedNetworkController::class, 'update'])->name('settings.discovery.update');
+    Route::delete('/settings/discovery/{discoveryAllowedNetwork}', [DiscoveryAllowedNetworkController::class, 'destroy'])->name('settings.discovery.destroy');
 
     Route::get('/tests', TestWorkspaceController::class)
         ->name('tests.index');

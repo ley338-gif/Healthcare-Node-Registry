@@ -34,6 +34,7 @@ ADRs dokumentieren langfristig bindende oder schwer umkehrbare technische Entsch
 - [ADR-0008: Dokumentspeicher](ADR-0008-document-storage.md)
 - [ADR-0009: Audit und Logging](ADR-0009-audit-and-logging.md)
 - [ADR-0010: Import und Export](ADR-0010-import-export.md)
+- [ADR-0011: Discovery-Scan-Architektur](ADR-0011-discovery-scanning.md)
 
 ## Offener Konsolidierungsbedarf
 

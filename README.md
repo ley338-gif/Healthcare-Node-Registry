@@ -15,7 +15,7 @@ HNR ist als modularer Monolith umgesetzt:
 - DICOM-Werkzeuge: DCMTK im PHP-Container
 - Speicherung: PostgreSQL für Fachdaten sowie ein privates Laravel-Dateisystem für Registry-Dokumente
 
-Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten Funktionen sind implementiert und durch automatisierte Tests abgedeckt. Eine öffentliche REST-API, OpenAPI-/Swagger-Dokumentation, DICOM-TLS, MFA, LDAP/Active Directory, Redis und ein Queue-Worker sind derzeit nicht Bestandteil des Stacks.
+Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten Funktionen sind implementiert und durch automatisierte Tests abgedeckt. Eine öffentliche REST-API, OpenAPI-/Swagger-Dokumentation, DICOM-TLS, MFA, LDAP/Active Directory und Redis sind derzeit nicht Bestandteil des Stacks. Seit dem Discovery-MVP gibt es einen `database`-gestützten Queue-Worker-Container für asynchrone Scan-Läufe (siehe unten).
 
 ## Features
 
@@ -38,6 +38,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - DICOM Capability-Matrix auf Basis der Association-Aushandlung
 - DICOM-Dateianalyse mit `dcmdump`
 - Öffentlicher, detailarmer Health-Endpunkt unter `/up`
+- DICOM Discovery: geführter Wizard, asynchroner Netzwerk-Scan (Ping/Reverse-DNS, TCP-Portprüfung, begrenzte DICOM-C-ECHO-Tests), regelbasierte Klassifizierung mit Confidence-Score, Review-Queue mit Duplikaterkennung und Übernahme in die System-Registry (siehe `docs/Features/dicom-discovery.md`)
 - Backup- und Restore-Skripte für PostgreSQL und privaten Dokumentenspeicher
 
 Der standardmäßig gebundene Malware-Scanner meldet `unavailable`. Uploads werden gespeichert, aber Download und Vorschau bleiben fail-closed gesperrt, solange eine Dokumentversion nicht den Scanstatus `clean` besitzt. Für einen produktiven Dokumentenbetrieb muss daher eine konkrete `MalwareScanner`-Implementierung angebunden werden.
@@ -140,10 +141,10 @@ Die folgenden Befehle werden im Repository-Stamm ausgeführt.
 
    Der Befehl fragt Name, E-Mail-Adresse und Passwort ab. Das Passwort muss mindestens 14 Zeichen sowie Groß- und Kleinbuchstaben, Zahlen und Sonderzeichen enthalten. Es wird weder ausgegeben noch protokolliert. Der Befehl verweigert ein zweites initiales Administratorkonto.
 
-8. Anwendung starten und prüfen:
+8. Anwendung und Discovery-Worker starten und prüfen:
 
    ```bash
-   docker compose up -d app web
+   docker compose up -d app worker web
    docker compose exec app php artisan registry:doctor
    docker compose ps
    ```
@@ -173,6 +174,28 @@ Bei `APP_ENV=local` erzeugt er:
 
 Dieser Zugang ist synthetisch und darf nicht in produktiven oder gemeinsam erreichbaren Installationen verwendet werden. Das Passwort muss bei jeder längerlebigen Entwicklungsinstallation sofort geändert werden. In anderen Umgebungen legt der Seeder nur die Systemadministratorrolle und deren Berechtigungen an, aber keinen Benutzer.
 
+### Discovery: Worker, DCMTK und ersten Testscan prüfen
+
+1. Worker-Status prüfen:
+
+   ```bash
+   docker compose ps worker
+   docker compose logs -f worker
+   ```
+
+   Der Worker verarbeitet die Queue `discovery` (`php artisan queue:work database --queue=discovery,default`).
+
+2. DCMTK im Container prüfen:
+
+   ```bash
+   docker compose exec app which echoscu
+   docker compose exec app which ping
+   ```
+
+3. Erlaubten Netzbereich prüfen: Unter Einstellungen > Discovery (`/settings/discovery`, Berechtigung `discovery.manage`) ist standardmäßig `192.168.0.0/16`, `172.16.0.0/12` und `10.0.0.0/8` freigegeben (Seed-Daten). Ohne mindestens einen aktiven Eintrag kann kein Lauf gestartet werden.
+
+4. Testscan starten: unter „Discovery" → „Neuer Discovery-Lauf" einen kleinen, tatsächlich erreichbaren Bereich wählen (z. B. das eigene Docker-Subnetz oder ein einzelnes bekanntes Testgerät), Schritt 5 mit der Sicherheitsbestätigung abschließen. Der Fortschritt ist auf der Laufseite sichtbar; Ergebnisse erscheinen dort in der Review-Queue, sobald der `worker` sie verarbeitet hat.
+
 ## Docker-Stack
 
 Es gibt genau eine Compose-Datei: `docker-compose.yml`.
@@ -181,6 +204,7 @@ Es gibt genau eine Compose-Datei: `docker-compose.yml`.
 | --- | --- | --- | --- | --- |
 | `web` | Nginx, statische Assets und Weiterleitung an PHP-FPM | `8080` | Standard | `unless-stopped` |
 | `app` | Laravel auf PHP-FPM, Port 9000 nur im Compose-Netz | keiner | Standard | `unless-stopped` |
+| `worker` | Queue-Worker (`php artisan queue:work database --queue=discovery,default`) für asynchrone Discovery-Scan-Läufe | keiner | Standard | `unless-stopped` |
 | `db` | PostgreSQL 18.4 | keiner | Standard | `unless-stopped` |
 | `node` | npm-/Vite-Werkzeugcontainer | keiner | `tools` | keine |
 | `app-test` | isolierte Backend-Testausführung | keiner | `test` | keine |
@@ -201,7 +225,9 @@ Persistente Volumes:
 - `postgres_test_data`: Daten des isolierten Testprofils
 - `app_test_storage`: Storage des isolierten Testprofils
 
-`web` läuft mit schreibgeschütztem Root-Dateisystem und temporären Dateisystemen für Nginx-Cache und PID-Dateien. `app`, `web` und `db` verwenden `no-new-privileges`.
+`web` läuft mit schreibgeschütztem Root-Dateisystem und temporären Dateisystemen für Nginx-Cache und PID-Dateien. `app`, `worker`, `web` und `db` verwenden `no-new-privileges`. Der Entrypoint (`docker/php/entrypoint.sh`) startet `php-fpm` weiterhin als root (üblich, da FPM Worker-Prozesse selbst per Pool-Konfiguration auf `www-data` absenkt), führt alle anderen Kommandos - insbesondere den Queue-Worker - jedoch bewusst als `www-data` aus.
+
+`worker` teilt sich `frontend`- und `backend`-Netz mit `app`, da Discovery-Scans Netzwerkverkehr zu Zielsystemen außerhalb des Compose-Netzes erzeugen müssen (`backend` ist `internal` und dafür nicht ausreichend).
 
 Stoppen ohne Datenverlust:
 
@@ -255,7 +281,7 @@ DICOM-Zielports werden pro registriertem Knoten gespeichert und sind keine einge
 | `SESSION_ENCRYPT` | In `.env.example` vorhanden, aktuell jedoch nicht ausgewertet; Sessions werden in `config/session.php` immer verschlüsselt | `true` |
 | `SESSION_SECURE_COOKIE` | Cookie nur über HTTPS senden | lokal `false`, mit HTTPS `true` |
 | `CACHE_STORE` | Laravel-Cache | `database` |
-| `QUEUE_CONNECTION` | Laravel-Queue-Backend; kein Worker-Dienst ist definiert | `database` |
+| `QUEUE_CONNECTION` | Laravel-Queue-Backend; verarbeitet vom `worker`-Dienst (`database`, keine Redis-Abhängigkeit) | `database` |
 | `FILESYSTEM_DISK` | Standard-Dateisystem | `local` |
 | `REGISTRY_DOCUMENT_EXPIRY_WARNING_DAYS` | Vorlauf für Ablaufwarnungen | `60` |
 | `MAIL_MAILER` | Mail-Transport | `log` |
@@ -263,6 +289,20 @@ DICOM-Zielports werden pro registriertem Knoten gespeichert und sind keine einge
 | `MAIL_FROM_NAME` | Absendername | `Healthcare Node Registry` |
 
 Zusätzlich unterstützt die Implementierung bei Bedarf `DIAGNOSTIC_NETWORK_TIMEOUT` (1 bis 10 Sekunden, Standard 5), `REGISTRY_DOCUMENT_DISK` (Standard `registry_documents`) und `REGISTRY_DOCUMENT_MAX_UPLOAD_KB` (Standard 25 MiB). Nginx begrenzt Requests derzeit auf 10 MiB; ohne Anpassung von `docker/nginx/default.conf` ist daher das kleinere Nginx-Limit wirksam.
+
+### Discovery-Variablen
+
+| Variable | Bedeutung | Standard |
+| --- | --- | --- |
+| `DISCOVERY_MAX_RANGE_SIZE` | Maximale Anzahl IPv4-Adressen je Discovery-Lauf | `1024` |
+| `DISCOVERY_LARGE_RANGE_WARNING_THRESHOLD` | Ab dieser Adressanzahl warnt der Wizard | `256` |
+| `DISCOVERY_DEFAULT_CALLING_AE` | Standard-Calling-AE-Titel für Discovery-Scans | `HNR_DISCOVERY` |
+| `DISCOVERY_MAX_PARALLEL_HOSTS` | Obergrenze für gleichzeitig verarbeitete Hosts je Lauf | `16` |
+| `DISCOVERY_MAX_AE_ATTEMPTS_PER_PORT` | Maximale AE-Titel-Versuche je Host und Port | `5` |
+| `DISCOVERY_PING_TIMEOUT` / `DISCOVERY_TCP_TIMEOUT` / `DISCOVERY_DICOM_ECHO_TIMEOUT` | Timeouts in Sekunden je Prüfungsart | `2` / `2` / `5` |
+| `DISCOVERY_PORT_SCAN_BATCH_SIZE` | Interne Batchgröße für parallele Portprüfungen | `12` |
+
+Erlaubte Scan-Netzbereiche sind keine Umgebungsvariable, sondern werden als Datensätze (`discovery_allowed_networks`) unter Einstellungen > Discovery verwaltet; die Seed-Daten legen initial die drei RFC1918-Bereiche an.
 
 Laravel unterstützt darüber hinaus optionale Verbindungs-, Session-, Cache-, Queue- und Mailvariablen aus den Dateien unter `config/`. Für den bereitgestellten Compose-Stack genügen die Variablen aus `.env.example`.
 
@@ -387,6 +427,7 @@ Es gibt derzeit keine freigegebene öffentliche REST-API, keine OpenAPI-Spezifik
 - Einen produktiven Malware-Scanner anbinden, bevor Registry-Dokumente zum Download freigegeben werden.
 - Datenbank und `app_storage` gemeinsam, regelmäßig und verschlüsselt sichern; Restore-Tests durchführen.
 - Benutzer, Rollen, Auditereignisse und Logs regelmäßig prüfen.
+- Discovery-Scans ausschließlich gegen unter Einstellungen > Discovery freigegebene, tatsächlich autorisierte Netzbereiche starten (siehe `docs/Features/dicom-discovery.md`, `docs/Security/ThreatModel.md`).
 - Keine Patientendaten, echten Zugangsdaten oder privaten Schlüssel in Tests, Logs oder Dokumentation speichern.
 
 ## Dokumentation
@@ -404,6 +445,10 @@ Der Einstieg in die Projektdokumentation befindet sich unter [`docs/README.md`](
 - [`docs/Security/FileUploadSecurity.md`](docs/Security/FileUploadSecurity.md) – Dokumenten-Uploadschutz
 - [`docs/Deployment/BackupRestore.md`](docs/Deployment/BackupRestore.md) – Backup und Restore
 - [`docs/maintenance/repository-cleanup.md`](docs/maintenance/repository-cleanup.md) – letzter Repository-Cleanup
+- [`docs/Features/dicom-discovery.md`](docs/Features/dicom-discovery.md) – DICOM Discovery: Workflow, Sicherheitsgrenzen, Klassifizierung
+- [`docs/Decisions/ADR-0011-discovery-scanning.md`](docs/Decisions/ADR-0011-discovery-scanning.md) – Architekturentscheidungen der Scan-Engine
+- [`docs/limitations.md`](docs/limitations.md) – bekannte Einschränkungen des Discovery-MVP
+- [`docs/roadmap.md`](docs/roadmap.md) – dokumentierte, nicht umgesetzte Version-2-Funktionen
 
 Dokumente mit Status `draft` sind Arbeitsstände. Bei Widersprüchen sind Code, Migrationen und Konfiguration des aktuellen Branches maßgeblich.
 

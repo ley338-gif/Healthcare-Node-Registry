@@ -44,6 +44,7 @@ export type NetworkConnection = {
     name: string;
     service: string;
     status: string;
+    evidence_status: string;
     source_node_id: number;
     target_node_id: number;
     destination_node_id: number | null;
@@ -298,16 +299,32 @@ const flowEdges = computed<Edge[]>(() =>
                 connection.target_node_id === selectedNode.value.id);
         const dimmedByNodeFocus = hasNodeFocus.value && !connectedToFocusedNode;
 
-        const color = serviceStroke[connection.service] ?? '#64748b';
+        const color =
+            connection.evidence_status === 'failed_last_test'
+                ? '#dc2626'
+                : (serviceStroke[connection.service] ?? '#64748b');
+        // Linienstil nach Nachweis-Status: durchgezogen (bestätigt/aktiv), gestrichelt (vermutet),
+        // gepunktet (technisch getestet, aber nicht bestätigt). Ein erfolgreicher C-ECHO allein
+        // erzeugt nie eine bestätigte Verbindung - das entscheidet ausschließlich der Benutzer.
+        const strokeDasharray =
+            connection.evidence_status === 'suspected'
+                ? '8 6'
+                : connection.evidence_status === 'technically_tested'
+                  ? '2 4'
+                  : undefined;
+        const label =
+            (serviceLabels[connection.service] ?? connection.service.toUpperCase()) +
+            (connection.evidence_status === 'failed_last_test' ? ' ⚠' : '');
 
         return {
             id: connection.public_id,
             source: String(connection.source_node_id),
             target: String(connection.target_node_id),
-            label: serviceLabels[connection.service] ?? connection.service.toUpperCase(),
+            label,
             type: 'smoothstep',
             animated:
                 connection.status === 'active' &&
+                connection.evidence_status !== 'failed_last_test' &&
                 !selected &&
                 !props.compact &&
                 (!hasNodeFocus.value || connectedToFocusedNode),
@@ -318,12 +335,13 @@ const flowEdges = computed<Edge[]>(() =>
             style: {
                 stroke: color,
                 strokeWidth: selected || connectedToFocusedNode ? 4 : 2.5,
+                strokeDasharray,
                 opacity: dimmedByNodeFocus ? 0.14 : 1,
                 filter: selected || connectedToFocusedNode ? 'drop-shadow(0 0 4px rgba(37, 99, 235, 0.35))' : undefined,
                 transition: 'opacity 180ms ease',
             },
             labelStyle: {
-                fill: selected ? '#1d4ed8' : '#334155',
+                fill: connection.evidence_status === 'failed_last_test' ? '#b91c1c' : selected ? '#1d4ed8' : '#334155',
                 fontSize: props.compact ? 10 : selected ? 13 : 12,
                 fontWeight: 700,
             },

@@ -43,6 +43,7 @@ final class SettingsController extends Controller
             'filters' => ['search' => $search, 'status' => $status, 'role' => $roleId ?: null],
             'canManageUsers' => $canManageUsers,
             'canManageRoles' => $canManageRoles,
+            'canManageDiscovery' => $actor->hasPermission('discovery.manage'),
             'currentUserId' => $actor->public_id,
         ]);
     }

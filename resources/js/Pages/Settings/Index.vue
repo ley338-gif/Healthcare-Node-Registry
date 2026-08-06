@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { KeyRound, Pencil, Plus, RotateCcw, Search, ShieldCheck, Trash2, Users, X } from '@lucide/vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { KeyRound, Pencil, Plus, Radar, RotateCcw, Search, ShieldCheck, Trash2, Users, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import Pagination from '../../Components/Pagination.vue';
 import PageHeader from '../../Components/ui/PageHeader.vue';
@@ -29,6 +29,7 @@ const props = defineProps<{
     filters: { search: string; status: string; role: number | null };
     canManageUsers: boolean;
     canManageRoles: boolean;
+    canManageDiscovery: boolean;
     currentUserId: string;
 }>();
 const tab = ref<'users' | 'roles'>(props.canManageUsers ? 'users' : 'roles');
@@ -158,6 +159,13 @@ const formatActivity = (value: number | null) =>
             >
                 <ShieldCheck :size="17" /> Rollen & Berechtigungen
             </button>
+            <Link
+                v-if="canManageDiscovery"
+                href="/settings/discovery"
+                class="inline-flex items-center gap-2 border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 hover:text-slate-700"
+            >
+                <Radar :size="17" /> Discovery
+            </Link>
         </div>
 
         <template v-if="tab === 'users' && canManageUsers && users">

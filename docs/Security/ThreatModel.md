@@ -43,6 +43,10 @@ Auch ohne Patientendaten sind diese Informationen sicherheitskritisch.
 | CSV Injection | Export wird in Office geöffnet | Formel-Injection-Schutz | Konzept vorhanden |
 | Enumeration | erratbare IDs oder Nutzer | public IDs, generische Fehlermeldungen | ADR offen |
 | Backup-Diebstahl | ungeschütztes Backup | Verschlüsselung, Zugriffskontrolle | Betriebsentscheidung offen |
+| Scan fremder/nicht autorisierter Netze | Discovery-Lauf gegen fremdes Netz gestartet | Freigabeliste `discovery_allowed_networks` (Default nur RFC1918), Pflichtbestätigung im Wizard, Audit | Implementiert |
+| Command Injection über Scan-Parameter | manipulierter Host/Port/AE-Titel erreicht eine Shell | ausschließlich Argumentlisten via `Symfony\Process`, keine Shell-Strings, serverseitige Eingabevalidierung (IPv4, Port 1–65535, AE-Titel-Regex) | Implementiert |
+| Ressourcenerschöpfung durch großen Scan | sehr großer Zielbereich blockiert Worker | `discovery.max_range_size`, `max_parallel_hosts`, harte Prozess-Timeouts, kooperativer Abbruch | Implementiert |
+| AE-Titel-Brute-Forcing | unbegrenzte Called-AE-Versuche gegen ein Zielsystem | `discovery.max_ae_attempts_per_port` begrenzt Versuche je Host/Port | Implementiert |
 
 ## Review
 
