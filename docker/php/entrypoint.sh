@@ -10,4 +10,11 @@ mkdir -p \
 
 chown -R www-data:www-data /var/www/html/storage
 
-exec docker-php-entrypoint "$@"
+# php-fpm startet als root und dropt Privilegien intern je Pool-Konfiguration
+# (pm.user=www-data). Alle anderen Kommandos - insbesondere der Discovery-
+# Queue-Worker - laufen bewusst nicht als root.
+if [ "$1" = "php-fpm" ]; then
+    exec docker-php-entrypoint "$@"
+fi
+
+exec su -s /bin/sh -c "docker-php-entrypoint $*" www-data

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- DICOM Discovery MVP ergänzt: geführter Wizard, asynchroner Netzwerk-Scan (Ping/Reverse-DNS, TCP-Portprüfung, begrenzte DICOM-C-ECHO-Tests) über einen neuen `worker`-Queue-Container, regelbasierte Klassifizierung mit Confidence-Score, Review-Queue mit Filtern und Detail-Drawer, Duplikaterkennung bei der Übernahme in die System-Registry, Administrator-verwaltete Freigabeliste erlaubter Netzbereiche und vollständige Audit-Protokollierung.
+- Bestehende Topologie um einen Nachweis-Status (`dicom_connections.evidence_status`: bestätigt/technisch getestet/vermutet/manuell dokumentiert/zuletzt fehlgeschlagen) und entsprechende Linienstile in der Netzwerkkarte erweitert.
+- `systems`-Tabelle um optionale Felder `responsible` und `criticality` ergänzt (aktuell nur über die Discovery-Übernahme setzbar, siehe `docs/limitations.md`).
 - Autorisierten C-MOVE-Diagnosetest mit `movescu`, synthetischer serverseitiger Study-UID, Pflichtbestätigung, Testhistorie und Audit-Protokollierung ergänzt.
 - Autorisierten C-GET-Diagnosetest mit `getscu`, synthetischer serverseitiger Study-UID, sicherer temporärer Dateibereinigung, Testhistorie und Audit-Protokollierung ergänzt.
 - Globale, serverseitig filter- und sortierbare Übersicht aller DICOM-Verbindungen unter `/connections` ergänzt.

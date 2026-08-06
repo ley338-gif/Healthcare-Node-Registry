@@ -43,3 +43,7 @@ Jeder fachlich kritische Wert sollte eine Herkunft besitzen:
 ## Datenschutz
 
 Die Registry speichert keine hochgeladenen DICOM-Dateien und benötigt keine echten Patientendaten. Der kontrollierte Storage-Test erzeugt kurzzeitig ein synthetisches Secondary-Capture-Objekt und kann dieses nach ausdrücklicher Bestätigung an ein Zielsystem senden. Dateianalysen und lokale Testartefakte werden nach Verarbeitung gelöscht. Details: [Diagnostic Test Workspace](DiagnosticTestWorkspace.md).
+
+## Discovery-C-ECHO gegenüber verifizierten Knoten
+
+Der Diagnose-Workspace verifiziert bekannte, bereits registrierte `DicomNode`-Einträge mit dem festen Calling-AE-Titel `NODE_REGISTRY`. Das DICOM-Discovery-Modul (siehe [dicom-discovery.md](../Features/dicom-discovery.md)) ist davon technisch getrennt: Es testet unbekannte Host/Port/AE-Kombinationen mit konfigurierbaren Calling- und Called-AE-Titel-Kandidaten und dem Standard-Calling-AE `HNR_DISCOVERY`. Beide Pfade nutzen DCMTK `echoscu` mit fester Argumentliste, teilen sich aber bewusst keinen Code, damit Discovery-Änderungen die produktive Node-Verifizierung nicht beeinflussen können.

@@ -8,6 +8,7 @@ import {
     FlaskConical,
     LayoutDashboard,
     Map,
+    Radar,
     TableProperties,
     Settings,
     ShieldCheck,
@@ -17,6 +18,9 @@ const page = usePage<PageProps>();
 const canViewAudit = ((page.props.auth as { permissions?: string[] })?.permissions ?? []).includes('audit.view');
 const canViewConnections = page.props.auth.permissions.some((permission) =>
     ['registry.view', 'registry.manage'].includes(permission),
+);
+const canViewDiscovery = page.props.auth.permissions.some((permission) =>
+    ['discovery.view', 'discovery.run', 'discovery.manage'].includes(permission),
 );
 const canViewSettings = page.props.auth.permissions.some((permission) =>
     ['users.manage', 'roles.manage', 'settings.manage'].includes(permission),
@@ -47,6 +51,18 @@ const groups = [
                 paths: ['/documents'],
                 icon: FileText,
                 enabled: true,
+            },
+        ],
+    },
+    {
+        label: 'Erkennung',
+        items: [
+            {
+                label: 'Discovery',
+                href: '/discovery',
+                paths: ['/discovery'],
+                icon: Radar,
+                enabled: canViewDiscovery,
             },
         ],
     },

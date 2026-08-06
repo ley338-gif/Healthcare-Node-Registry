@@ -134,6 +134,7 @@ final class DicomNetworkMapController extends Controller
                         'name' => $connection->name,
                         'service' => $connection->service,
                         'status' => $connection->status,
+                        'evidence_status' => $connection->evidence_status,
                         'source_node_id' => $connection->source_dicom_node_id,
                         'target_node_id' => $connection->target_dicom_node_id,
                         'destination_node_id' => $connection

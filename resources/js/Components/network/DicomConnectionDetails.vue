@@ -189,6 +189,26 @@ const endpoint = (node: NetworkNode | null): string => {
                                     {{ connection.test_enabled ? 'Aktiv' : 'Inaktiv' }}
                                 </p>
                             </div>
+
+                            <div class="rounded-xl border border-slate-200 p-4 sm:col-span-2">
+                                <p class="text-xs text-slate-500">Nachweis-Status (Linienstil in der Topologie)</p>
+                                <p class="mt-1 text-sm font-semibold text-slate-900">
+                                    {{
+                                        {
+                                            confirmed: 'Bestätigt (durchgezogen)',
+                                            technically_tested: 'Technisch getestet, nicht bestätigt (gepunktet)',
+                                            suspected: 'Vermutet, nicht bestätigt (gestrichelt)',
+                                            manually_documented: 'Manuell dokumentiert (durchgezogen)',
+                                            failed_last_test: 'Letzter Test fehlgeschlagen (rot, ⚠)',
+                                        }[connection.evidence_status] ?? connection.evidence_status
+                                    }}
+                                </p>
+                                <p class="mt-1 text-xs text-slate-400">
+                                    Ein erfolgreicher C-ECHO beweist nur die Erreichbarkeit dieses Endpunkts, keine
+                                    produktive Verbindung. Nur der Benutzer kann eine Verbindung als bestätigt
+                                    kennzeichnen.
+                                </p>
+                            </div>
                         </div>
                     </section>
                 </div>

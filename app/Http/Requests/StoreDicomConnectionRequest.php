@@ -71,6 +71,10 @@ final class StoreDicomConnectionRequest extends FormRequest
                     'inactive',
                 ]),
             ],
+            'evidence_status' => [
+                'required',
+                Rule::in(DicomConnection::EVIDENCE_STATUSES),
+            ],
             'calling_ae_title' => [
                 'nullable',
                 'string',

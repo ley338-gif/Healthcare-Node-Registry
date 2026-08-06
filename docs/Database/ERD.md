@@ -179,3 +179,84 @@ erDiagram
 - SCU-/SCP-Rollen werden pro DICOM-Dienst modelliert
 - Audit Events sind append-only
 - `actor_user_id` darf bei Systemaktionen leer sein; `actor_type` bleibt erforderlich
+
+## Discovery (implementiertes Schema)
+
+Die obige, konzeptionelle ERD-Skizze wurde für die Kernregistry (`ASSETS`/`ENDPOINTS`/`CONNECTIONS`) vor der Implementierung erstellt und verwendet abstrahierte Namen. Die tatsächlich implementierten Tabellen heißen `systems`, `dicom_nodes`, `dicom_connections` (siehe ADR-0006). Der folgende Ausschnitt zeigt zusätzlich das mit dem Discovery-MVP eingeführte, tatsächlich implementierte Schema:
+
+```mermaid
+erDiagram
+    DISCOVERY_RUNS ||--o{ DISCOVERY_EXCLUSIONS : excludes
+    DISCOVERY_RUNS ||--o{ DISCOVERY_PORTS : configures
+    DISCOVERY_RUNS ||--o{ DISCOVERY_AE_CANDIDATES : configures
+    DISCOVERY_RUNS ||--o{ DISCOVERED_HOSTS : finds
+    DISCOVERED_HOSTS ||--o{ DISCOVERED_PORTS : scans
+    DISCOVERED_HOSTS ||--o{ DICOM_DISCOVERY_RESULTS : tests
+    DISCOVERED_HOSTS ||--o{ DISCOVERY_CLASSIFICATION_EVIDENCE : classifies
+    DISCOVERED_HOSTS }o--o| SYSTEMS : promotes_to
+    USERS ||--o{ DISCOVERY_ALLOWED_NETWORKS : approves
+
+    DISCOVERY_RUNS {
+      bigint id PK
+      uuid public_id UK
+      string name
+      string ip_range
+      string status
+      int progress_percentage
+      int total_ips
+      int processed_ips
+      jsonb scan_options
+      bigint created_by FK
+      timestamp started_at
+      timestamp finished_at
+      timestamps
+      soft_deletes
+    }
+    DISCOVERED_HOSTS {
+      bigint id PK
+      uuid public_id UK
+      bigint discovery_run_id FK
+      string ip_address
+      string hostname
+      boolean is_reachable
+      string status
+      string confidence_score
+      int confidence_percentage
+      string suggested_system_type
+      bigint system_id FK
+      timestamp last_seen_at
+    }
+    DISCOVERED_PORTS {
+      bigint id PK
+      bigint discovered_host_id FK
+      int port
+      boolean is_open
+      boolean is_dicom_candidate
+      int response_time_ms
+    }
+    DICOM_DISCOVERY_RESULTS {
+      bigint id PK
+      bigint discovered_host_id FK
+      int port
+      string calling_ae
+      string called_ae
+      boolean association_successful
+      boolean echo_successful
+      string error_code
+      jsonb raw_response
+    }
+    DISCOVERY_CLASSIFICATION_EVIDENCE {
+      bigint id PK
+      bigint discovered_host_id FK
+      string rule_name
+      string reason
+      int weight
+    }
+    DISCOVERY_ALLOWED_NETWORKS {
+      bigint id PK
+      uuid public_id UK
+      string cidr
+      boolean active
+      bigint created_by FK
+    }
+```

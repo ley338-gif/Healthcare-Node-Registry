@@ -19,6 +19,7 @@ use Illuminate\Support\Str;
  * @property string $name
  * @property string $service
  * @property string $status
+ * @property string $evidence_status
  * @property string|null $calling_ae_title
  * @property string|null $called_ae_title
  * @property int|null $port_override
@@ -57,6 +58,27 @@ final class DicomConnection extends Model
         self::SERVICE_GET,
     ];
 
+    public const EVIDENCE_CONFIRMED = 'confirmed';
+
+    public const EVIDENCE_TECHNICALLY_TESTED = 'technically_tested';
+
+    public const EVIDENCE_SUSPECTED = 'suspected';
+
+    public const EVIDENCE_MANUALLY_DOCUMENTED = 'manually_documented';
+
+    public const EVIDENCE_FAILED_LAST_TEST = 'failed_last_test';
+
+    /**
+     * @var list<string>
+     */
+    public const EVIDENCE_STATUSES = [
+        self::EVIDENCE_CONFIRMED,
+        self::EVIDENCE_TECHNICALLY_TESTED,
+        self::EVIDENCE_SUSPECTED,
+        self::EVIDENCE_MANUALLY_DOCUMENTED,
+        self::EVIDENCE_FAILED_LAST_TEST,
+    ];
+
     protected $fillable = [
         'source_dicom_node_id',
         'target_dicom_node_id',
@@ -64,6 +86,7 @@ final class DicomConnection extends Model
         'name',
         'service',
         'status',
+        'evidence_status',
         'calling_ae_title',
         'called_ae_title',
         'port_override',

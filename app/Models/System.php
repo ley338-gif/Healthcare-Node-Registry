@@ -48,6 +48,8 @@ final class System extends Model
         'inventory_number',
         'description',
         'notes',
+        'responsible',
+        'criticality',
         'archived_at',
     ];
 
