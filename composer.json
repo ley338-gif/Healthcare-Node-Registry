@@ -38,6 +38,11 @@
       "@php artisan package:discover --ansi"
     ],
     "test": "@php vendor/bin/phpunit",
+    "coverage": "@php -d pcov.enabled=1 vendor/bin/phpunit --coverage-clover coverage/clover.xml",
+    "coverage:check": [
+      "@coverage",
+      "@php scripts/coverage-gate.php coverage/clover.xml coverage-thresholds.json"
+    ],
     "lint": "pint --parallel",
     "lint:check": "pint --parallel --test",
     "analyse": "phpstan analyse --memory-limit=1G",
@@ -45,6 +50,11 @@
       "@lint:check",
       "@analyse",
       "@test"
+    ],
+    "ci": [
+      "@lint:check",
+      "@analyse",
+      "@coverage:check"
     ]
   },
   "config": {

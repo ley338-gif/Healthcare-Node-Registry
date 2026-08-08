@@ -22,6 +22,8 @@ RUN apt-get update \
         pcntl \
         pdo_pgsql \
         zip \
+    && pecl install pcov-1.0.12 \
+    && docker-php-ext-enable pcov \
     && rm -rf /var/lib/apt/lists/*
 
 COPY docker/php/requirements-dicom.txt /tmp/requirements-dicom.txt
@@ -37,6 +39,7 @@ RUN curl -fsSL "https://getcomposer.org/download/${COMPOSER_VERSION}/composer.ph
 
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-registry.ini
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/10-opcache.ini
+COPY docker/php/pcov.ini /usr/local/etc/php/conf.d/20-pcov.ini
 
 WORKDIR /var/www/html
 

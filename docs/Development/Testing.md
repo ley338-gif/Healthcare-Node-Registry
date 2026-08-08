@@ -20,6 +20,20 @@ Complete local checks:
 .\scripts\quality.ps1
 ```
 
+## Coverage
+
+The backend image includes PCOV, disabled by default. Run the full test suite with
+coverage and enforce the repository thresholds with:
+
+```powershell
+docker compose --profile test run --rm app-test composer coverage:check
+```
+
+The generated Clover report is written to `coverage/clover.xml` and is ignored by
+Git. `coverage-thresholds.json` protects the overall application coverage and the
+security-sensitive policy, document, discovery, and CSV import groups against
+regressions. GitHub Actions runs the same gate through `composer ci`.
+
 ## Commands that must not be used for backend tests
 
 Do not run PHPUnit in the development container:
