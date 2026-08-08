@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
+use LogicException;
 
 /**
  * @property int $id
@@ -14,6 +15,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $subject_public_id
  * @property array<string, mixed> $metadata
  * @property CarbonImmutable $occurred_at
+ * @property string $previous_hash
+ * @property string $event_hash
+ * @property CarbonImmutable $retention_until
  */
 final class SecurityEvent extends Model
 {
@@ -27,6 +31,9 @@ final class SecurityEvent extends Model
         'subject_public_id',
         'metadata',
         'occurred_at',
+        'previous_hash',
+        'event_hash',
+        'retention_until',
     ];
 
     protected function casts(): array
@@ -34,6 +41,17 @@ final class SecurityEvent extends Model
         return [
             'metadata' => 'array',
             'occurred_at' => 'immutable_datetime',
+            'retention_until' => 'immutable_datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        self::updating(static function (): never {
+            throw new LogicException('Audit events are immutable.');
+        });
+        self::deleting(static function (): never {
+            throw new LogicException('Audit events may only expire through the controlled retention process.');
+        });
     }
 }
