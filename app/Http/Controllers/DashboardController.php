@@ -7,9 +7,12 @@ use App\Models\DiagnosticTestRun;
 use App\Models\DicomConnection;
 use App\Models\DicomNode;
 use App\Models\Organization;
+use App\Models\RegistryDocument;
 use App\Models\SecurityEvent;
 use App\Models\Site;
 use App\Models\System;
+use App\Notifications\RegistryDocumentExpiryNotification;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,6 +28,61 @@ final class DashboardController extends Controller
         $systems = System::query()->active()->count();
         $dicomNodes = DicomNode::query()->active()->count();
         $connections = DicomConnection::query()->active()->count();
+
+        $user = $request->user();
+        $canViewDocuments = $user?->hasPermission('documents.view') ?? false;
+        $expiringDocuments = null;
+        if ($canViewDocuments && $user !== null) {
+            $today = CarbonImmutable::today();
+            $warningEnd = $today->addDays(max(0, (int) config('registry_documents.expiry_warning_days')));
+            $expiryQuery = RegistryDocument::query()
+                ->whereNull('archived_at')
+                ->where('status', '!=', 'archived')
+                ->whereNotNull('valid_until')
+                ->whereDate('valid_until', '<=', $warningEnd);
+
+            $notificationIds = [];
+            foreach ($user->unreadNotifications()->where('type', RegistryDocumentExpiryNotification::class)->get() as $notification) {
+                $documentPublicId = $notification->data['document_public_id'] ?? null;
+                if (is_string($documentPublicId)) {
+                    $notificationIds[$documentPublicId] = $notification->id;
+                }
+            }
+
+            $expiringDocuments = [
+                'total' => (clone $expiryQuery)->count(),
+                'expired' => (clone $expiryQuery)->whereDate('valid_until', '<', $today)->count(),
+                'expiringSoon' => (clone $expiryQuery)->whereDate('valid_until', '>=', $today)->count(),
+                'warningDays' => max(0, (int) config('registry_documents.expiry_warning_days')),
+                'items' => $expiryQuery
+                    ->with('documentable')
+                    ->orderByRaw('CASE WHEN valid_until < ? THEN 0 ELSE 1 END', [$today->toDateString()])
+                    ->orderByRaw('CASE WHEN valid_until < ? THEN valid_until END DESC', [$today->toDateString()])
+                    ->orderBy('valid_until')
+                    ->limit(8)
+                    ->get()
+                    ->map(function (RegistryDocument $document) use ($notificationIds, $today): array {
+                        $daysRemaining = (int) $today->diffInDays($document->valid_until, false);
+                        $notificationId = $notificationIds[$document->public_id] ?? null;
+
+                        return [
+                            'publicId' => $document->public_id,
+                            'title' => $document->title,
+                            'categoryLabel' => $document->category->label(),
+                            'contextName' => (string) ($document->documentable?->getAttribute('name') ?? ''),
+                            'validUntil' => $document->valid_until?->toDateString(),
+                            'daysRemaining' => $daysRemaining,
+                            'status' => $daysRemaining < 0 ? 'expired' : 'expiring_soon',
+                            'unread' => $notificationId !== null,
+                            'href' => $notificationId !== null
+                                ? route('notifications.show', ['notification' => $notificationId])
+                                : route('documents.index', ['document' => $document->public_id]),
+                        ];
+                    })
+                    ->values()
+                    ->all(),
+            ];
+        }
 
         $failedDicomNodes = DicomNode::query()
             ->active()
@@ -101,6 +159,7 @@ final class DashboardController extends Controller
             ],
             'recentChanges' => $recentChanges,
             'diagnostics' => $diagnostics,
+            'expiringDocuments' => $expiringDocuments,
             'tasks' => [
                 [
                     'label' => 'Mindestens ein System dokumentieren',

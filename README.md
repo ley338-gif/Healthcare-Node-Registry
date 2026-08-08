@@ -29,6 +29,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - Globale, berechtigungsgeprüfte Suche
 - Strukturierte Betriebsdokumentation für Organisationen, Standorte, Abteilungen und Systeme
 - Private Dokumentenablage mit Metadaten, Versionen, SHA-256-Prüfung, Duplikaterkennung, Archivierung und PDF-Vorschau
+- Tägliche In-App-Erinnerungen und Dashboard-Übersicht für ablaufende Zertifikate, Lizenzen und Wartungsdokumente
 - Datei-Allowlist und Signaturprüfung für PDF, PNG, JPEG, DOCX, XLSX, TXT und ZIP
 - Sessionbasierter Login sowie Benutzer-, Rollen- und Berechtigungsverwaltung
 - RBAC mit einer initialen Rolle `system-administrator` und serverseitigen Policies/Gates
@@ -207,7 +208,7 @@ Es gibt genau eine Compose-Datei: `docker-compose.yml`.
 | `web` | Nginx, statische Assets und Weiterleitung an PHP-FPM | `8080` | Standard | `unless-stopped` |
 | `app` | Laravel auf PHP-FPM, Port 9000 nur im Compose-Netz | keiner | Standard | `unless-stopped` |
 | `worker` | Queue-Worker (`php artisan queue:work database --queue=discovery,default`) für asynchrone Discovery-Scan-Läufe | keiner | Standard | `unless-stopped` |
-| `scheduler` | Laravel-Scheduler für den stündlichen Rescan offener Dokumentversionen | keiner | Standard | `unless-stopped` |
+| `scheduler` | Laravel-Scheduler für den stündlichen Malware-Rescan und die tägliche Dokument-Ablaufprüfung | keiner | Standard | `unless-stopped` |
 | `clamav` | ClamAV 1.5.3 mit ClamD und FreshClam | keiner | Standard | `unless-stopped` |
 | `db` | PostgreSQL 18.4 | keiner | Standard | `unless-stopped` |
 | `node` | npm-/Vite-Werkzeugcontainer | keiner | `tools` | keine |
@@ -386,7 +387,7 @@ Backend-Tests sollen nicht gegen den normalen `app`-/`db`-Stack ausgeführt werd
 
 ## Datenbank, Migrationen und Seeds
 
-Die Anwendung verwendet ausschließlich PostgreSQL. Migrationen verwalten Benutzer, Sessions, Cache, Jobs, RBAC, Security Events, Organisationsstruktur, Systeme, DICOM-Knoten und -Verbindungen, Diagnoseverläufe und -profile sowie Registry-Dokumentation und Dokumentversionen.
+Die Anwendung verwendet ausschließlich PostgreSQL. Migrationen verwalten Benutzer, Sessions, Cache, Jobs, persistente In-App-Benachrichtigungen, RBAC, Security Events, Organisationsstruktur, Systeme, DICOM-Knoten und -Verbindungen, Diagnoseverläufe und -profile sowie Registry-Dokumentation und Dokumentversionen.
 
 Migrationen:
 

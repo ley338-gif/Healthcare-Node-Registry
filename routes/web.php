@@ -24,6 +24,7 @@ use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\MoveDiagnosticController;
 use App\Http\Controllers\MppsDiagnosticController;
 use App\Http\Controllers\NetworkDiagnosticController;
+use App\Http\Controllers\NotificationRedirectController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationStructureController;
 use App\Http\Controllers\PacsQueryDiagnosticController;
@@ -65,6 +66,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/structure', OrganizationStructureController::class)->name('structure.index');
     Route::get('/documents', RegistryDocumentIndexController::class)->name('documents.index');
+    Route::get('/notifications/{notification}', NotificationRedirectController::class)->name('notifications.show');
 
     Route::get('/registry-documentation/{documentableType}/{documentable}', [RegistryDocumentationController::class, 'index'])
         ->whereIn('documentableType', ['organizations', 'sites', 'departments', 'systems'])

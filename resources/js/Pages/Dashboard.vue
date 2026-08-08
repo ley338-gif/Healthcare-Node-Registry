@@ -15,6 +15,7 @@ import {
     Radio,
 } from '@lucide/vue';
 import { computed } from 'vue';
+import ExpiringDocumentsPanel, { type ExpiringDocument } from '../Components/dashboard/ExpiringDocumentsPanel.vue';
 import AppLayout from '../Layouts/AppLayout.vue';
 
 type Summary = {
@@ -57,11 +58,20 @@ type Diagnostics = {
     }>;
 };
 
+type ExpiringDocuments = {
+    total: number;
+    expired: number;
+    expiringSoon: number;
+    warningDays: number;
+    items: ExpiringDocument[];
+};
+
 const props = defineProps<{
     summary: Summary;
     recentChanges: RecentChange[];
     tasks: Task[];
     diagnostics: Diagnostics | null;
+    expiringDocuments: ExpiringDocuments | null;
 }>();
 
 const testTypeLabel = (type: string): string =>
@@ -242,6 +252,15 @@ const changeIconClass = (eventType: string): string => {
                 </p>
             </Link>
         </div>
+
+        <ExpiringDocumentsPanel
+            v-if="expiringDocuments"
+            :total="expiringDocuments.total"
+            :expired="expiringDocuments.expired"
+            :expiring-soon="expiringDocuments.expiringSoon"
+            :warning-days="expiringDocuments.warningDays"
+            :items="expiringDocuments.items"
+        />
 
         <section v-if="diagnostics" class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

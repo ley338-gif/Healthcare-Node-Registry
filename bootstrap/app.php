@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('registry-documents:rescan --limit=250')->hourly()->withoutOverlapping();
+        $schedule->command('registry-documents:notify-expiry')->dailyAt('07:00')->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
