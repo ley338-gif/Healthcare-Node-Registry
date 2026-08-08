@@ -78,6 +78,13 @@
 
 ## Historische Entwicklungsmeilensteine
 
+### 0.2.0-dev – Organisationsstruktur und UI-Grundlage
+
+- Organisationen, Standorte und Abteilungen mit Suche, Bearbeitung, Archivierung, RBAC, Audit und Dashboard-Integration umgesetzt.
+- Gemeinsamen Einstieg und gruppierte Navigation für die Organisationsstruktur ergänzt; die fachliche Hierarchie folgt ADR‑0005.
+- Monolithisches Anwendungslayout in getrennte Sidebar-/Header-Komponenten und wiederverwendbare Page-, Card-, Status- und Statistikkomponenten zerlegt.
+- Dashboard auf tatsächlich vorhandene Registry-Daten begrenzt; Monitoring- und Verbindungswerte werden erst mit realen Datenquellen dargestellt.
+
 ### 0.1.2 – Isolierte Entwicklungs- und Testinfrastruktur
 
 - Eigene Compose-Dienste `app-test` und `db-test` mit isoliertem Netzwerk und getrennten Volumes eingeführt.
