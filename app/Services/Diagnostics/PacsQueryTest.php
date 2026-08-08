@@ -24,6 +24,7 @@ final class PacsQueryTest
         $duration = (int) round((hrtime(true) - $timer) / 1_000_000);
         $normalized = strtolower($command->output);
         $failureType = match (true) {
+            str_contains($normalized, 'dicom-tls'), str_contains($normalized, 'tls-profil') => 'tls_configuration',
             $command->timedOut, str_contains($normalized, 'timeout'), str_contains($normalized, 'timed out') => 'timeout',
             str_contains($normalized, 'association rejected') => 'association_rejected',
             $command->processError => 'process_error', default => 'c_find_failed',
@@ -32,6 +33,7 @@ final class PacsQueryTest
         if (! $command->successful) {
             $status = $failureType === 'timeout' ? DiagnosticTestStatus::Timeout : DiagnosticTestStatus::Failed;
             $summary = match ($failureType) {
+                'tls_configuration' => 'Die DICOM-TLS-Konfiguration ist unvollständig oder ungültig.',
                 'timeout' => 'Zeitüberschreitung bei der PACS-Abfrage.',
                 'association_rejected' => 'DICOM Association wurde abgelehnt.',
                 'process_error' => 'DCMTK-Prozess konnte nicht ausgeführt werden.',

@@ -34,6 +34,7 @@ final class DicomConnectionFactory extends Factory
             'called_ae_title' => null,
             'port_override' => null,
             'tls_enabled' => false,
+            'tls_profile' => null,
             'test_enabled' => true,
             'description' => null,
             'notes' => null,

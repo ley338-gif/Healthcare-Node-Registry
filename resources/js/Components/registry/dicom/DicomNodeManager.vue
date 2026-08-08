@@ -39,6 +39,7 @@ export type DicomNode = {
     role: 'scu' | 'scp' | 'both';
     status: 'active' | 'planned' | 'maintenance' | 'inactive';
     tls_enabled: boolean;
+    tls_profile: string | null;
     supports_echo: boolean;
     supports_store: boolean;
     supports_query: boolean;
@@ -117,6 +118,7 @@ const emptyForm = () => ({
     role: 'both' as DicomNode['role'],
     status: 'active' as DicomNode['status'],
     tls_enabled: false,
+    tls_profile: '',
     supports_echo: true,
     supports_store: false,
     supports_query: false,
@@ -170,6 +172,7 @@ watch(
         editForm.role = node.role;
         editForm.status = node.status;
         editForm.tls_enabled = node.tls_enabled;
+        editForm.tls_profile = node.tls_profile ?? '';
         editForm.supports_echo = node.supports_echo;
         editForm.supports_store = node.supports_store;
         editForm.supports_query = node.supports_query;
@@ -630,6 +633,22 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                                 <input v-model="createForm.tls_enabled" type="checkbox" class="h-4 w-4" />
                                 <span class="text-sm font-medium text-slate-700"> TLS aktiviert </span>
                             </label>
+
+                            <label v-if="createForm.tls_enabled" class="sm:col-span-2">
+                                <span class="text-sm font-medium text-slate-700">TLS-Profil *</span>
+                                <input
+                                    v-model="createForm.tls_profile"
+                                    maxlength="64"
+                                    placeholder="z. B. pacs-produktiv"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                                />
+                                <span class="mt-1 block text-xs text-slate-500">
+                                    Referenz auf ein vom Betreiber bereitgestelltes Zertifikatsprofil.
+                                </span>
+                                <span v-if="createForm.errors.tls_profile" class="mt-1 block text-xs text-red-600">
+                                    {{ createForm.errors.tls_profile }}
+                                </span>
+                            </label>
                         </div>
 
                         <section>
@@ -800,6 +819,22 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                             <label class="flex items-center gap-3 rounded-xl border border-slate-200 p-3 sm:self-end">
                                 <input v-model="editForm.tls_enabled" type="checkbox" class="h-4 w-4" />
                                 <span class="text-sm font-medium text-slate-700"> TLS aktiviert </span>
+                            </label>
+
+                            <label v-if="editForm.tls_enabled" class="sm:col-span-2">
+                                <span class="text-sm font-medium text-slate-700">TLS-Profil *</span>
+                                <input
+                                    v-model="editForm.tls_profile"
+                                    maxlength="64"
+                                    placeholder="z. B. pacs-produktiv"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                                />
+                                <span class="mt-1 block text-xs text-slate-500">
+                                    Ohne gültiges Profil wird kein Diagnose-Lauf gestartet.
+                                </span>
+                                <span v-if="editForm.errors.tls_profile" class="mt-1 block text-xs text-red-600">
+                                    {{ editForm.errors.tls_profile }}
+                                </span>
                             </label>
                         </div>
 

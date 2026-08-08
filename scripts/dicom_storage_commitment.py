@@ -2,6 +2,7 @@
 """Request storage commitment for one previously stored synthetic object."""
 
 import json
+import ssl
 import sys
 import threading
 
@@ -13,6 +14,30 @@ from pynetdicom.sop_class import StorageCommitmentPushModel
 
 PUSH_MODEL_INSTANCE_UID = "1.2.840.10008.1.20.1.1"
 UID_PREFIX = "1.2.826.0.1.3680043.10.987."
+
+
+def tls_client_arguments(request):
+    tls = request.get("tls")
+    if not tls:
+        return None
+
+    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=tls["ca_certificate"])
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_REQUIRED
+    context.load_cert_chain(certfile=tls["certificate"], keyfile=tls["private_key"])
+    return context, request["host"]
+
+
+def tls_server_context(request):
+    tls = request.get("tls")
+    if not tls:
+        return None
+
+    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    context.load_verify_locations(cafile=tls["ca_certificate"])
+    context.verify_mode = ssl.CERT_REQUIRED
+    context.load_cert_chain(certfile=tls["certificate"], keyfile=tls["private_key"])
+    return context
 
 
 def main():
@@ -44,6 +69,7 @@ def main():
         (request.get("callback_bind", "0.0.0.0"), int(request["callback_port"])),
         block=False,
         evt_handlers=handlers,
+        ssl_context=tls_server_context(request),
     )
 
     association = None
@@ -60,6 +86,7 @@ def main():
             ae_title=request["called_ae_title"],
             ext_neg=[role],
             evt_handlers=handlers,
+            tls_args=tls_client_arguments(request),
         )
         if not association.is_established:
             print(json.dumps({"successful": False, "failure_type": "association_rejected", "transaction_uid": transaction_uid, "message": "DICOM association could not be established"}))

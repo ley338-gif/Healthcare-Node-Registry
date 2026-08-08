@@ -19,7 +19,7 @@ final class WorklistDiagnosticTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_successful_query_without_results_is_not_an_error(): void
+    public function test_tls_enabled_successful_query_without_results_is_not_an_error(): void
     {
         $result = $this->executeWorklist(new WorklistCommandResult(true, 0, '', '<responses/>'));
 
@@ -97,7 +97,11 @@ final class WorklistDiagnosticTest extends TestCase
     public function test_invalid_filters_are_rejected_before_execution(): void
     {
         $user = $this->createRegistryManager();
-        $node = DicomNode::factory()->create(['supports_worklist' => true]);
+        $node = DicomNode::factory()->create([
+            'supports_worklist' => true,
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
+        ]);
         $runner = new FakeWorklistCommandRunner(new WorklistCommandResult(true, 0, '', '<responses/>'));
         $this->app->instance(WorklistFindTest::class, new WorklistFindTest($runner));
 

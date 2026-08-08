@@ -23,9 +23,11 @@ Organisationen sowie optional Standorte und Abteilungen müssen bereits existier
 ## DICOM-Knoten
 
 ```csv
-organization_name,system_name,name,ae_title,host,port,role,status,tls_enabled,supports_echo,supports_store,supports_query,supports_retrieve,supports_storage_commitment,supports_mpps,supports_worklist,description,notes
+organization_name,system_name,name,ae_title,host,port,role,status,tls_enabled,tls_profile,supports_echo,supports_store,supports_query,supports_retrieve,supports_storage_commitment,supports_mpps,supports_worklist,description,notes
 ```
 
 Das referenzierte System muss bereits in der angegebenen Organisation existieren. Für boolesche Spalten sind `true`/`false`, `1`/`0`, `yes`/`no` und `ja`/`nein` zulässig. Die Kombination aus System, AE Title, Host und Port muss eindeutig sein.
+
+Wenn `tls_enabled=true` gesetzt ist, muss `tls_profile` die Kennung eines vom Betreiber bereitgestellten Zertifikatsprofils enthalten. Dateipfade oder Zertifikatsinhalte werden nicht importiert.
 
 Die Feldvalidierung verwendet dieselben Regeln wie die manuellen Formulare aus `StoreSystemRequest` und `StoreDicomNodeRequest`.

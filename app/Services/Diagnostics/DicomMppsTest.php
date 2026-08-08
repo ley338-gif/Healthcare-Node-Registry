@@ -53,6 +53,7 @@ final class DicomMppsTest
     private function failureSummary(?string $type): string
     {
         return match ($type) {
+            'tls_configuration' => 'Die DICOM-TLS-Konfiguration ist unvollständig oder ungültig.',
             'timeout' => 'Zeitüberschreitung beim MPPS-Test.',
             'association_rejected' => 'DICOM Association für MPPS wurde abgelehnt.',
             'n_create_failed' => 'MPPS N-CREATE wurde vom Zielsystem nicht erfolgreich bestätigt.',

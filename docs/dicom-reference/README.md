@@ -36,6 +36,6 @@ SCU initiiert einen Dienst, SCP stellt ihn bereit. Die Rolle gilt pro Dienst. Do
 
 ## Sicherheitsgrenzen
 
-Die HNR ist kein PACS, DICOM-Router oder dauerhafter DICOM-Datenspeicher. C-MOVE, C-GET, DICOM-TLS und weitere Dienste sind nicht als aktuell verfügbar dokumentiert. Tests verwenden registrierte Ziele; Patientendaten sind nicht erforderlich.
+Die HNR ist kein PACS, DICOM-Router oder dauerhafter DICOM-Datenspeicher. Kontrollierte C-MOVE-/C-GET-Diagnosen und DICOM-TLS für registrierte Diagnoseziele sind verfügbar; Discovery-TLS und weitere nicht dokumentierte Dienste sind nicht implementiert. Tests verwenden registrierte Ziele und synthetische Kennungen; Patientendaten sind nicht erforderlich.
 
 Vertiefung: [DICOM-Grundlagen](../Healthcare/DICOM.md), [Diagnose-Workspace](../Healthcare/DiagnosticTestWorkspace.md) und [Glossar](../glossary/README.md).

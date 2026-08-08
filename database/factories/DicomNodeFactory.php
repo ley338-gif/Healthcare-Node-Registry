@@ -41,6 +41,7 @@ final class DicomNodeFactory extends Factory
             ]),
             'status' => 'active',
             'tls_enabled' => false,
+            'tls_profile' => null,
             'supports_echo' => true,
             'supports_store' => fake()->boolean(),
             'supports_query' => fake()->boolean(),

@@ -31,6 +31,7 @@ export type DicomConnection = {
     called_ae_title: string | null;
     port_override: number | null;
     tls_enabled: boolean;
+    tls_profile: string | null;
     test_enabled: boolean;
     description: string | null;
     notes: string | null;
@@ -95,6 +96,7 @@ const emptyForm = () => ({
     called_ae_title: '',
     port_override: null as number | null,
     tls_enabled: false,
+    tls_profile: '',
     test_enabled: true,
     description: '',
     notes: '',
@@ -163,6 +165,7 @@ const openEdit = (connection: DicomConnection): void => {
     editForm.called_ae_title = connection.called_ae_title ?? '';
     editForm.port_override = connection.port_override;
     editForm.tls_enabled = connection.tls_enabled;
+    editForm.tls_profile = connection.tls_profile ?? '';
     editForm.test_enabled = connection.test_enabled;
     editForm.description = connection.description ?? '';
     editForm.notes = connection.notes ?? '';
@@ -856,6 +859,19 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                                 ></label
                             >
                         </div>
+                        <label v-if="createForm.tls_enabled" class="block"
+                            ><span class="text-sm font-medium text-slate-700">TLS-Profil *</span
+                            ><input
+                                v-model="createForm.tls_profile"
+                                maxlength="64"
+                                placeholder="z. B. pacs-produktiv"
+                                class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                            /><span class="mt-1 block text-xs text-slate-500"
+                                >Referenz auf ein vom Betreiber bereitgestelltes Zertifikatsprofil.</span
+                            ><span v-if="createForm.errors.tls_profile" class="mt-1 block text-xs text-red-600">{{
+                                createForm.errors.tls_profile
+                            }}</span></label
+                        >
                         <label class="block"
                             ><span class="text-sm font-medium text-slate-700">Beschreibung</span
                             ><textarea
@@ -1033,6 +1049,19 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                                 ></label
                             >
                         </div>
+                        <label v-if="editForm.tls_enabled" class="block"
+                            ><span class="text-sm font-medium text-slate-700">TLS-Profil *</span
+                            ><input
+                                v-model="editForm.tls_profile"
+                                maxlength="64"
+                                placeholder="z. B. pacs-produktiv"
+                                class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                            /><span class="mt-1 block text-xs text-slate-500"
+                                >Ohne gültiges Profil wird kein Diagnose-Lauf gestartet.</span
+                            ><span v-if="editForm.errors.tls_profile" class="mt-1 block text-xs text-red-600">{{
+                                editForm.errors.tls_profile
+                            }}</span></label
+                        >
                         <label class="block"
                             ><span class="text-sm font-medium text-slate-700">Beschreibung</span
                             ><textarea

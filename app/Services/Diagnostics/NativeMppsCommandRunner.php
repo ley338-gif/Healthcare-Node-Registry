@@ -3,20 +3,30 @@
 namespace App\Services\Diagnostics;
 
 use App\Models\DicomNode;
+use App\Services\Dicom\DicomTlsProfileResolver;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 use Throwable;
 
 final class NativeMppsCommandRunner implements MppsCommandRunner
 {
+    public function __construct(private readonly DicomTlsProfileResolver $tlsProfiles = new DicomTlsProfileResolver) {}
+
     public function run(DicomNode $node, string $callingAeTitle, string $calledAeTitle): MppsCommandResult
     {
+        try {
+            $tlsProfile = $this->tlsProfiles->resolve($node);
+        } catch (Throwable $exception) {
+            return new MppsCommandResult(false, null, null, null, $exception->getMessage(), 'tls_configuration');
+        }
+
         $process = new Process(['/opt/registry-dicom/bin/python', base_path('scripts/dicom_mpps.py')]);
         $process->setInput(json_encode([
             'host' => $node->host,
             'port' => $node->port,
             'calling_ae_title' => $callingAeTitle,
             'called_ae_title' => $calledAeTitle,
+            'tls' => $tlsProfile?->pythonPayload(),
         ], JSON_THROW_ON_ERROR));
         $process->setTimeout(30);
 

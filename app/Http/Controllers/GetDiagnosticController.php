@@ -26,8 +26,7 @@ final class GetDiagnosticController extends Controller
             return back()->with('error', 'Die Verbindung ist kein C-GET-Pfad.');
         }
 
-        $dicomConnection->loadMissing('targetNode.system');
-        $targetNode = $dicomConnection->targetNode;
+        $targetNode = $dicomConnection->diagnosticTargetNode();
         if ($targetNode->archived_at !== null) {
             return back()->with('error', 'Der Zielknoten ist archiviert.');
         }

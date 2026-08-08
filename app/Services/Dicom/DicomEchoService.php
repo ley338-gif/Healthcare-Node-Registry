@@ -77,6 +77,8 @@ class DicomEchoService
         $normalized = strtolower($output);
 
         return match (true) {
+            str_contains($normalized, 'dicom-tls'),
+            str_contains($normalized, 'tls-profil') => 'tls_configuration',
             $command->timedOut,
             str_contains($normalized, 'timeout'),
             str_contains($normalized, 'timed out') => 'timeout',
@@ -93,6 +95,7 @@ class DicomEchoService
     private function failureSummary(?string $failureType): string
     {
         return match ($failureType) {
+            'tls_configuration' => 'Die DICOM-TLS-Konfiguration ist unvollständig oder ungültig.',
             'timeout' => 'Zeitüberschreitung beim C-ECHO.',
             'connection_refused' => 'TCP-Verbindung wurde vom Ziel abgelehnt.',
             'association_rejected' => 'DICOM Association wurde abgelehnt.',
@@ -110,7 +113,7 @@ class DicomEchoService
         int $duration,
         string $output,
     ): array {
-        $failedAtTcp = in_array($failureType, ['timeout', 'connection_refused'], true);
+        $failedAtTcp = in_array($failureType, ['timeout', 'connection_refused', 'tls_configuration', 'process_error'], true);
         $failedAtAssociation = in_array(
             $failureType,
             ['association_rejected', 'called_ae_unknown', 'calling_ae_unauthorized'],

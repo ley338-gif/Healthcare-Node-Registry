@@ -192,7 +192,7 @@ Der Betreiber muss ausgehenden Netzwerkzugriff auf erforderliche DICOM-Ziele beg
 
 ### Bekannte aktuelle Grenzen
 
-Eine konfigurierbare CIDR-Allowlist, zentrale Parallelitätssteuerung und DICOM-TLS in den Diagnose-Runnern sind nicht vorhanden. Das Feld `tls_enabled` dokumentiert eine Konfiguration, stellt aber keine aktive TLS-Unterstützung der aktuellen Runner sicher.
+Eine zentrale Parallelitätssteuerung für Diagnose-Läufe ist nicht vorhanden. DICOM-TLS ist für registrierte Diagnoseziele über vom Betreiber bereitgestellte Zertifikatsprofile umgesetzt; Discovery-TLS bleibt getrennt davon nicht implementiert. Bei aktivem TLS-Flag verhindern serverseitige Profilprüfung und verpflichtende Peer-Zertifikatsprüfung jeden Klartext-Fallback.
 
 C-MOVE und C-GET verwenden ausschließlich eine serverseitig konfigurierte synthetische Study UID. MPPS erzeugt nach ausdrücklicher Autorisierungsbestätigung ausschließlich synthetische Identifikatoren und führt N-CREATE sowie N-SET aus. Storage Commitment speichert nach ausdrücklicher Bestätigung ein synthetisches Objekt und korreliert N-ACTION mit dem asynchronen N-EVENT-REPORT.
 

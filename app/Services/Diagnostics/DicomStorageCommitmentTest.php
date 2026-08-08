@@ -25,7 +25,7 @@ final class DicomStorageCommitmentTest
         $storage = $this->storageRunner->run($node, $callingAeTitle, $calledAeTitle);
         $commitment = $storage->successful
             ? $this->commitmentRunner->run($node, $callingAeTitle, $calledAeTitle, '1.2.840.10008.5.1.4.1.1.7', $storage->sopInstanceUid)
-            : new StorageCommitmentCommandResult(false, null, null, null, null, 'C-STORE failed before commitment request.', 'c_store_failed');
+            : new StorageCommitmentCommandResult(false, null, null, null, null, 'C-STORE failed before commitment request.', $storage->tlsConfigurationFailed ? 'tls_configuration' : 'c_store_failed');
         $duration = (int) round((hrtime(true) - $timer) / 1_000_000);
         $status = $commitment->successful ? DiagnosticTestStatus::Success : (in_array($commitment->failureType, ['timeout', 'event_report_timeout'], true) ? DiagnosticTestStatus::Timeout : DiagnosticTestStatus::Failed);
         $summary = $commitment->successful ? 'Storage Commitment für das synthetische Testobjekt bestätigt.' : $this->failureSummary($commitment->failureType);
@@ -63,6 +63,7 @@ final class DicomStorageCommitmentTest
     private function failureSummary(?string $type): string
     {
         return match ($type) {
+            'tls_configuration' => 'Die DICOM-TLS-Konfiguration ist unvollständig oder ungültig.',
             'c_store_failed' => 'Das synthetische Testobjekt konnte vor der Commitment-Anfrage nicht gespeichert werden.',
             'association_rejected' => 'DICOM Association für Storage Commitment wurde abgelehnt.',
             'n_action_failed' => 'Storage Commitment N-ACTION wurde nicht erfolgreich bestätigt.',
