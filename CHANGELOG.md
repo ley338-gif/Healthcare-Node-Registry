@@ -78,6 +78,13 @@
 
 ## Historische Entwicklungsmeilensteine
 
+### 0.1.2 – Isolierte Entwicklungs- und Testinfrastruktur
+
+- Eigene Compose-Dienste `app-test` und `db-test` mit isoliertem Netzwerk und getrennten Volumes eingeführt.
+- Test-Sicherheitsguard auf effektive Laravel-Testumgebung und Datenbanknamen mit Suffix `_test` erweitert.
+- PowerShell-Helfer und Entwicklungsdokumentation für sichere Einzeltests und vollständige Quality-Gates ergänzt.
+- PHPUnit kann die PostgreSQL-Entwicklungsdatenbank durch die Docker-Netztrennung nicht erreichen.
+
 ### 0.1.1 – Foundation Hardening
 
 - Initialen Administrator als transaktionalen, einmaligen Konsolenprozess mit Rollenvergabe und Security Event abgesichert.
