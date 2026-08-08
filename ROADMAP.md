@@ -16,7 +16,7 @@
 - [x] Dokumentaktionen in der gemeinsamen Registry-Historie
 - [x] globale Audit-Seite auf der gemeinsamen Query-Grundlage
 - [x] gefilterter, gestreamter Audit-Export als CSV
-- [ ] verbindliche Audit-Aufbewahrung und kryptografischer Integritätsnachweis
+- [x] verbindliche Audit-Aufbewahrung und kryptografischer Integritätsnachweis
 - [x] produktiver ClamAV-Scanner mit fail-closed Fallback und Rescan-Workflow
 - [ ] Dokumentfreigabe, Vier-Augen-Prinzip und verbindliche Aufbewahrungsregeln
 

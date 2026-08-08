@@ -11,6 +11,8 @@ Die Tabs „Historie“ in Systemen und Organisationsstruktur verwenden dieselbe
 - Detail-Slide-over mit ausschließlich geänderten Vorher-/Nachher-Feldern
 - einklappbare technische Metadaten
 - zentrale menschenlesbare Bezeichnung betroffener Entitäten
+- kryptografisch verkettete SHA-256-Integritätsnachweise mit prüfbarem Kettenkopf
+- konfigurierbare Aufbewahrung und kontrolliertes Präfix-Pruning mit Checkpoint
 
 Die Systemhistorie umfasst auch DICOM-Knoten, Verbindungen, Diagnoseereignisse und Dokumentationsänderungen. Organisations-, Standort- und Abteilungshistorien übernehmen diese Ereignisse entsprechend ihrer Hierarchie.
 
@@ -18,5 +20,5 @@ Die Systemhistorie umfasst auch DICOM-Knoten, Verbindungen, Diagnoseereignisse u
 
 - Ereignisse können nur Informationen darstellen, die beim Schreiben als sichere Metadaten erfasst wurden.
 - Historische Entitätsnamen werden derzeit nicht als vollständiger Snapshot gespeichert.
-- Export, Aufbewahrungssteuerung und Integritätsnachweis folgen mit dem globalen Audit-Modul.
-
+- Der interne Kettennachweis ist noch nicht extern signiert oder in einem separaten
+  unveränderlichen Dienst verankert.
