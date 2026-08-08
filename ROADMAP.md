@@ -51,8 +51,10 @@ DICOM Nodes, Diagnose-Workspace und zugehörige Stammdaten sind umgesetzt.
 - [x] Capability-Matrix per Association Negotiation
 - [x] Testprofile, Verlauf, Export und Dashboard
 - [x] serverseitige DICOM-Dateianalyse
-- [ ] granulare Einzelrechte für Netzwerk, Echo, Worklist und PACS Query
-- [ ] konfigurierbare CIDR-Allowlist, Timeouts und Parallelitätsgrenzen
+- [x] granulare Einzelrechte für alle ausführbaren Diagnosefunktionen
+- [x] konfigurierbare CIDR-Allowlist, Timeouts und Parallelitätsgrenzen für Discovery
 - [ ] DICOM-TLS für Diagnose-Runner
 - [ ] weitere synthetische Storage-SOP-Classes
-- [ ] C-MOVE/C-GET nach separatem Sicherheitsdesign
+- [x] C-MOVE/C-GET nach separatem Sicherheitsdesign
+- [x] synthetischer MPPS-Test mit N-CREATE und N-SET
+- [x] synthetisches Storage Commitment mit N-ACTION und korreliertem N-EVENT-REPORT
