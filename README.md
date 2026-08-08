@@ -41,7 +41,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - DICOM Discovery: geführter Wizard, asynchroner Netzwerk-Scan (Ping/Reverse-DNS, TCP-Portprüfung, begrenzte DICOM-C-ECHO-Tests), regelbasierte Klassifizierung mit Confidence-Score, Review-Queue mit Duplikaterkennung und Übernahme in die System-Registry (siehe `docs/Features/dicom-discovery.md`)
 - Backup- und Restore-Skripte für PostgreSQL und privaten Dokumentenspeicher
 
-Der standardmäßig gebundene Malware-Scanner meldet `unavailable`. Uploads werden gespeichert, aber Download und Vorschau bleiben fail-closed gesperrt, solange eine Dokumentversion nicht den Scanstatus `clean` besitzt. Für einen produktiven Dokumentenbetrieb muss daher eine konkrete `MalwareScanner`-Implementierung angebunden werden.
+Der Docker-Stack bindet ClamAV 1.5.3 über das interne ClamD-Netzwerk an. Uploads werden synchron gescannt; ein stündlicher Scheduler prüft offene Scans erneut. Ist der Scanner deaktiviert oder nicht erreichbar, werden Dateien mit `unavailable` privat gespeichert und Download sowie Vorschau bleiben fail-closed gesperrt.
 
 ## Verzeichnisstruktur
 
@@ -141,10 +141,10 @@ Die folgenden Befehle werden im Repository-Stamm ausgeführt.
 
    Der Befehl fragt Name, E-Mail-Adresse und Passwort ab. Das Passwort muss mindestens 14 Zeichen sowie Groß- und Kleinbuchstaben, Zahlen und Sonderzeichen enthalten. Es wird weder ausgegeben noch protokolliert. Der Befehl verweigert ein zweites initiales Administratorkonto.
 
-8. Anwendung und Discovery-Worker starten und prüfen:
+8. Anwendung, Worker, Scheduler und Malware-Scanner starten und prüfen:
 
    ```bash
-   docker compose up -d app worker web
+   docker compose up -d app worker scheduler web clamav
    docker compose exec app php artisan registry:doctor
    docker compose ps
    ```
@@ -205,17 +205,20 @@ Es gibt genau eine Compose-Datei: `docker-compose.yml`.
 | `web` | Nginx, statische Assets und Weiterleitung an PHP-FPM | `8080` | Standard | `unless-stopped` |
 | `app` | Laravel auf PHP-FPM, Port 9000 nur im Compose-Netz | keiner | Standard | `unless-stopped` |
 | `worker` | Queue-Worker (`php artisan queue:work database --queue=discovery,default`) für asynchrone Discovery-Scan-Läufe | keiner | Standard | `unless-stopped` |
+| `scheduler` | Laravel-Scheduler für den stündlichen Rescan offener Dokumentversionen | keiner | Standard | `unless-stopped` |
+| `clamav` | ClamAV 1.5.3 mit ClamD und FreshClam | keiner | Standard | `unless-stopped` |
 | `db` | PostgreSQL 18.4 | keiner | Standard | `unless-stopped` |
 | `node` | npm-/Vite-Werkzeugcontainer | keiner | `tools` | keine |
 | `app-test` | isolierte Backend-Testausführung | keiner | `test` | keine |
 | `db-test` | isolierte PostgreSQL-Testdatenbank | keiner | `test` | keine |
 
-Nur Nginx wird auf dem Host veröffentlicht. PostgreSQL und PHP-FPM sind nicht direkt vom Host erreichbar.
+Nur Nginx wird auf dem Host veröffentlicht. PostgreSQL, PHP-FPM und ClamD sind nicht direkt vom Host erreichbar.
 
 Netzwerke:
 
 - `frontend`: Kommunikation zwischen `web` und `app`
-- `backend`: internes Netz zwischen `app` und `db`
+- `backend`: internes Netz zwischen `app`, `worker`, `scheduler`, `db` und `clamav`
+- `clamav_updates`: ausschließlich für Signaturaktualisierungen des ClamAV-Dienstes
 - `test_backend`: internes Netz zwischen `app-test` und `db-test`
 
 Persistente Volumes:
@@ -224,6 +227,7 @@ Persistente Volumes:
 - `app_storage`: Laravel-Laufzeitdaten und private Registry-Dokumente
 - `postgres_test_data`: Daten des isolierten Testprofils
 - `app_test_storage`: Storage des isolierten Testprofils
+- `clamav_data`: persistente ClamAV-Signaturdatenbank
 
 `web` läuft mit schreibgeschütztem Root-Dateisystem und temporären Dateisystemen für Nginx-Cache und PID-Dateien. `app`, `worker`, `web` und `db` verwenden `no-new-privileges`. Der Entrypoint (`docker/php/entrypoint.sh`) startet `php-fpm` weiterhin als root (üblich, da FPM Worker-Prozesse selbst per Pool-Konfiguration auf `www-data` absenkt), führt alle anderen Kommandos - insbesondere den Queue-Worker - jedoch bewusst als `www-data` aus.
 
@@ -284,6 +288,11 @@ DICOM-Zielports werden pro registriertem Knoten gespeichert und sind keine einge
 | `QUEUE_CONNECTION` | Laravel-Queue-Backend; verarbeitet vom `worker`-Dienst (`database`, keine Redis-Abhängigkeit) | `database` |
 | `FILESYSTEM_DISK` | Standard-Dateisystem | `local` |
 | `REGISTRY_DOCUMENT_EXPIRY_WARNING_DAYS` | Vorlauf für Ablaufwarnungen | `60` |
+| `REGISTRY_DOCUMENT_MALWARE_SCANNER_ENABLED` | ClamAV-Adapter aktivieren; bei `false` wird sicher auf `UnavailableMalwareScanner` zurückgefallen | `true` |
+| `REGISTRY_DOCUMENT_MALWARE_SCANNER_HOST` | ClamD-Hostname im internen Netz | `clamav` |
+| `REGISTRY_DOCUMENT_MALWARE_SCANNER_PORT` | ClamD-TCP-Port | `3310` |
+| `REGISTRY_DOCUMENT_MALWARE_SCANNER_CONNECT_TIMEOUT` | Verbindungs-Timeout in Sekunden | `2` |
+| `REGISTRY_DOCUMENT_MALWARE_SCANNER_READ_TIMEOUT` | Scan-Timeout in Sekunden | `30` |
 | `MAIL_MAILER` | Mail-Transport | `log` |
 | `MAIL_FROM_ADDRESS` | Absenderadresse | `noreply@example.test` |
 | `MAIL_FROM_NAME` | Absendername | `Healthcare Node Registry` |
@@ -424,7 +433,7 @@ Es gibt derzeit keine freigegebene öffentliche REST-API, keine OpenAPI-Spezifik
 - Ausgehenden Netzwerkzugriff des App-Containers auf ausdrücklich freigegebene DICOM-Ziele begrenzen.
 - DICOM-Diagnosen verwenden aktuell kein TLS; `tls_enabled` ist für diese Runner nur Registry-Metadatum.
 - Das strengere Recht `tests.run.storage` und die ausdrückliche Bestätigung für C-STORE beachten; das synthetische Objekt kann im Zielsystem dauerhaft gespeichert werden.
-- Einen produktiven Malware-Scanner anbinden, bevor Registry-Dokumente zum Download freigegeben werden.
+- ClamAV-Signaturupdates und den Zustand des `clamav`-Containers überwachen; ClamD-Port 3310 nicht außerhalb des internen Netzes veröffentlichen.
 - Datenbank und `app_storage` gemeinsam, regelmäßig und verschlüsselt sichern; Restore-Tests durchführen.
 - Benutzer, Rollen, Auditereignisse und Logs regelmäßig prüfen.
 - Discovery-Scans ausschließlich gegen unter Einstellungen > Discovery freigegebene, tatsächlich autorisierte Netzbereiche starten (siehe `docs/Features/dicom-discovery.md`, `docs/Security/ThreatModel.md`).
@@ -517,7 +526,7 @@ Host, Port, Called/Calling AE Title und Dienstkonfiguration des registrierten Kn
 
 ### Dokument kann nicht heruntergeladen oder angezeigt werden
 
-Downloads und PDF-Vorschau erfordern den Malware-Scanstatus `clean`. Die Standardimplementierung liefert `unavailable` und sperrt den Zugriff. Eine betriebsfähige Scannerintegration ist erforderlich.
+Downloads und PDF-Vorschau erfordern den Malware-Scanstatus `clean`. `docker compose ps clamav` und `docker compose logs clamav` prüfen. Nach Wiederherstellung kann ein Rescan mit `docker compose exec app php artisan registry-documents:rescan` sofort angestoßen werden; andernfalls übernimmt ihn der stündliche Scheduler.
 
 ## Mitwirken
 

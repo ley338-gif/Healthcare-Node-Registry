@@ -10,3 +10,8 @@ The complete license texts are included in the installed package metadata inside
 - https://github.com/pydicom/pynetdicom
 - https://github.com/pydicom/pydicom
 
+The Docker Compose stack uses the official ClamAV container image:
+
+- `clamav/clamav` 1.5.3 — GNU General Public License, version 2
+
+Source and license information: https://github.com/Cisco-Talos/clamav

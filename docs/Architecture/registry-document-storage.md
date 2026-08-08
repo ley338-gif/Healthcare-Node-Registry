@@ -9,6 +9,8 @@ Die Dokumentenablage bleibt Teil des modularen Laravel-Monolithen:
 - `RegistryDocumentUploadService` koordiniert Prüfung, Scan, private Ablage, Datenbanktransaktion und Audit.
 - `RegistryDocumentFileInspector` validiert Allowlist, MIME-Typ, Signatur, Größe und SHA-256.
 - `MalwareScanner` kapselt den installationsabhängigen Scanner.
+- `ClamAvMalwareScanner` streamt Dateien ohne gemeinsamen Dateipfad über das ClamD-`INSTREAM`-Protokoll.
+- `RegistryDocumentRescanService` verarbeitet offene Scanstatus erneut und aktualisiert Status und Audit.
 - `RegistryDocumentQueryService` liefert kontextgebundene Suche, Filter und serverseitige Pagination.
 - `RegistryDocumentController` erzwingt Berechtigungen, Kontext-Policy und Freigabestatus bei jeder Dateioperation.
 
@@ -61,9 +63,15 @@ Das persistente Storage-Volume und PostgreSQL sind eine logische Sicherungseinhe
 
 Der aktuelle Code implementiert Archivierung, aber keine physische Aufbewahrungsbereinigung. Eine spätere Retention muss rechtliche Vorgaben, Audit-Nachweis, konsistente Datei-/Datenbanklöschung und getestete Wiederherstellbarkeit gemeinsam behandeln.
 
+## Malware-Scanner und Rescan
+
+Der produktive Compose-Pfad verwendet ClamAV über TCP 3310 ausschließlich im internen `backend`-Netz. Upload-Scans laufen synchron, damit bereits beim Speichern ein eindeutiger Status vorliegt. Verbindungs- und Scanfehler führen fail-closed zu `unavailable` beziehungsweise `failed`; nur `clean` ist abrufbar.
+
+Der separate `scheduler`-Dienst startet stündlich das Artisan-Kommando `registry-documents:rescan`. Es bearbeitet begrenzte Batches der Status `pending`, `failed` und `unavailable`. Die Signaturdaten liegen im Volume `clamav_data`; FreshClam erhält über das getrennte Netz `clamav_updates` ausgehenden Zugriff. ClamD selbst besitzt keinen Host-Port.
+
 ## Bewusste Grenzen
 
-- Der mitgelieferte Scanner meldet `unavailable`; ein produktiver Adapter ist installationsspezifisch bereitzustellen.
-- Scans laufen synchron im Request; Queue und Rescan-Workflow sind noch nicht implementiert.
+- Scans laufen synchron im Upload-Request; bei großen erlaubten Dateien ist das konfigurierte ClamD-Lesezeitlimit relevant.
+- Infizierte Dateien werden gesperrt aufbewahrt, aber nicht automatisch verschoben oder gelöscht.
 - Lokaler privater Storage ist implementiert; ein S3-kompatibler Adapter ist architektonisch möglich, aber nicht konfiguriert oder getestet.
 - Es gibt keine OCR, Volltextindizierung, Office-Vorschau oder automatische Archivextraktion.
