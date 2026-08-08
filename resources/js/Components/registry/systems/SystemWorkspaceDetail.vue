@@ -24,6 +24,7 @@ import AuditHistoryPanel, { type AuditEvent } from '../../audit/AuditHistoryPane
 import DocumentationPanel from '../../documentation/DocumentationPanel.vue';
 import type { RegistryDocumentationItem } from '../../documentation/documentationTypes';
 import type { RegistryDocumentPagination } from '../../documents/RegistryDocumentList.vue';
+import SystemNetworkInterfaceManager, { type SystemNetworkInterface } from './SystemNetworkInterfaceManager.vue';
 import { systemDocumentationSections } from '../../documentation/systemDocumentationSections';
 
 export type SelectOption = {
@@ -60,6 +61,7 @@ export type SystemDetail = {
     hostname: string | null;
     fqdn: string | null;
     ip_address: string | null;
+    network_interfaces: SystemNetworkInterface[];
     vendor: string | null;
     product: string | null;
     model: string | null;
@@ -487,22 +489,11 @@ const statusClass = (value: string): string => {
             </div>
 
             <div v-else-if="activeTab === 'network'" class="space-y-5">
-                <ContentCard title="Netzwerk" description="Hostname, FQDN und IP-Konfiguration.">
-                    <div class="grid gap-5 sm:grid-cols-3">
-                        <div>
-                            <p class="text-xs font-semibold text-slate-500 uppercase">Hostname</p>
-                            <p class="mt-1 font-mono text-sm text-slate-900">{{ displayValue(system.hostname) }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs font-semibold text-slate-500 uppercase">FQDN</p>
-                            <p class="mt-1 font-mono text-sm text-slate-900">{{ displayValue(system.fqdn) }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs font-semibold text-slate-500 uppercase">IP-Adresse</p>
-                            <p class="mt-1 font-mono text-sm text-slate-900">{{ displayValue(system.ip_address) }}</p>
-                        </div>
-                    </div>
-                </ContentCard>
+                <SystemNetworkInterfaceManager
+                    :system-public-id="system.public_id"
+                    :interfaces="system.network_interfaces"
+                    :can-manage="canManage"
+                />
 
                 <ContentCard title="Topologie" description="Direkte DICOM-Beziehungen des ausgewählten Systems.">
                     <DicomNetworkMap

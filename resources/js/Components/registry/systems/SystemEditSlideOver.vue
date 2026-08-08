@@ -33,9 +33,6 @@ type EditableSystem = {
     name: string;
     system_type: string;
     status: string;
-    hostname: string | null;
-    fqdn: string | null;
-    ip_address: string | null;
     vendor: string | null;
     product: string | null;
     model: string | null;
@@ -69,9 +66,6 @@ const form = useForm({
     name: '',
     system_type: '',
     status: 'active',
-    hostname: '',
-    fqdn: '',
-    ip_address: '',
     vendor: '',
     product: '',
     model: '',
@@ -103,9 +97,6 @@ watch(
         form.name = system.name;
         form.system_type = system.system_type;
         form.status = system.status;
-        form.hostname = system.hostname ?? '';
-        form.fqdn = system.fqdn ?? '';
-        form.ip_address = system.ip_address ?? '';
         form.vendor = system.vendor ?? '';
         form.product = system.product ?? '';
         form.model = system.model ?? '';
@@ -318,48 +309,6 @@ const submit = (): void => {
                                         </select>
                                     </label>
                                 </div>
-                            </div>
-                        </section>
-
-                        <section>
-                            <h3 class="text-sm font-semibold text-slate-950">Netzwerk</h3>
-
-                            <div class="mt-4 space-y-4">
-                                <div class="grid gap-4 sm:grid-cols-2">
-                                    <label>
-                                        <span class="text-sm font-medium text-slate-700"> Hostname </span>
-
-                                        <input
-                                            v-model="form.hostname"
-                                            type="text"
-                                            class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
-                                        />
-                                    </label>
-
-                                    <label>
-                                        <span class="text-sm font-medium text-slate-700"> IP-Adresse </span>
-
-                                        <input
-                                            v-model="form.ip_address"
-                                            type="text"
-                                            class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
-                                        />
-
-                                        <span v-if="form.errors.ip_address" class="mt-1 block text-xs text-red-600">
-                                            {{ form.errors.ip_address }}
-                                        </span>
-                                    </label>
-                                </div>
-
-                                <label class="block">
-                                    <span class="text-sm font-medium text-slate-700"> FQDN </span>
-
-                                    <input
-                                        v-model="form.fqdn"
-                                        type="text"
-                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
-                                    />
-                                </label>
                             </div>
                         </section>
 

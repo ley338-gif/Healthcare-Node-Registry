@@ -72,7 +72,7 @@ final class GlobalSearchService
     /** @return Collection<int, array{group: string, type: string, title: string, subtitle: string, url: string}> */
     private function systems(string $pattern): Collection
     {
-        return System::query()->active()->where(fn (Builder $query) => $query->where('name', 'ilike', $pattern)->orWhere('hostname', 'ilike', $pattern)->orWhere('fqdn', 'ilike', $pattern)->orWhere('ip_address', 'ilike', $pattern)->orWhere('vendor', 'ilike', $pattern)->orWhere('product', 'ilike', $pattern)->orWhere('inventory_number', 'ilike', $pattern)->orWhere('serial_number', 'ilike', $pattern))
+        return System::query()->active()->where(fn (Builder $query) => $query->where('name', 'ilike', $pattern)->orWhere('hostname', 'ilike', $pattern)->orWhere('fqdn', 'ilike', $pattern)->orWhere('ip_address', 'ilike', $pattern)->orWhereHas('networkInterfaces', fn (Builder $interfaces) => $interfaces->where('hostname', 'ilike', $pattern)->orWhere('fqdn', 'ilike', $pattern)->orWhere('ip_address', 'ilike', $pattern)->orWhere('interface_label', 'ilike', $pattern))->orWhere('vendor', 'ilike', $pattern)->orWhere('product', 'ilike', $pattern)->orWhere('inventory_number', 'ilike', $pattern)->orWhere('serial_number', 'ilike', $pattern))
             ->limit(self::LIMIT_PER_GROUP)->get()->map(fn (System $item): array => $this->result('Registry', 'System', $item->name, collect([$item->system_type, $item->hostname ?? $item->ip_address])->filter()->join(' · '), "/systems/{$item->public_id}"));
     }
 

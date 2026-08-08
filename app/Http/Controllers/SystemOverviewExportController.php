@@ -15,7 +15,7 @@ final class SystemOverviewExportController extends Controller
     /** @var list<string> */
     private const HEADERS = [
         'Organisation', 'Standort', 'Abteilung', 'System', 'Systemtyp', 'Systemstatus',
-        'Hostname', 'FQDN', 'IP-Adresse', 'Hersteller', 'Produkt', 'Modell', 'Version',
+        'Hostname (primär)', 'FQDN (primär)', 'IP-Adresse (primär)', 'Alle Netzwerkinterfaces', 'Hersteller', 'Produkt', 'Modell', 'Version',
         'Betriebssystem', 'Betriebssystemversion', 'Inventarnummer', 'Seriennummer',
         'DICOM-Knoten', 'AE Title', 'Modalität', 'DICOM-Host', 'DICOM-Port', 'DICOM-Rolle',
         'DICOM-Status', 'DICOM-TLS',
@@ -51,7 +51,7 @@ final class SystemOverviewExportController extends Controller
         abort_unless($format === 'xlsx', 404);
         $values = $rows->map(static fn (array $row): array => [
             $row['organization'], $row['site'], $row['department'], $row['system'], $row['system_type'], $row['system_status'],
-            $row['hostname'], $row['fqdn'], $row['ip_address'], $row['vendor'], $row['product'], $row['model'], $row['version'],
+            $row['hostname'], $row['fqdn'], $row['ip_address'], $row['network_interfaces'], $row['vendor'], $row['product'], $row['model'], $row['version'],
             $row['operating_system'], $row['operating_system_version'], $row['inventory_number'], $row['serial_number'],
             $row['dicom_node'], $row['ae_title'], $row['modality'], $row['dicom_host'], $row['dicom_port'], $row['dicom_role'],
             $row['dicom_status'], $row['dicom_tls'],

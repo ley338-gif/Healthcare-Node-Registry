@@ -169,6 +169,7 @@ final class SystemController extends Controller
                 'organization:id,public_id,name',
                 'site:id,public_id,name',
                 'department:id,public_id,name',
+                'networkInterfaces',
                 'documentation' => fn ($query) => $query
                     ->with('updatedByUser:id,public_id,name')
                     ->orderBy('section'),
@@ -351,6 +352,7 @@ final class SystemController extends Controller
             'organization:id,public_id,name',
             'site:id,public_id,name',
             'department:id,public_id,name',
+            'networkInterfaces',
             'documentation' => fn ($query) => $query
                 ->with('updatedByUser:id,public_id,name')
                 ->orderBy('section'),

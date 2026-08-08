@@ -22,6 +22,9 @@ use Illuminate\Support\Str;
  * @property string $system_type
  * @property string $status
  * @property CarbonImmutable|null $archived_at
+ * @property string|null $hostname Deprecated mirror of the primary network interface
+ * @property string|null $fqdn Deprecated mirror of the primary network interface
+ * @property string|null $ip_address Deprecated mirror of the primary network interface
  */
 final class System extends Model
 {
@@ -59,6 +62,24 @@ final class System extends Model
             if (blank($system->public_id)) {
                 $system->public_id = (string) Str::uuid7();
             }
+        });
+
+        self::saved(function (System $system): void {
+            if (! $system->wasRecentlyCreated && ! $system->wasChanged(['hostname', 'fqdn', 'ip_address'])) {
+                return;
+            }
+            if (blank($system->hostname) && blank($system->fqdn) && blank($system->ip_address)) {
+                return;
+            }
+
+            $primary = $system->networkInterfaces()->where('is_primary', true)->first();
+            $values = ['hostname' => $system->hostname, 'fqdn' => $system->fqdn, 'ip_address' => $system->ip_address];
+            if ($primary === null) {
+                $system->networkInterfaces()->create([...$values, 'interface_label' => 'Primärschnittstelle', 'is_primary' => true]);
+
+                return;
+            }
+            $primary->update($values);
         });
     }
 
@@ -104,6 +125,12 @@ final class System extends Model
     public function dicomNodes(): HasMany
     {
         return $this->hasMany(DicomNode::class);
+    }
+
+    /** @return HasMany<SystemNetworkInterface, $this> */
+    public function networkInterfaces(): HasMany
+    {
+        return $this->hasMany(SystemNetworkInterface::class)->orderByDesc('is_primary')->orderBy('interface_label');
     }
 
     /** @return HasMany<DiagnosticTestRun, $this> */

@@ -127,7 +127,7 @@ Jedes System gehört zu genau einer Organisation. Standort und Abteilung sind op
 Das aktuelle Systemmodell umfasst insbesondere:
 
 - Name, Systemtyp und Verwaltungsstatus;
-- Hostname, FQDN und IP-Adresse;
+- ein oder mehrere Netzwerkinterfaces mit Bezeichnung, Hostname, FQDN und IP-Adresse sowie einem Primärinterface;
 - Hersteller, Produkt, Modell und Version;
 - Betriebssystem und Betriebssystemversion;
 - Serien- und Inventarnummer;
@@ -135,6 +135,8 @@ Das aktuelle Systemmodell umfasst insbesondere:
 - Archivierungszeitpunkt.
 
 Systemtyp und Status stammen aktuell aus zentral in der Anwendung bereitgestellten Auswahlwerten. Eine administrierbare Referenzdatenoberfläche ist geplant und nicht Teil des gegenwärtigen Datenmodells.
+
+Die früher direkt am System gepflegten Felder für Hostname, FQDN und IP-Adresse bleiben während der Übergangsphase als Spiegel des primären Netzwerkinterfaces erhalten. Neue Pflege erfolgt über die Interface-Liste im Netzwerk-Reiter.
 
 ### Status und Archivierung
 

@@ -45,6 +45,7 @@ Die gewachsene technische Dokumentation bleibt erhalten. Bis zu ihrer kontrollie
 - [Authentifizierung](Security/Authentication.md) und [Zugriffskontrolle](Security/AccessControl.md)
 - [Audit-Workspace](Features/audit-workspace.md)
 - [Export der System- und Knotenübersicht](Features/system-overview-export.md)
+- [Netzwerkinterfaces von Systemen](Features/system-network-interfaces.md)
 - [Registry-Dokumentation](Features/registry-documentation.md)
 - [Benutzerverwaltung](Features/UserManagement.md)
 - [Vorlage für Versionshinweise](Releases/RELEASE_NOTES_TEMPLATE.md)

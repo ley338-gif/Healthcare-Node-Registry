@@ -277,8 +277,8 @@ final class RunDiscoveryScanJob implements ShouldQueue
                 }
             }
 
-            $existingRegistryMatch = System::query()->active()->where('ip_address', $ip)->exists()
-                || ($hostname !== null && System::query()->active()->whereRaw('lower(hostname) = lower(?)', [$hostname])->exists())
+            $existingRegistryMatch = System::query()->active()->where(fn ($query) => $query->where('ip_address', $ip)->orWhereHas('networkInterfaces', fn ($interfaces) => $interfaces->where('ip_address', $ip)))->exists()
+                || ($hostname !== null && System::query()->active()->where(fn ($query) => $query->whereRaw('lower(hostname) = lower(?)', [$hostname])->orWhereHas('networkInterfaces', fn ($interfaces) => $interfaces->whereRaw('lower(hostname) = lower(?)', [$hostname])))->exists())
                 || DicomNode::query()->active()->where('host', $ip)->exists();
 
             $context = new ClassificationContext(

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Mehrere Netzwerkinterfaces je System ergänzt: Bestandsmigration, Primärinterface-Synchronisierung, CRUD im Netzwerk-Reiter sowie Einbindung in Suche, Discovery-Duplikaterkennung und Systemexport.
 - Gefilterten XLSX-/PDF-Export der System- und DICOM-Knotenübersicht ergänzt und den PDF-Tabellenkern mit der Firewall-/Portmatrix vereinheitlicht.
 - Diagnoseausführung in neun einzeln vergebbare `diagnostics.*`-Berechtigungen aufgeteilt; bestehende Rollen werden migrationssicher übernommen und die Standardrollen `PACS-Administrator` sowie `Nur Lesen` ergänzt.
 - Produktiven ClamAV-Malware-Scanner für Registry-Dokumente ergänzt: interne ClamD-`INSTREAM`-Anbindung, fail-closed Fallback, persistente Signaturdaten, Healthcheck, stündlicher Rescan und Auditierung der Rescan-Ergebnisse.
