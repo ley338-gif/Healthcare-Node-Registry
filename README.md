@@ -53,7 +53,7 @@ Der Docker-Stack bindet ClamAV 1.5.3 über das interne ClamD-Netzwerk an. Upload
 
 ## Nicht enthalten
 
-Der aktuelle Stand enthält keine öffentliche REST-API, keine OpenAPI-/Swagger-Spezifikation, kein DICOM-TLS, keine DICOMweb- oder HL7/MLLP-Schnittstelle, keine MFA- oder LDAP-/Active-Directory-Anbindung und kein Redis. Die Anwendung ist außerdem kein PACS, kein Patientenakten-System und kein kontinuierliches Monitoring- oder Alarmierungssystem.
+Der aktuelle Stand enthält keine öffentliche REST-API, keine OpenAPI-/Swagger-Spezifikation, kein DICOM-TLS im Discovery-Scanner, keine DICOMweb- oder HL7/MLLP-Schnittstelle, keine MFA- oder LDAP-/Active-Directory-Anbindung und kein Redis. Registrierte Diagnoseziele unterstützen dagegen DICOM-TLS über betreiberseitig bereitgestellte Zertifikatsprofile. Die Anwendung ist außerdem kein PACS, kein Patientenakten-System und kein kontinuierliches Monitoring- oder Alarmierungssystem.
 
 ## Verzeichnisstruktur
 
@@ -78,7 +78,7 @@ Der aktuelle Stand enthält keine öffentliche REST-API, keine OpenAPI-/Swagger-
 ### Empfohlen: Docker
 
 - Git
-- Docker Engine mit Compose-Plugin (`docker compose`)
+- Docker Engine mit Compose-Plugin (`docker compose`); für die HTTPS-Überlagerung mindestens Compose 2.24.4 wegen `!override`
 - PowerShell nur für die mitgelieferten `.ps1`-Skripte
 
 PHP, Composer, PostgreSQL, Node.js und DCMTK müssen bei dieser Variante nicht auf dem Host installiert sein.
@@ -211,7 +211,7 @@ Dieser Zugang ist synthetisch und darf nicht in produktiven oder gemeinsam errei
 
 ## Docker-Stack
 
-Es gibt genau eine Compose-Datei: `docker-compose.yml`.
+`docker-compose.yml` definiert den Standard-Stack. `docker-compose.https.yml` ist eine optionale Überlagerung für den HTTPS-Betrieb; ohne diese Datei bleibt der lokale HTTP-Start auf Port 8080 unverändert.
 
 | Dienst | Zweck | Host-Port | Profil | Restart Policy |
 | --- | --- | --- | --- | --- |
@@ -226,6 +226,46 @@ Es gibt genau eine Compose-Datei: `docker-compose.yml`.
 | `db-test` | isolierte PostgreSQL-Testdatenbank | keiner | `test` | keine |
 
 Nur Nginx wird auf dem Host veröffentlicht. PostgreSQL, PHP-FPM und ClamD sind nicht direkt vom Host erreichbar.
+
+### HTTPS-Referenzbetrieb
+
+Für eine über TLS erreichbare Installation stellt der Betreiber ein Serverzertifikat und den zugehörigen privaten Schlüssel bereit. Standardmäßig werden folgende nicht versionierte Dateien erwartet:
+
+```text
+docker/https/tls.crt
+docker/https/tls.key
+```
+
+`tls.crt` muss das Serverzertifikat einschließlich erforderlicher Zwischenzertifikate enthalten. Für den produktiven Betrieb sollte `HTTPS_CERTIFICATE_HOST_DIRECTORY` auf ein geschütztes Verzeichnis außerhalb des Repositorys zeigen. Anschließend in `.env` mindestens diese Werte setzen:
+
+```dotenv
+APP_URL=https://registry.example.org
+SESSION_SECURE_COOKIE=true
+HTTPS_CERTIFICATE_HOST_DIRECTORY=/srv/healthcare-node-registry/https
+HTTPS_HTTP_PORT=80
+HTTPS_PORT=443
+```
+
+Den Stack mit Basisdatei und HTTPS-Überlagerung bauen, prüfen und starten:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.https.yml config --quiet
+docker compose -f docker-compose.yml -f docker-compose.https.yml up --build -d
+docker compose -f docker-compose.yml -f docker-compose.https.yml exec app php artisan registry:doctor
+```
+
+Nginx veröffentlicht dann HTTP auf Port 80 ausschließlich als permanente Weiterleitung und die Anwendung per HTTPS auf Port 443. TLS 1.2 und 1.3, HSTS und die bereits im Standardbetrieb verwendeten Sicherheitsheader sind aktiviert. Die Überlagerung erzwingt für den `app`-Dienst zusätzlich `SESSION_SECURE_COOKIE=true`; der Eintrag in `.env` hält die beabsichtigte Betriebskonfiguration für Administratoren und Konsolenbefehle sichtbar. Fehlen `tls.crt` oder `tls.key`, startet `web` absichtlich nicht. Zertifikatsausstellung, Vertrauenskette, Dateirechte, Erneuerung und privater Schlüssel bleiben Betreiberverantwortung.
+
+Für einen lokalen Test mit einem selbstsignierten Zertifikat können die Host-Ports geändert werden:
+
+```dotenv
+APP_URL=https://localhost:8443
+SESSION_SECURE_COOKIE=true
+HTTPS_HTTP_PORT=8081
+HTTPS_PORT=8443
+```
+
+Die HTTP-Weiterleitung zielt auf den produktiven Standardport 443. Bei einem abweichenden lokalen HTTPS-Port deshalb direkt `https://localhost:8443` öffnen. Der Browser warnt bei selbstsignierten Zertifikaten erwartungsgemäß. Zur Rückkehr zum unverschlüsselten, ausschließlich lokalen Entwicklungsbetrieb `APP_URL=http://localhost:8080` und `SESSION_SECURE_COOKIE=false` setzen und wieder nur `docker compose up -d` verwenden.
 
 Netzwerke:
 
@@ -259,6 +299,7 @@ docker compose down
 | Komponente | Port | Erreichbarkeit |
 | --- | --- | --- |
 | HNR über Nginx | `8080/tcp` | Host und Browser |
+| HNR HTTPS-Überlagerung | `80/tcp` → HTTPS, `443/tcp` → Anwendung | Host und Browser; nur mit `docker-compose.https.yml` |
 | Storage-Commitment-Callback | `11113/tcp` standardmäßig | während eines Storage-Commitment-Tests vom DICOM-Ziel erreichbar; Host-Port konfigurierbar |
 | PHP-FPM | `9000/tcp` | nur Compose-Netz `frontend` |
 | PostgreSQL | `5432/tcp` | nur internes Compose-Netz `backend` |
@@ -280,6 +321,9 @@ DICOM-Zielports werden pro registriertem Knoten gespeichert und sind keine einge
 | `APP_KEY` | Laravel-Schlüssel für Verschlüsselung; mit `key:generate` erzeugen | kein Vorgabewert |
 | `APP_DEBUG` | Laravel-Debugausgabe | `false` |
 | `APP_URL` | Externe Basis-URL | `http://localhost:8080` |
+| `HTTPS_HTTP_PORT` | Host-Port für die HTTP-zu-HTTPS-Weiterleitung der optionalen HTTPS-Überlagerung | `80` |
+| `HTTPS_PORT` | Host-Port für TLS der optionalen HTTPS-Überlagerung | `443` |
+| `HTTPS_CERTIFICATE_HOST_DIRECTORY` | Read-only eingebundenes Host-Verzeichnis mit `tls.crt` und `tls.key` | `./docker/https` |
 | `APP_LOCALE` | In `.env.example` vorhanden, aktuell jedoch nicht ausgewertet; `de` ist in `config/app.php` fest gesetzt | `de` |
 | `APP_FALLBACK_LOCALE` | In `.env.example` vorhanden, aktuell jedoch nicht ausgewertet; `en` ist in `config/app.php` fest gesetzt | `en` |
 | `LOG_CHANNEL` | Laravel-Logkanal | `stderr` |
@@ -454,10 +498,10 @@ Es gibt derzeit keine freigegebene öffentliche REST-API, keine OpenAPI-Spezifik
 - Produktive Passwörter und `APP_KEY` niemals aus `.env.example` übernehmen oder versionieren.
 - Den Development-Administrator nicht produktiv verwenden; initiale Administratoren mit `registry:create-admin` anlegen.
 - `APP_DEBUG=false` beibehalten.
-- Für produktiven Betrieb HTTPS an einem vorgeschalteten Reverse Proxy terminieren, `APP_URL` auf die HTTPS-URL setzen und `SESSION_SECURE_COOKIE=true` verwenden. Der mitgelieferte Nginx-Dienst terminiert selbst kein TLS.
+- Für produktiven Betrieb die mitgelieferte HTTPS-Überlagerung oder einen gleichwertig gehärteten vorgeschalteten Reverse Proxy verwenden, `APP_URL` auf die HTTPS-URL setzen und `SESSION_SECURE_COOKIE=true` verwenden.
 - PostgreSQL und PHP-FPM nicht zusätzlich auf Host-Ports veröffentlichen.
 - Ausgehenden Netzwerkzugriff des App-Containers auf ausdrücklich freigegebene DICOM-Ziele begrenzen.
-- DICOM-Diagnosen verwenden aktuell kein TLS; `tls_enabled` ist für diese Runner nur Registry-Metadatum.
+- Für registrierte DICOM-Diagnoseziele bei Bedarf DICOM-TLS mit einem gültigen Zertifikatsprofil aktivieren; Profilfehler brechen ohne Klartext-Fallback ab. Der Discovery-Scanner unterstützt noch kein DICOM-TLS.
 - Diagnoseberechtigungen (`diagnostics.echo`, `.worklist`, `.query`, `.store`, `.move`, `.get`, `.mpps`, `.storage_commitment`, `.capability_matrix`) nach dem Minimalprinzip vergeben. Datenverändernde Tests verlangen zusätzlich eine ausdrückliche Bestätigung.
 - ClamAV-Signaturupdates und den Zustand des `clamav`-Containers überwachen; ClamD-Port 3310 nicht außerhalb des internen Netzes veröffentlichen.
 - Datenbank und `app_storage` gemeinsam, regelmäßig und verschlüsselt sichern; Restore-Tests durchführen.
