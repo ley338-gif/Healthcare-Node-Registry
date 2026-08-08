@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateDicomConnectionRequest;
 use App\Models\DicomConnection;
 use App\Models\DicomNode;
 use App\Models\System;
+use App\Support\DiagnosticPermission;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -92,6 +93,7 @@ final class DicomConnectionController extends Controller
             'filters' => $filters,
             'services' => DicomConnection::SERVICES,
             'canManage' => $request->user()?->can('create', DicomConnection::class) ?? false,
+            'runnableServices' => DiagnosticPermission::allowedDicomConnectionServices($request->user()),
         ]);
     }
 

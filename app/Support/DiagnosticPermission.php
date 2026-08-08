@@ -36,6 +36,28 @@ enum DiagnosticPermission: string
         return $user->hasPermission($this->value);
     }
 
+    /** @return list<string> */
+    public static function allowedDicomConnectionServices(?User $user): array
+    {
+        if ($user === null) {
+            return [];
+        }
+
+        $permissions = [
+            'echo' => self::Echo,
+            'store' => self::Store,
+            'worklist' => self::Worklist,
+            'query' => self::Query,
+            'move' => self::Move,
+            'get' => self::Get,
+        ];
+
+        return array_keys(array_filter(
+            $permissions,
+            static fn (self $permission): bool => $permission->allows($user),
+        ));
+    }
+
     public static function forProfileType(string $testType): ?self
     {
         return match ($testType) {

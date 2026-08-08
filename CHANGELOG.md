@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- DICOM-Testaktionen in Verbindungsansichten werden nur bei passender granularer Diagnoseberechtigung angeboten; C-MOVE und C-GET werden nicht mehr irreführend in den C-FIND-Dialog des Test-Arbeitsbereichs geleitet.
+
 - Dokumentfristen werden täglich geprüft, als persistente In-App-Hinweise an berechtigte Benutzer verteilt und im Dashboard-Widget „Ablaufende Dokumente“ zusammengefasst.
 - Mehrere Netzwerkinterfaces je System ergänzt: Bestandsmigration, Primärinterface-Synchronisierung, CRUD im Netzwerk-Reiter sowie Einbindung in Suche, Discovery-Duplikaterkennung und Systemexport.
 - Gefilterten XLSX-/PDF-Export der System- und DICOM-Knotenübersicht ergänzt und den PDF-Tabellenkern mit der Firewall-/Portmatrix vereinheitlicht.

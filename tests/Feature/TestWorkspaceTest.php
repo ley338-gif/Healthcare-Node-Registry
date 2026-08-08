@@ -100,4 +100,18 @@ final class TestWorkspaceTest extends TestCase
         self::assertFalse($readOnly->permissions()->where('name', 'like', 'diagnostics.%')->exists());
         self::assertTrue($readOnly->permissions()->where('name', 'registry.view')->exists());
     }
+
+    public function test_connection_only_move_and_get_services_are_not_accepted_as_workspace_prefill(): void
+    {
+        $this->seed();
+        $user = User::factory()->create();
+        $user->roles()->attach(Role::query()->where('name', 'system-administrator')->firstOrFail());
+
+        $this->actingAs($user)->get('/tests?service=move')
+            ->assertRedirect()
+            ->assertSessionHasErrors('service');
+        $this->actingAs($user)->get('/tests?service=get')
+            ->assertRedirect()
+            ->assertSessionHasErrors('service');
+    }
 }
