@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- Der globale Audit-Arbeitsbereich und der gefilterte CSV-Export sind umgesetzt; eine verbindliche Aufbewahrungssteuerung und ein kryptografischer Integritätsnachweis fehlen noch.
+- Der Audit-Trail besitzt eine interne SHA-256-Hash-Chain und kontrollierte Aufbewahrung;
+  eine externe signierte Verankerung gegen Angreifer mit vollständigem Datenbank-Schreibzugriff
+  ist noch nicht umgesetzt.
 - Dokumentenablage und Versionierung sind umgesetzt; Dokumentfreigaben, Vier-Augen-Prinzip und verbindliche Aufbewahrungsregeln fehlen noch.
 - Historische Entitätsnamen sind nicht als vollständige Snapshots verfügbar.
 - Die Diagnose-Runner unterstützen noch kein DICOM-TLS.

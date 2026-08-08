@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\SecurityEvent;
 use App\Models\User;
 use App\Support\RbacBootstrapper;
+use App\Support\RegistryAudit;
 use App\Support\RegistryPasswordPolicy;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +22,7 @@ final class CreateInitialAdminCommand extends Command
 
     protected $description = 'Create the first system administrator securely';
 
-    public function handle(RbacBootstrapper $rbac): int
+    public function handle(RbacBootstrapper $rbac, RegistryAudit $audit): int
     {
         if ($this->administratorExists()) {
             $this->error('Es existiert bereits ein Systemadministrator.');
@@ -79,7 +79,7 @@ final class CreateInitialAdminCommand extends Command
         }
 
         try {
-            $user = DB::transaction(function () use ($name, $email, $password, $rbac): User {
+            $user = DB::transaction(function () use ($name, $email, $password, $rbac, $audit): User {
                 $role = $rbac->ensureSystemAdministratorRole();
 
                 $user = User::query()->create([
@@ -92,15 +92,13 @@ final class CreateInitialAdminCommand extends Command
                 ]);
                 $user->roles()->attach($role->id);
 
-                SecurityEvent::query()->create([
-                    'event_id' => (string) Str::uuid7(),
-                    'event_type' => 'identity.initial_admin_created',
-                    'actor_type' => 'console',
-                    'subject_type' => User::class,
-                    'subject_public_id' => $user->public_id,
-                    'metadata' => ['command' => 'registry:create-admin'],
-                    'occurred_at' => now(),
-                ]);
+                $audit->record(
+                    'identity.initial_admin_created',
+                    $user,
+                    null,
+                    ['command' => 'registry:create-admin'],
+                    'console',
+                );
 
                 return $user;
             });

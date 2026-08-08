@@ -2,24 +2,24 @@
 
 namespace App\Support;
 
-use App\Models\SecurityEvent;
 use App\Models\User;
+use App\Services\Audit\AuditChainWriter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 final class RegistryAudit
 {
     /** @param array<string,mixed> $metadata */
-    public function record(string $eventType, Model $subject, ?User $actor, array $metadata = []): void
+    public function record(string $eventType, Model $subject, ?User $actor, array $metadata = [], ?string $actorType = null): void
     {
-        SecurityEvent::query()->create([
-            'event_id' => (string) Str::uuid7(),
-            'event_type' => $eventType,
-            'actor_type' => $actor ? User::class : 'system',
-            'subject_type' => $subject::class,
-            'subject_public_id' => $subject->getAttribute('public_id'),
-            'metadata' => ['actor_public_id' => $actor?->public_id, ...$metadata],
-            'occurred_at' => now(),
-        ]);
+        app(AuditChainWriter::class)->append(
+            (string) Str::uuid7(),
+            $eventType,
+            $actorType ?? ($actor ? User::class : 'system'),
+            $subject::class,
+            $subject->getAttribute('public_id'),
+            ['actor_public_id' => $actor?->public_id, ...$metadata],
+            now()->toImmutable(),
+        );
     }
 }
