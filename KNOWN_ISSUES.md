@@ -10,6 +10,5 @@
 
 ## 0.1.1
 
-- Clean Install und Restore müssen noch auf einer separaten Zielumgebung protokolliert werden.
 - MFA, OIDC und LDAP fehlen noch.
 - Backup-Verschlüsselung und Schlüsselverwaltung sind installationsspezifisch.

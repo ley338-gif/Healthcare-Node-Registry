@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- PowerShell-Backup und -Restore um verbindliche Docker-Exitcode-, Dump- und Archivprüfung, sichere Wiederherstellung über ein Staging-Verzeichnis sowie fail-closed Webdienstverhalten bei Restore-Fehlern gehärtet; privates Storage-Verzeichnis wird bereits beim Containerstart angelegt.
 - Product Book mit dem implementierten Stand von DICOM-Diagnosen und -TLS, ClamAV, Dokumentfreigabe und -aufbewahrung, Audit-Integrität sowie Systemverantwortlichkeit synchronisiert und verbleibende Grenzen präzisiert.
 - Kontrollierten synthetischen C-STORE um auswählbare Secondary-Capture-, CT- und MR-Image-Storage-Objekte mit serverseitiger SOP-Class-Validierung, korrekten Auditdaten und rückstandsfreier lokaler Erzeugung erweitert.
 - Optionale betriebliche Verantwortlichkeit von Systemen in Anlage, Bearbeitung, Detailansicht, Suche und XLSX-Export eingebunden; Änderungen werden mit Vorher-/Nachher-Wert im bestehenden Registry-Audit protokolliert.
