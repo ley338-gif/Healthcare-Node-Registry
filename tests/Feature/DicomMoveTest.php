@@ -25,7 +25,7 @@ final class DicomMoveTest extends TestCase
         fake()->unique(true);
     }
 
-    public function test_success_contains_move_destination_and_synthetic_study_uid(): void
+    public function test_tls_enabled_success_contains_move_destination_and_synthetic_study_uid(): void
     {
         $result = $this->execute(new MoveCommandResult(true, 0, 'Response status 0x0000', '1.2.826.0.1.3680043.10.987.999.1'));
 
@@ -106,7 +106,10 @@ final class DicomMoveTest extends TestCase
 
     private function execute(MoveCommandResult $command): DiagnosticTestResult
     {
-        $target = DicomNode::factory()->create();
+        $target = DicomNode::factory()->create([
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
+        ]);
         $destination = DicomNode::factory()->create();
 
         return (new MoveService(new FakeMoveRunner($command)))->run($target, $destination, 'NODE_REGISTRY', $target->ae_title);

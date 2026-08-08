@@ -23,9 +23,12 @@ final class DicomGetTest extends TestCase
         fake()->unique(true);
     }
 
-    public function test_success_contains_synthetic_uid_and_received_count(): void
+    public function test_tls_enabled_success_contains_synthetic_uid_and_received_count(): void
     {
-        $node = DicomNode::factory()->create();
+        $node = DicomNode::factory()->create([
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
+        ]);
         $result = (new GetService(new FakeGetRunner(new GetCommandResult(true, 0, 'status 0x0000', '1.2.826.0.1.3680043.10.987.999.2', 2))))->run($node, 'NODE_REGISTRY', $node->ae_title);
 
         self::assertSame('dicom_get', $result->testType);

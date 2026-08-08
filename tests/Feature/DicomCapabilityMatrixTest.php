@@ -16,9 +16,13 @@ final class DicomCapabilityMatrixTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_matrix_normalizes_accepted_rejected_unsupported_and_not_tested_contexts(): void
+    public function test_tls_enabled_matrix_normalizes_accepted_rejected_unsupported_and_not_tested_contexts(): void
     {
-        $node = DicomNode::factory()->create(['supports_store' => true]);
+        $node = DicomNode::factory()->create([
+            'supports_store' => true,
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
+        ]);
         $result = (new CapabilityService(new FakeCapabilityRunner(new CapabilityMatrixResult(true, [1 => 0, 3 => 1, 5 => 3]))))->run($node, 'NODE_REGISTRY', $node->ae_title);
 
         self::assertSame(DiagnosticTestStatus::Success, $result->status);

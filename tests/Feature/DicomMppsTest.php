@@ -22,9 +22,13 @@ final class DicomMppsTest extends TestCase
         fake()->unique(true);
     }
 
-    public function test_success_reports_both_dimse_statuses(): void
+    public function test_tls_enabled_success_reports_both_dimse_statuses(): void
     {
-        $node = DicomNode::factory()->create(['supports_mpps' => true]);
+        $node = DicomNode::factory()->create([
+            'supports_mpps' => true,
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
+        ]);
         $result = (new MppsService(new FakeMppsRunner(new MppsCommandResult(true, 0, 0, '1.2.3', 'MPPS completed'))))->run($node, 'NODE_REGISTRY', $node->ae_title);
 
         self::assertSame(DiagnosticTestStatus::Success, $result->status);

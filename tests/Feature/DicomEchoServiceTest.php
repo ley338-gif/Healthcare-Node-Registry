@@ -15,7 +15,7 @@ final class DicomEchoServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_success_contains_all_steps_and_dimse_status(): void
+    public function test_tls_enabled_success_contains_all_steps_and_dimse_status(): void
     {
         $result = $this->executeEcho(new DicomEchoCommandResult(true, 0, 'DIMSE status: 0x0000'));
 
@@ -94,6 +94,8 @@ final class DicomEchoServiceTest extends TestCase
             'host' => 'pacs.example.test',
             'port' => 104,
             'ae_title' => 'PACS',
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
         ]);
 
         return (new DicomEchoService(new FakeDicomEchoCommandRunner($command)))->test($node);
