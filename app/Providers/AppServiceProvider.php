@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\Documents\ClamAvMalwareScanner;
 use App\Services\Documents\MalwareScanner;
 use App\Services\Documents\UnavailableMalwareScanner;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,9 @@ final class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(MalwareScanner::class, UnavailableMalwareScanner::class);
+        $this->app->bind(MalwareScanner::class, fn (): MalwareScanner => config('registry_documents.malware_scanner.enabled')
+            ? new ClamAvMalwareScanner
+            : new UnavailableMalwareScanner);
     }
 
     public function boot(): void

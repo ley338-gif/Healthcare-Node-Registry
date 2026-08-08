@@ -55,7 +55,9 @@ SHA-256 dient als Integritätsmerkmal und zur Duplikaterkennung. Derselbe Inhalt
 
 `MalwareScanner` ist die austauschbare Scanner-Schnittstelle. Unterstützte Zustände sind `pending`, `clean`, `infected`, `failed` und `unavailable`. Nur `clean` darf heruntergeladen oder als PDF angezeigt werden; alle anderen Zustände werden serverseitig gesperrt.
 
-Die Standardbindung ist derzeit `UnavailableMalwareScanner`. Ohne installationsspezifischen produktiven Adapter werden Uploads daher privat gespeichert und mit `unavailable` markiert, sind aber nicht abrufbar. Infizierte Dateien bleiben als gesperrter Nachweis im privaten Storage; es gibt aktuell keinen automatischen Quarantäne-, Rescan- oder Bereinigungsjob.
+Bei `REGISTRY_DOCUMENT_MALWARE_SCANNER_ENABLED=true` verwendet die Anwendung `ClamAvMalwareScanner` und überträgt Uploads per ClamD-`INSTREAM` an den internen Dienst `clamav:3310`. Port 3310 wird nicht auf dem Host veröffentlicht. Ist ClamAV deaktiviert, bindet die Anwendung `UnavailableMalwareScanner`; ist ClamD nicht erreichbar, liefert der Adapter ebenfalls `unavailable`. In beiden Fällen bleibt die Datei privat und gesperrt.
+
+Der Scheduler führt stündlich `registry-documents:rescan --limit=250` aus. Das Kommando kann zusätzlich manuell ausgeführt werden und prüft `pending`, `failed` und `unavailable` erneut. Ein erfolgreicher Rescan setzt den Status auf `clean` und gibt die Version über die bestehenden Controller-Prüfungen frei. `infected` bleibt terminal gesperrt. Ergebnisse werden als `document.scan_rescanned` ohne rohe Scanner-Ausgabe am Registry-Kontext auditiert.
 
 ## Berechtigungen und Zugriff
 
@@ -78,8 +80,7 @@ Dateiinhalte, interne Storage-Pfade und rohe Scanner-Ausgaben werden nicht in Au
 
 ## Bekannte Einschränkungen
 
-- Standardmäßig ist kein produktiver Malware-Scanner angebunden; Dateien bleiben bis zur Scannerintegration gesperrt.
-- Es gibt keinen automatischen Rescan, keine physische Löschung und keinen konfigurierbaren Retention-Job.
+- Es gibt keine automatische Quarantäne oder physische Löschung infizierter Dateien und keinen konfigurierbaren Retention-Job.
 - Es gibt keinen Freigabe- oder Vier-Augen-Workflow.
 - Vorschau ist ausschließlich für saubere PDF-Versionen verfügbar; Office-, Bild-, Text- und ZIP-Dateien werden nicht inline dargestellt.
 - ZIP-Dateien werden nicht entpackt oder inhaltlich analysiert.
