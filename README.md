@@ -12,10 +12,10 @@ HNR ist als modularer Monolith umgesetzt:
 - Frontend: Vue 3, TypeScript, Inertia 3, Tailwind CSS 4 und Vite
 - Datenbank: PostgreSQL 18
 - Betrieb: Nginx 1.28 vor PHP-FPM, bereitgestellt mit Docker Compose
-- DICOM-Werkzeuge: DCMTK im PHP-Container
+- DICOM-Werkzeuge: DCMTK sowie eine fest gepinnte Python-Laufzeit mit `pynetdicom` und `pydicom` im PHP-Container
 - Speicherung: PostgreSQL für Fachdaten sowie ein privates Laravel-Dateisystem für Registry-Dokumente
 
-Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten Funktionen sind implementiert und durch automatisierte Tests abgedeckt. Eine öffentliche REST-API, OpenAPI-/Swagger-Dokumentation, DICOM-TLS, MFA, LDAP/Active Directory und Redis sind derzeit nicht Bestandteil des Stacks. Seit dem Discovery-MVP gibt es einen `database`-gestützten Queue-Worker-Container für asynchrone Scan-Läufe (siehe unten).
+Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten Funktionen sind implementiert und durch automatisierte Tests abgedeckt. Für asynchrone Discovery-Scan-Läufe gibt es einen `database`-gestützten Queue-Worker-Container.
 
 ## Features
 
@@ -24,8 +24,10 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - Registry für Healthcare-IT-Systeme mit Zuordnung zur Organisationsstruktur und Archivierung
 - Mehrere Netzwerkinterfaces je System mit primärer Schnittstelle und kompatiblen Alt-Feldern
 - Gefilterter Excel-/PDF-Export der System- und DICOM-Knotenübersicht
+- CSV-Import für Systeme und DICOM-Knoten mit Vorschau, Validierung und Duplikaterkennung
 - DICOM-Knoten mit AE Title, Host, Port, Rolle, Status und Verifikation
 - DICOM-Verbindungen zwischen registrierten Knoten sowie grafische Netzwerkansicht
+- Globale DICOM-Verbindungsübersicht und Firewall-/Portmatrix mit CSV-/PDF-Export
 - Globale, berechtigungsgeprüfte Suche
 - Strukturierte Betriebsdokumentation für Organisationen, Standorte, Abteilungen und Systeme
 - Private Dokumentenablage mit Metadaten, Versionen, SHA-256-Prüfung, Duplikaterkennung, Archivierung und PDF-Vorschau
@@ -38,6 +40,9 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - Netzwerkprüfung und DICOM C-ECHO
 - Modality-Worklist-C-FIND und PACS-Study-Root-C-FIND
 - Kontrollierter C-STORE eines synthetischen Secondary-Capture-Objekts
+- Autorisierte C-MOVE- und C-GET-Tests mit serverseitig konfigurierten synthetischen Study-UIDs
+- Autorisierter MPPS-Test mit synthetischem N-CREATE und anschließendem N-SET auf `COMPLETED`
+- Autorisiertes Storage Commitment mit synthetischem C-STORE, N-ACTION und korreliertem N-EVENT-REPORT
 - DICOM Capability-Matrix auf Basis der Association-Aushandlung
 - DICOM-Dateianalyse mit `dcmdump`
 - Öffentlicher, detailarmer Health-Endpunkt unter `/up`
@@ -45,6 +50,10 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - Backup- und Restore-Skripte für PostgreSQL und privaten Dokumentenspeicher
 
 Der Docker-Stack bindet ClamAV 1.5.3 über das interne ClamD-Netzwerk an. Uploads werden synchron gescannt; ein stündlicher Scheduler prüft offene Scans erneut. Ist der Scanner deaktiviert oder nicht erreichbar, werden Dateien mit `unavailable` privat gespeichert und Download sowie Vorschau bleiben fail-closed gesperrt.
+
+## Nicht enthalten
+
+Der aktuelle Stand enthält keine öffentliche REST-API, keine OpenAPI-/Swagger-Spezifikation, kein DICOM-TLS, keine DICOMweb- oder HL7/MLLP-Schnittstelle, keine MFA- oder LDAP-/Active-Directory-Anbindung und kein Redis. Die Anwendung ist außerdem kein PACS, kein Patientenakten-System und kein kontinuierliches Monitoring- oder Alarmierungssystem.
 
 ## Verzeichnisstruktur
 
@@ -80,7 +89,8 @@ PHP, Composer, PostgreSQL, Node.js und DCMTK müssen bei dieser Variante nicht a
 - Composer 2
 - PostgreSQL 18
 - Node.js 24 und npm
-- DCMTK für native DICOM-Diagnosen (`echoscu`, `findscu`, `img2dcm`, `storescu`, `dcmdump`)
+- DCMTK für native DICOM-Diagnosen (`echoscu`, `findscu`, `movescu`, `getscu`, `img2dcm`, `storescu`, `dcmdump`, `dump2dcm`)
+- Python 3 mit `venv`, `pynetdicom==3.0.4` und `pydicom==3.0.1` unter `/opt/registry-dicom` für MPPS und Storage Commitment
 
 Für einen reproduzierbaren Betrieb wird Docker empfohlen.
 
@@ -249,6 +259,7 @@ docker compose down
 | Komponente | Port | Erreichbarkeit |
 | --- | --- | --- |
 | HNR über Nginx | `8080/tcp` | Host und Browser |
+| Storage-Commitment-Callback | `11113/tcp` standardmäßig | während eines Storage-Commitment-Tests vom DICOM-Ziel erreichbar; Host-Port konfigurierbar |
 | PHP-FPM | `9000/tcp` | nur Compose-Netz `frontend` |
 | PostgreSQL | `5432/tcp` | nur internes Compose-Netz `backend` |
 | PostgreSQL Test | `5432/tcp` | nur internes Compose-Netz `test_backend` |
@@ -290,6 +301,12 @@ DICOM-Zielports werden pro registriertem Knoten gespeichert und sind keine einge
 | `CACHE_STORE` | Laravel-Cache | `database` |
 | `QUEUE_CONNECTION` | Laravel-Queue-Backend; verarbeitet vom `worker`-Dienst (`database`, keine Redis-Abhängigkeit) | `database` |
 | `FILESYSTEM_DISK` | Standard-Dateisystem | `local` |
+| `DIAGNOSTIC_CALLING_AE_TITLE` | Standardmäßiger Calling AE Title für DICOM-Diagnosen | `NODE_REGISTRY` |
+| `DIAGNOSTIC_MOVE_TEST_STUDY_UID` | Ausschließlich serverseitig konfigurierte Test-Study-UID für C-MOVE | synthetische UID aus `.env.example` |
+| `DIAGNOSTIC_GET_TEST_STUDY_UID` | Ausschließlich serverseitig konfigurierte Test-Study-UID für C-GET | synthetische UID aus `.env.example` |
+| `DIAGNOSTIC_STORAGE_COMMITMENT_CALLBACK_PORT` | Interner Callback-Port für N-EVENT-REPORT | `11113` |
+| `DIAGNOSTIC_STORAGE_COMMITMENT_HOST_PORT` | Auf dem Docker-Host veröffentlichter Callback-Port | `11113` |
+| `DIAGNOSTIC_STORAGE_COMMITMENT_EVENT_TIMEOUT` | Wartezeit auf den N-EVENT-REPORT in Sekunden | `30` |
 | `REGISTRY_DOCUMENT_EXPIRY_WARNING_DAYS` | Vorlauf für Ablaufwarnungen | `60` |
 | `REGISTRY_DOCUMENT_MALWARE_SCANNER_ENABLED` | ClamAV-Adapter aktivieren; bei `false` wird sicher auf `UnavailableMalwareScanner` zurückgefallen | `true` |
 | `REGISTRY_DOCUMENT_MALWARE_SCANNER_HOST` | ClamD-Hostname im internen Netz | `clamav` |
@@ -323,6 +340,8 @@ Laravel unterstützt darüber hinaus optionale Verbindungs-, Session-, Cache-, Q
 Nach Installation der nativen Voraussetzungen:
 
 ```bash
+python3 -m venv /opt/registry-dicom
+/opt/registry-dicom/bin/pip install --require-hashes -r docker/php/requirements-dicom.txt
 cp .env.example .env
 composer install
 npm ci
