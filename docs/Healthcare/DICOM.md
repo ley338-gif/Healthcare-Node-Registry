@@ -7,6 +7,7 @@ Ein Gerät, ein logisches System und eine DICOM Application Entity sind nicht zw
 Ein DICOM-Endpunkt kann enthalten:
 
 - AE Title
+- Modalität (optional, z. B. `DX`, `CT`, `MR`; dient der automatischen Vorbelegung im Worklist-Test, siehe [Diagnostic Test Workspace](DiagnosticTestWorkspace.md))
 - Hostname und/oder IP
 - Port
 - lokale/entfernte Rolle
@@ -46,4 +47,4 @@ Die Registry speichert keine hochgeladenen DICOM-Dateien und benötigt keine ech
 
 ## Discovery-C-ECHO gegenüber verifizierten Knoten
 
-Der Diagnose-Workspace verifiziert bekannte, bereits registrierte `DicomNode`-Einträge mit dem festen Calling-AE-Titel `NODE_REGISTRY`. Das DICOM-Discovery-Modul (siehe [dicom-discovery.md](../Features/dicom-discovery.md)) ist davon technisch getrennt: Es testet unbekannte Host/Port/AE-Kombinationen mit konfigurierbaren Calling- und Called-AE-Titel-Kandidaten und dem Standard-Calling-AE `HNR_DISCOVERY`. Beide Pfade nutzen DCMTK `echoscu` mit fester Argumentliste, teilen sich aber bewusst keinen Code, damit Discovery-Änderungen die produktive Node-Verifizierung nicht beeinflussen können.
+Der Diagnose-Workspace verifiziert bekannte, bereits registrierte `DicomNode`-Einträge mit dem Calling-AE-Titel aus `config('diagnostics.default_calling_ae_title')` (Standard weiterhin `NODE_REGISTRY`, per `DIAGNOSTIC_CALLING_AE_TITLE` zentral konfigurierbar). Das DICOM-Discovery-Modul (siehe [dicom-discovery.md](../Features/dicom-discovery.md)) ist davon technisch getrennt: Es testet unbekannte Host/Port/AE-Kombinationen mit konfigurierbaren Calling- und Called-AE-Titel-Kandidaten und dem eigenständigen Standard-Calling-AE `HNR_DISCOVERY` (`config('discovery.default_calling_ae_title')`). Beide Pfade nutzen DCMTK `echoscu` mit fester Argumentliste, teilen sich aber bewusst keine Konfiguration und keinen Code, damit Discovery-Änderungen die produktive Node-Verifizierung nicht beeinflussen können.

@@ -29,6 +29,15 @@ final class DicomEchoServiceTest extends TestCase
         self::assertSame('NODE_REGISTRY', $result->diagnosticResult->target->callingAeTitle);
     }
 
+    public function test_calling_ae_title_is_read_from_central_configuration(): void
+    {
+        config(['diagnostics.default_calling_ae_title' => 'HNR_TEST']);
+
+        $result = $this->executeEcho(new DicomEchoCommandResult(true, 0, 'DIMSE status: 0x0000'));
+
+        self::assertSame('HNR_TEST', $result->diagnosticResult->target->callingAeTitle);
+    }
+
     public function test_timeout_is_classified(): void
     {
         $result = $this->executeEcho(new DicomEchoCommandResult(false, 1, 'timed out', timedOut: true));

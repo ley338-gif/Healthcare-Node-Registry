@@ -470,8 +470,10 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
             <aside class="absolute inset-y-0 right-0 flex w-full max-w-xl flex-col bg-white shadow-2xl">
                 <header class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
                     <div>
-                        <p class="text-xs font-semibold text-rose-600 uppercase">Autorisierter DICOM-Test</p>
-                        <h2 class="mt-1 text-xl font-semibold text-slate-950">C-GET ausführen</h2>
+                        <p class="text-xs font-semibold text-rose-600 uppercase">
+                            Autorisierter DICOM-Test · DICOM C-GET
+                        </p>
+                        <h2 class="mt-1 text-xl font-semibold text-slate-950">Abruf testen</h2>
                         <p class="mt-1 text-sm text-slate-500">{{ selected.name }}</p>
                     </div>
                     <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100" @click="closeGet">
@@ -543,7 +545,7 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                             :disabled="!getForm.confirmed || getForm.processing"
                             class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                         >
-                            {{ getForm.processing ? 'C-GET läuft …' : 'Autorisierten C-GET starten' }}
+                            {{ getForm.processing ? 'Abruf läuft …' : 'Abruf starten' }}
                         </button>
                     </footer>
                 </form>
@@ -559,8 +561,10 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
             <aside class="absolute inset-y-0 right-0 flex w-full max-w-xl flex-col bg-white shadow-2xl">
                 <header class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
                     <div>
-                        <p class="text-xs font-semibold text-rose-600 uppercase">Autorisierter DICOM-Test</p>
-                        <h2 class="mt-1 text-xl font-semibold text-slate-950">C-MOVE ausführen</h2>
+                        <p class="text-xs font-semibold text-rose-600 uppercase">
+                            Autorisierter DICOM-Test · DICOM C-MOVE
+                        </p>
+                        <h2 class="mt-1 text-xl font-semibold text-slate-950">Abruf testen</h2>
                         <p class="mt-1 text-sm text-slate-500">{{ selected.name }}</p>
                     </div>
                     <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100" @click="closeMove">
@@ -639,7 +643,7 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                             :disabled="!moveForm.confirmed || moveForm.processing"
                             class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                         >
-                            {{ moveForm.processing ? 'C-MOVE läuft …' : 'Autorisierten C-MOVE starten' }}
+                            {{ moveForm.processing ? 'Abruf läuft …' : 'Abruf starten' }}
                         </button>
                     </footer>
                 </form>

@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'default_calling_ae_title' => env('DIAGNOSTIC_CALLING_AE_TITLE', 'NODE_REGISTRY'),
     'move_test_study_instance_uid' => env(
         'DIAGNOSTIC_MOVE_TEST_STUDY_UID',
         '1.2.826.0.1.3680043.10.987.999.1',
