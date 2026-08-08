@@ -75,3 +75,32 @@
 - Organisationen, Standorte und Abteilungen unter einem Navigationsbereich gebündelt
 - Systeme als nächstes zentrales Registry-Objekt hervorgehoben
 - geplante Module klar von verfügbaren Funktionen getrennt
+
+## Historische Entwicklungsmeilensteine
+
+### 0.2.0-dev – Organisationsstruktur und UI-Grundlage
+
+- Organisationen, Standorte und Abteilungen mit Suche, Bearbeitung, Archivierung, RBAC, Audit und Dashboard-Integration umgesetzt.
+- Gemeinsamen Einstieg und gruppierte Navigation für die Organisationsstruktur ergänzt; die fachliche Hierarchie folgt ADR‑0005.
+- Monolithisches Anwendungslayout in getrennte Sidebar-/Header-Komponenten und wiederverwendbare Page-, Card-, Status- und Statistikkomponenten zerlegt.
+- Dashboard auf tatsächlich vorhandene Registry-Daten begrenzt; Monitoring- und Verbindungswerte werden erst mit realen Datenquellen dargestellt.
+
+### 0.1.2 – Isolierte Entwicklungs- und Testinfrastruktur
+
+- Eigene Compose-Dienste `app-test` und `db-test` mit isoliertem Netzwerk und getrennten Volumes eingeführt.
+- Test-Sicherheitsguard auf effektive Laravel-Testumgebung und Datenbanknamen mit Suffix `_test` erweitert.
+- PowerShell-Helfer und Entwicklungsdokumentation für sichere Einzeltests und vollständige Quality-Gates ergänzt.
+- PHPUnit kann die PostgreSQL-Entwicklungsdatenbank durch die Docker-Netztrennung nicht erreichen.
+
+### 0.1.1 – Foundation Hardening
+
+- Initialen Administrator als transaktionalen, einmaligen Konsolenprozess mit Rollenvergabe und Security Event abgesichert.
+- Installationsprüfung über `registry:doctor` sowie Featuretests für Administratorkonto, Rollenvergabe und Zweitkonto-Sperre ergänzt.
+- Clean-Install-Validierung auf einer separaten Zielumgebung und vollständiger Restore-Test blieben als manuelle Nachweise offen.
+
+### 0.1.0 – Application Foundation (2026-07-25)
+
+- Reproduzierbare Laravel-/Inertia-Grundlage als modularer Monolith mit lokaler Sessionauthentisierung, RBAC, Dashboard, Health-Endpunkt, Docker Compose und CI geschaffen.
+- Datenbankbasis für Benutzer, Sessions, Rollen und Berechtigungen eingeführt; Default-Deny, generische Loginfehler und Rate Limits als Sicherheitsgrundlage umgesetzt.
+- Abhängigkeiten werden kontrolliert installiert und über Composer-/npm-Lockfiles versioniert; Offline-Installationen benötigen ein internes Artefakt- und Image-Mirroring.
+- Die Foundation enthält ausschließlich synthetische Entwicklungsdaten und keine realen Patientendaten.
