@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\DicomNode;
 use App\Models\User;
+use App\Support\DiagnosticPermission;
 
 final class DicomNodePolicy
 {
@@ -35,6 +36,6 @@ final class DicomNodePolicy
 
     public function verify(User $user, DicomNode $dicomNode): bool
     {
-        return $user->hasPermission('registry.manage');
+        return $this->view($user, $dicomNode) && DiagnosticPermission::Echo->allows($user);
     }
 }

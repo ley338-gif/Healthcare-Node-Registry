@@ -7,6 +7,7 @@ use App\Models\DicomNode;
 use App\Services\Diagnostics\DiagnosticTestRecorder;
 use App\Services\Diagnostics\DiagnosticTestStatus;
 use App\Services\Diagnostics\DicomMppsTest;
+use App\Support\DiagnosticPermission;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -16,8 +17,8 @@ final class MppsDiagnosticController extends Controller
 {
     public function __invoke(RunMppsTestRequest $request, DicomNode $dicomNode, DicomMppsTest $test, DiagnosticTestRecorder $recorder, RegistryAudit $audit): RedirectResponse
     {
-        Gate::authorize('verify', $dicomNode);
-        abort_unless($request->user()?->hasPermission('registry.manage'), 403);
+        Gate::authorize('view', $dicomNode);
+        Gate::authorize(DiagnosticPermission::Mpps->value);
         if ($dicomNode->archived_at !== null || ! $dicomNode->supports_mpps) {
             return back()->with('error', 'Der ausgewählte DICOM-Knoten unterstützt keinen ausführbaren MPPS-Test.');
         }

@@ -254,7 +254,7 @@ Die detaillierte Arbeitsroadmap wird außerhalb dieses Kapitels gepflegt. Auf Pr
 
 ### Diagnosehärtung
 
-- granulare Einzelrechte für Netzwerk, C-ECHO, Modality Worklist und PACS Query;
+- weitere installationsbezogene Härtung der Diagnoseausführung;
 - konfigurierbare CIDR-Allowlist, Timeouts und Parallelitätsgrenzen;
 - DICOM-TLS;
 - weitere synthetische Storage-SOP-Klassen;

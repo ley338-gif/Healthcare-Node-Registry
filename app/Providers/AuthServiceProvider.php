@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Support\DiagnosticPermission;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -16,5 +17,9 @@ final class AuthServiceProvider extends ServiceProvider
 
         Gate::define('view-audit', fn (User $user): bool => $user->hasPermission('audit.view'));
         Gate::define('manage-users', fn (User $user): bool => $user->hasPermission('users.manage'));
+
+        foreach (DiagnosticPermission::cases() as $permission) {
+            Gate::define($permission->value, fn (User $user): bool => $permission->allows($user));
+        }
     }
 }

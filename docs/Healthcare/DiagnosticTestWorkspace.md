@@ -83,13 +83,19 @@ Das vorhandene RBAC-System bleibt maßgeblich.
 | Funktion | Aktuelle Prüfung |
 |---|---|
 | Workspace und Verlauf | `registry.view` oder `registry.manage` über Policies |
-| Netzwerk, C-ECHO, Worklist, PACS Query und MPPS | `registry.manage` und Knoten-Policy |
+| Netzwerk und C-ECHO | `diagnostics.echo` und Knoten-Policy |
+| Worklist | `diagnostics.worklist` und Knoten-Policy |
+| PACS Query | `diagnostics.query` und Knoten-Policy |
+| MPPS | `diagnostics.mpps` und Knoten-Policy |
 | Testprofile verwalten | `registry.manage` |
-| C-STORE und Capability-Matrix | `tests.run.storage` und Knoten-Policy |
+| C-STORE | `diagnostics.store` und Knoten-Policy |
+| Storage Commitment | `diagnostics.storage_commitment` und Knoten-Policy |
+| Capability-Matrix | `diagnostics.capability_matrix` und Knoten-Policy |
+| C-MOVE / C-GET | `diagnostics.move` / `diagnostics.get` und Verbindungs-Policy |
 | DICOM-Datei analysieren | `tests.analyze_file` |
 | Ergebnisse exportieren | `tests.export` und Verlauf-Policy |
 
-C-STORE besitzt bewusst ein strengeres Recht, da ein dauerhaftes Zielobjekt entstehen kann. Eine spätere Aufteilung von `registry.manage` in einzelne Testrechte ist in der Roadmap vermerkt; es existiert keine parallele Berechtigungsarchitektur.
+C-STORE und andere datenverändernde Tests besitzen eigene Rechte und verlangen weiterhin eine ausdrückliche Bestätigung. Die alte Berechtigung `tests.run.storage` bleibt nur zur migrationssicheren Übernahme bestehender Rollen erhalten und wird von Diagnose-Controllern nicht mehr ausgewertet.
 
 ## Sicherheitskonzept
 

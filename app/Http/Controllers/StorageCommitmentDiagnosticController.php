@@ -7,6 +7,7 @@ use App\Models\DicomNode;
 use App\Services\Diagnostics\DiagnosticTestRecorder;
 use App\Services\Diagnostics\DiagnosticTestStatus;
 use App\Services\Diagnostics\DicomStorageCommitmentTest;
+use App\Support\DiagnosticPermission;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
@@ -17,8 +18,8 @@ final class StorageCommitmentDiagnosticController extends Controller
 {
     public function __invoke(RunStorageCommitmentTestRequest $request, DicomNode $dicomNode, DicomStorageCommitmentTest $test, DiagnosticTestRecorder $recorder, RegistryAudit $audit): RedirectResponse
     {
-        Gate::authorize('verify', $dicomNode);
-        abort_unless($request->user()?->hasPermission('tests.run.storage'), 403);
+        Gate::authorize('view', $dicomNode);
+        Gate::authorize(DiagnosticPermission::StorageCommitment->value);
         if ($dicomNode->archived_at !== null || ! $dicomNode->supports_storage_commitment) {
             return back()->with('error', 'Der ausgewählte DICOM-Knoten unterstützt keinen ausführbaren Storage-Commitment-Test.');
         }

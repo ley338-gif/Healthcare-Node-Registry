@@ -7,6 +7,7 @@ use App\Models\DicomConnection;
 use App\Services\Diagnostics\DiagnosticTestRecorder;
 use App\Services\Diagnostics\DiagnosticTestStatus;
 use App\Services\Diagnostics\DicomMoveTest;
+use App\Support\DiagnosticPermission;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,7 @@ final class MoveDiagnosticController extends Controller
         RegistryAudit $audit,
     ): RedirectResponse {
         Gate::authorize('view', $dicomConnection);
-        abort_unless($request->user()?->hasPermission('registry.manage'), 403);
+        Gate::authorize(DiagnosticPermission::Move->value);
 
         if ($dicomConnection->archived_at !== null || ! $dicomConnection->test_enabled) {
             return back()->with('error', 'Diese DICOM-Verbindung ist nicht für Tests freigegeben.');

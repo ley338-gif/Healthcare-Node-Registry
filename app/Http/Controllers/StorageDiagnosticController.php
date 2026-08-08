@@ -7,6 +7,7 @@ use App\Models\DicomNode;
 use App\Services\Diagnostics\DiagnosticTestRecorder;
 use App\Services\Diagnostics\DiagnosticTestStatus;
 use App\Services\Diagnostics\DicomStorageTest;
+use App\Support\DiagnosticPermission;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -16,8 +17,8 @@ final class StorageDiagnosticController extends Controller
 {
     public function __invoke(RunStorageTestRequest $request, DicomNode $dicomNode, DicomStorageTest $test, DiagnosticTestRecorder $recorder, RegistryAudit $audit): RedirectResponse
     {
-        Gate::authorize('verify', $dicomNode);
-        abort_unless($request->user()?->hasPermission('tests.run.storage'), 403);
+        Gate::authorize('view', $dicomNode);
+        Gate::authorize(DiagnosticPermission::Store->value);
         if ($dicomNode->archived_at !== null) {
             return back()->with('error', 'Ein archivierter DICOM-Knoten kann nicht getestet werden.');
         }

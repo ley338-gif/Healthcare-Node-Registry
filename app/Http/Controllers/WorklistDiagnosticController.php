@@ -8,6 +8,7 @@ use App\Services\Diagnostics\DiagnosticTestRecorder;
 use App\Services\Diagnostics\DiagnosticTestStatus;
 use App\Services\Diagnostics\WorklistFindParameters;
 use App\Services\Diagnostics\WorklistFindTest;
+use App\Support\DiagnosticPermission;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,8 @@ final class WorklistDiagnosticController extends Controller
         DiagnosticTestRecorder $recorder,
         RegistryAudit $audit,
     ): RedirectResponse {
-        Gate::authorize('verify', $dicomNode);
+        Gate::authorize('view', $dicomNode);
+        Gate::authorize(DiagnosticPermission::Worklist->value);
 
         if ($dicomNode->archived_at !== null) {
             return back()->with('error', 'Ein archivierter DICOM-Knoten kann nicht getestet werden.');

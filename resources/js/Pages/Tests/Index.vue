@@ -164,6 +164,8 @@ const props = defineProps<{
     canRunMpps: boolean;
     canRunPacsQuery: boolean;
     canRunStorage: boolean;
+    canRunStorageCommitment: boolean;
+    canRunCapabilityMatrix: boolean;
     canAnalyzeFile: boolean;
     canExport: boolean;
     fileAnalysis: FileAnalysis | null;
@@ -549,7 +551,7 @@ const runMppsTest = (): void => {
 };
 
 const openStorageCommitmentTest = (): void => {
-    if (!selectedNode.value?.supports_storage_commitment || !props.canRunStorage) return;
+    if (!selectedNode.value?.supports_storage_commitment || !props.canRunStorageCommitment) return;
     storageCommitmentForm.called_ae_title = selectedNode.value.ae_title;
     storageCommitmentForm.confirmed = false;
     storageCommitmentDialogOpen.value = true;
@@ -630,6 +632,14 @@ const executeProfile = (profile: TestProfile): void => {
     router.post(`/tests/profiles/${profile.public_id}/execute`, {}, { preserveScroll: true });
 };
 
+const canExecuteProfile = (profile: TestProfile): boolean => {
+    if (profile.test_type === 'network' || profile.test_type === 'dicom_echo') return props.canRunEcho;
+    if (profile.test_type === 'worklist') return props.canRunWorklist;
+    if (profile.test_type === 'pacs_query') return props.canRunPacsQuery;
+
+    return false;
+};
+
 const archiveProfile = (profile: TestProfile): void => {
     if (window.confirm(`Testprofil „${profile.name}“ archivieren?`))
         router.post(`/tests/profiles/${profile.public_id}/archive`, {}, { preserveScroll: true });
@@ -654,7 +664,7 @@ const runStorageTest = (): void => {
 };
 
 const openCapabilityTest = (): void => {
-    if (!selectedNode.value?.supports_store || !props.canRunStorage) return;
+    if (!selectedNode.value?.supports_store || !props.canRunCapabilityMatrix) return;
     capabilityForm.reset();
     capabilityForm.called_ae_title = selectedNode.value.ae_title;
     capabilityDialogOpen.value = true;
@@ -788,7 +798,7 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                             <div class="flex items-start justify-between gap-2">
                                 <button
                                     type="button"
-                                    :disabled="!profile.enabled"
+                                    :disabled="!profile.enabled || !canExecuteProfile(profile)"
                                     class="min-w-0 flex-1 text-left disabled:opacity-40"
                                     @click="executeProfile(profile)"
                                 >
@@ -992,7 +1002,9 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                             </p>
                             <button
                                 type="button"
-                                :disabled="!canRunStorage || !selectedNode.supports_store || capabilityForm.processing"
+                                :disabled="
+                                    !canRunCapabilityMatrix || !selectedNode.supports_store || capabilityForm.processing
+                                "
                                 class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                                 @click="openCapabilityTest"
                             >
@@ -1121,7 +1133,7 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                             <button
                                 type="button"
                                 :disabled="
-                                    !canRunStorage ||
+                                    !canRunStorageCommitment ||
                                     !selectedNode.supports_storage_commitment ||
                                     storageCommitmentForm.processing
                                 "

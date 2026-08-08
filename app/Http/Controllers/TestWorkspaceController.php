@@ -6,6 +6,7 @@ use App\Models\DiagnosticTestProfile;
 use App\Models\DiagnosticTestRun;
 use App\Models\DicomNode;
 use App\Models\User;
+use App\Support\DiagnosticPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -193,12 +194,14 @@ final class TestWorkspaceController extends Controller
 
         return Inertia::render('Tests/Index', [
             'nodes' => $nodes,
-            'canRunEcho' => $request->user()?->hasPermission('registry.manage') ?? false,
-            'canRunNetwork' => $request->user()?->hasPermission('registry.manage') ?? false,
-            'canRunWorklist' => $request->user()?->hasPermission('registry.manage') ?? false,
-            'canRunMpps' => $request->user()?->hasPermission('registry.manage') ?? false,
-            'canRunPacsQuery' => $request->user()?->hasPermission('registry.manage') ?? false,
-            'canRunStorage' => $request->user()?->hasPermission('tests.run.storage') ?? false,
+            'canRunEcho' => $request->user()?->can(DiagnosticPermission::Echo->value) ?? false,
+            'canRunNetwork' => $request->user()?->can(DiagnosticPermission::Echo->value) ?? false,
+            'canRunWorklist' => $request->user()?->can(DiagnosticPermission::Worklist->value) ?? false,
+            'canRunMpps' => $request->user()?->can(DiagnosticPermission::Mpps->value) ?? false,
+            'canRunPacsQuery' => $request->user()?->can(DiagnosticPermission::Query->value) ?? false,
+            'canRunStorage' => $request->user()?->can(DiagnosticPermission::Store->value) ?? false,
+            'canRunStorageCommitment' => $request->user()?->can(DiagnosticPermission::StorageCommitment->value) ?? false,
+            'canRunCapabilityMatrix' => $request->user()?->can(DiagnosticPermission::CapabilityMatrix->value) ?? false,
             'canAnalyzeFile' => $request->user()?->hasPermission('tests.analyze_file') ?? false,
             'canExport' => $request->user()?->hasPermission('tests.export') ?? false,
             'fileAnalysis' => $request->session()->get('dicomFileAnalysis'),

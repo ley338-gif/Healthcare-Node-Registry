@@ -16,7 +16,7 @@ Wenn das Ziel den N-EVENT-REPORT auf derselben Association sendet, wird dieser e
 
 ## Sicherheit
 
-- Ausführung nur mit `tests.run.storage`, Knoten-Policy und aktivierter Capability `supports_storage_commitment`.
+- Ausführung nur mit `diagnostics.storage_commitment`, Knoten-Policy und aktivierter Capability `supports_storage_commitment`.
 - Explizite Bestätigung vor jedem Lauf.
 - Ausschließlich synthetisches Secondary Capture ohne echte Patientendaten.
 - Transaction UID und SOP Instance UID werden serverseitig erzeugt.

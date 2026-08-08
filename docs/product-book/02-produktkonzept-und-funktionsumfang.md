@@ -186,7 +186,7 @@ Zentrale Pflegeoberflächen für fachliche Referenzdaten können fest hinterlegt
 
 ### Feingranulare Diagnoseberechtigungen
 
-Netzwerk, C-ECHO, Modality Worklist und PACS Query sollen bei Bedarf getrennte Berechtigungen erhalten. Konfigurierbare Netzwerkfreigaben, Timeouts und Parallelitätsgrenzen sind ebenfalls als spätere Härtung vorgesehen.
+Netzwerk, C-ECHO, Modality Worklist und PACS Query besitzen getrennte Berechtigungen. Konfigurierbare Netzwerkfreigaben, Timeouts und Parallelitätsgrenzen bleiben als weitere Härtung vorgesehen.
 
 ### Dokumentfreigabe und Aufbewahrung
 

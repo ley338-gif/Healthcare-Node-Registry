@@ -156,7 +156,7 @@ Die HNR enthält keine verbindliche Eins-zu-eins-Zuordnung zwischen den beschrie
 | Registry pflegen | `registry.manage` |
 | Audit einsehen | `audit.view` |
 | Dokumente verwenden | getrennte Rechte für Anzeige, Upload, Änderung, Archivierung, Download und Versionen |
-| Sensiblen Storage-Test ausführen | `tests.run.storage` |
+| Diagnose ausführen | separates Recht `diagnostics.*` je Diagnoseart |
 | DICOM-Datei analysieren | `tests.analyze_file` |
 | Testergebnisse exportieren | `tests.export` |
 | Benutzer verwalten | `users.manage` |
