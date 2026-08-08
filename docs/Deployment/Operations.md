@@ -38,6 +38,7 @@ Status prüfen:
 docker compose ps clamav scheduler
 docker compose logs clamav
 docker compose exec app php artisan registry-documents:rescan --limit=250
+docker compose exec app php artisan registry-documents:notify-expiry
 ```
 
 Bei deaktiviertem oder nicht erreichbarem Scanner bleiben neue und offene Dateien mit einem nicht freigegebenen Scanstatus gesperrt. Der Scheduler wiederholt offene Scans stündlich.

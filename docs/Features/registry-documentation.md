@@ -59,6 +59,18 @@ Bei `REGISTRY_DOCUMENT_MALWARE_SCANNER_ENABLED=true` verwendet die Anwendung `Cl
 
 Der Scheduler führt stündlich `registry-documents:rescan --limit=250` aus. Das Kommando kann zusätzlich manuell ausgeführt werden und prüft `pending`, `failed` und `unavailable` erneut. Ein erfolgreicher Rescan setzt den Status auf `clean` und gibt die Version über die bestehenden Controller-Prüfungen frei. `infected` bleibt terminal gesperrt. Ergebnisse werden als `document.scan_rescanned` ohne rohe Scanner-Ausgabe am Registry-Kontext auditiert.
 
+## Ablaufhinweise
+
+Der Scheduler führt täglich um 07:00 Uhr `registry-documents:notify-expiry` aus. Berücksichtigt werden aktive, nicht archivierte Dokumente, deren `valid_until` innerhalb des mit `REGISTRY_DOCUMENT_EXPIRY_WARNING_DAYS` konfigurierten Zeitraums liegt, sowie bereits abgelaufene Dokumente. Aktive Benutzer mit `documents.view` erhalten pro Dokument und Fälligkeitsdatum genau einen persistenten In-App-Hinweis. Wird das Gültigkeitsdatum geändert, kann für die neue Frist erneut ein Hinweis entstehen.
+
+Das Dashboard-Widget **Ablaufende Dokumente** zeigt berechtigten Benutzern die aktuellen Fristen und trennt abgelaufene von bald ablaufenden Dokumenten. Das Öffnen eines ungelesenen Hinweises markiert ihn als gelesen und führt zum Dokument. Es wird kein E-Mail-Versand erzwungen.
+
+Das Kommando kann bei Bedarf manuell ausgeführt werden:
+
+```bash
+docker compose exec app php artisan registry-documents:notify-expiry
+```
+
 ## Berechtigungen und Zugriff
 
 Die Dokumentenfunktionen verwenden das bestehende RBAC und zusätzlich die Policy des zugeordneten Registry-Kontexts. Es gibt kein paralleles Rollenmodell.
