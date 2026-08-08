@@ -18,7 +18,7 @@ final class RegistryCsvImportService
 {
     private const SYSTEM_HEADERS = ['organization_name', 'site_name', 'department_name', 'name', 'system_type', 'status', 'hostname', 'fqdn', 'ip_address', 'vendor', 'product', 'model', 'version', 'operating_system', 'operating_system_version', 'serial_number', 'inventory_number', 'description', 'notes'];
 
-    private const NODE_HEADERS = ['organization_name', 'system_name', 'name', 'ae_title', 'host', 'port', 'role', 'status', 'tls_enabled', 'supports_echo', 'supports_store', 'supports_query', 'supports_retrieve', 'supports_storage_commitment', 'supports_mpps', 'supports_worklist', 'description', 'notes'];
+    private const NODE_HEADERS = ['organization_name', 'system_name', 'name', 'ae_title', 'host', 'port', 'role', 'status', 'tls_enabled', 'tls_profile', 'supports_echo', 'supports_store', 'supports_query', 'supports_retrieve', 'supports_storage_commitment', 'supports_mpps', 'supports_worklist', 'description', 'notes'];
 
     /** @return array{kind:string,headers:list<string>,rows:list<array<string,mixed>>,valid:int,invalid:int} */
     public function preview(string $kind, UploadedFile $file): array

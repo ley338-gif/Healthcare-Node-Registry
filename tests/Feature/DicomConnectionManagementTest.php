@@ -38,6 +38,8 @@ final class DicomConnectionManagementTest extends TestCase
                         'calling_ae_title' => 'ct_store',
                         'called_ae_title' => 'pacs_store',
                         'port_override' => 11112,
+                        'tls_enabled' => true,
+                        'tls_profile' => 'pacs-production',
                     ],
                 ),
             );
@@ -54,6 +56,8 @@ final class DicomConnectionManagementTest extends TestCase
             'calling_ae_title' => 'CT_STORE',
             'called_ae_title' => 'PACS_STORE',
             'port_override' => 11112,
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
             'status' => 'active',
             'archived_at' => null,
         ]);
@@ -62,6 +66,19 @@ final class DicomConnectionManagementTest extends TestCase
             'event_type' => 'registry.dicom_connection.created',
             'subject_type' => DicomConnection::class,
         ]);
+    }
+
+    public function test_tls_enabled_connection_requires_a_profile_reference(): void
+    {
+        $user = $this->createRegistryManager();
+        $sourceNode = DicomNode::factory()->create();
+        $targetNode = DicomNode::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/dicom-connections', $this->validPayload($sourceNode, $targetNode, ['tls_enabled' => true]))
+            ->assertSessionHasErrors('tls_profile');
+
+        $this->assertDatabaseCount('dicom_connections', 0);
     }
 
     public function test_source_and_target_node_cannot_be_identical(): void
@@ -348,6 +365,7 @@ final class DicomConnectionManagementTest extends TestCase
             'called_ae_title' => null,
             'port_override' => null,
             'tls_enabled' => false,
+            'tls_profile' => null,
             'test_enabled' => true,
             'description' => null,
             'notes' => null,

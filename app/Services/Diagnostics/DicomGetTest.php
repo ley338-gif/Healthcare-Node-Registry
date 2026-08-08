@@ -53,6 +53,7 @@ final class DicomGetTest
         $normalized = strtolower($output);
 
         return match (true) {
+            str_contains($normalized, 'dicom-tls'), str_contains($normalized, 'tls-profil') => 'tls_configuration',
             $command->timedOut, str_contains($normalized, 'timeout'), str_contains($normalized, 'timed out') => 'timeout',
             str_contains($normalized, 'association rejected') => 'association_rejected',
             str_contains($normalized, 'no presentation context') => 'presentation_context_rejected',
@@ -63,6 +64,7 @@ final class DicomGetTest
     private function failureSummary(?string $type): string
     {
         return match ($type) {
+            'tls_configuration' => 'Die DICOM-TLS-Konfiguration ist unvollständig oder ungültig.',
             'timeout' => 'Zeitüberschreitung beim C-GET-Test.',
             'association_rejected' => 'DICOM Association wurde abgelehnt.',
             'presentation_context_rejected' => 'Der benötigte C-GET-Presentation-Context wurde abgelehnt.',

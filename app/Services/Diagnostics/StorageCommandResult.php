@@ -11,5 +11,6 @@ final readonly class StorageCommandResult
         public string $sopInstanceUid,
         public bool $timedOut = false,
         public bool $generationFailed = false,
+        public bool $tlsConfigurationFailed = false,
     ) {}
 }

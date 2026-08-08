@@ -12,6 +12,7 @@ services:
     volumes:
       - ./:/var/www/html
       - app_storage:/var/www/html/storage
+      - ${DIAGNOSTIC_TLS_PROFILE_HOST_DIRECTORY:-./docker/dicom-tls}:${DIAGNOSTIC_TLS_PROFILE_DIRECTORY:-/run/secrets/dicom-tls}:ro
     depends_on:
       db:
         condition: service_healthy
@@ -31,6 +32,7 @@ services:
     volumes:
       - ./:/var/www/html
       - app_storage:/var/www/html/storage
+      - ${DIAGNOSTIC_TLS_PROFILE_HOST_DIRECTORY:-./docker/dicom-tls}:${DIAGNOSTIC_TLS_PROFILE_DIRECTORY:-/run/secrets/dicom-tls}:ro
     depends_on:
       db:
         condition: service_healthy

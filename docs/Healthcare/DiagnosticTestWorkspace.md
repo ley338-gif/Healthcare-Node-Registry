@@ -170,7 +170,7 @@ Das PHP-Containerimage installiert DCMTK sowie die hashgebundenen Python-Pakete 
 
 ## Firewall und Netzwerk
 
-Der App-/PHP-Container benötigt ausgehenden TCP-Zugriff auf die registrierten DICOM-Ports. DNS muss gespeicherte Hostnamen im Container auflösen. Rückverbindungen sind für die implementierten SCU-Tests nicht nötig.
+Der App-/PHP-Container benötigt ausgehenden TCP-Zugriff auf die registrierten DICOM-Ports. DNS muss gespeicherte Hostnamen im Container auflösen. Eine Rückverbindung ist nur für den Storage-Commitment-N-EVENT-REPORT nötig.
 
 Empfohlen:
 
@@ -178,7 +178,9 @@ Empfohlen:
 - keine pauschale Freigabe kompletter Krankenhausnetze
 - Containerhost-Quelladresse im Zielsystem berücksichtigen
 - Firewall- und SCP-Logs bei Association-Rejections korrelieren
-- `tls_enabled` ist Dokumentation; die aktuellen Diagnose-Runner bauen keine DICOM-TLS-Verbindung auf
+- bei DICOM-TLS Zertifikatsverzeichnis read-only einbinden, eine eng begrenzte Vertrauens-CA verwenden und den Callback für Storage Commitment ebenfalls TLS-fähig freigeben
+
+Bei `tls_enabled=true` verwenden sämtliche DICOM-Diagnose-Associations das referenzierte Zertifikatsprofil. Profilprüfung und TLS-Handshake sind fail-closed; eine Klartext-Wiederholung findet nicht statt. Siehe [DICOM-TLS für Diagnose-Runner](DicomTlsDiagnostics.md).
 
 ## Bekannte Einschränkungen
 
@@ -186,7 +188,7 @@ Empfohlen:
 - Capability-Matrix ist Association-only
 - keine zentrale Abbruchfunktion, Queue oder Parallelitätssteuerung
 - keine CIDR-Allowlist oder zentrale Timeout-Konfiguration
-- keine DICOM-TLS-Unterstützung in den Runnern
+- DICOM-TLS gilt nur für registrierte Diagnoseziele; Discovery-TLS ist nicht implementiert
 - keine Löschung bereits im Zielsystem gespeicherter Testobjekte
 - kein PDF-Export, da keine projektweite PDF-Infrastruktur vorhanden ist
 
@@ -204,7 +206,6 @@ Feature-Tests decken Berechtigungen, Erfolg, Timeout, Protokollfehler, Maskierun
 
 - granulare Einzelrechte für ungefährliche Tests
 - konfigurierbare Zielnetz-Allowlist, Timeouts und Parallelitätsgrenzen
-- DICOM-TLS mit kontrolliertem Zertifikatsmanagement
 - weitere synthetische Storage-Objekttypen
 - Aufbewahrungs- und Löschregeln für Diagnoseverläufe
 - PDF-Bericht, sobald eine projektweite PDF-Infrastruktur existiert

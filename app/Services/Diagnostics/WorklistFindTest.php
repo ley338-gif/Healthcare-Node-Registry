@@ -137,6 +137,7 @@ final class WorklistFindTest
         $normalized = strtolower($output);
 
         return match (true) {
+            str_contains($normalized, 'dicom-tls'), str_contains($normalized, 'tls-profil') => 'tls_configuration',
             $command->timedOut, str_contains($normalized, 'timeout'), str_contains($normalized, 'timed out') => 'timeout',
             str_contains($normalized, 'association rejected') => 'association_rejected',
             str_contains($normalized, 'connection refused') => 'connection_refused',
@@ -148,6 +149,7 @@ final class WorklistFindTest
     private function failureSummary(string $failureType): string
     {
         return match ($failureType) {
+            'tls_configuration' => 'Die DICOM-TLS-Konfiguration ist unvollständig oder ungültig.',
             'timeout' => 'Zeitüberschreitung bei der Worklist-Abfrage.',
             'association_rejected' => 'DICOM Association wurde abgelehnt.',
             'connection_refused' => 'TCP-Verbindung wurde vom Ziel abgelehnt.',
@@ -162,7 +164,7 @@ final class WorklistFindTest
         string $failureType,
         int $duration,
     ): array {
-        $associationFailure = in_array($failureType, ['association_rejected', 'timeout', 'connection_refused'], true);
+        $associationFailure = in_array($failureType, ['association_rejected', 'timeout', 'connection_refused', 'tls_configuration', 'process_error'], true);
 
         return [
             new DiagnosticTestStep(

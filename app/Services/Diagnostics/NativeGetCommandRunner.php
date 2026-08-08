@@ -3,6 +3,7 @@
 namespace App\Services\Diagnostics;
 
 use App\Models\DicomNode;
+use App\Services\Dicom\DicomTlsProfileResolver;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
@@ -10,6 +11,8 @@ use Throwable;
 
 final class NativeGetCommandRunner implements GetCommandRunner
 {
+    public function __construct(private readonly DicomTlsProfileResolver $tlsProfiles = new DicomTlsProfileResolver) {}
+
     public function run(DicomNode $targetNode, string $callingAeTitle, string $calledAeTitle): GetCommandResult
     {
         $studyInstanceUid = (string) config('diagnostics.get_test_study_instance_uid');
@@ -20,6 +23,8 @@ final class NativeGetCommandRunner implements GetCommandRunner
                 throw new \RuntimeException('Temporäres C-GET-Verzeichnis konnte nicht erstellt werden.');
             }
 
+            $tlsProfile = $this->tlsProfiles->resolve($targetNode);
+
             $process = new Process([
                 '/usr/bin/getscu', '-v', '-S',
                 '-to', '5', '-ta', '5', '-td', '20',
@@ -28,6 +33,7 @@ final class NativeGetCommandRunner implements GetCommandRunner
                 '-od', $directory,
                 '-k', 'QueryRetrieveLevel=STUDY',
                 '-k', "StudyInstanceUID={$studyInstanceUid}",
+                ...($tlsProfile?->dcmtkArguments() ?? []),
                 $targetNode->host,
                 (string) $targetNode->port,
             ]);

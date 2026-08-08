@@ -3,6 +3,7 @@
 namespace App\Services\Diagnostics;
 
 use App\Models\DicomNode;
+use App\Services\Dicom\DicomTlsProfileResolver;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
@@ -10,6 +11,8 @@ use Throwable;
 
 final class FindScuCommandExecutor
 {
+    public function __construct(private readonly DicomTlsProfileResolver $tlsProfiles = new DicomTlsProfileResolver) {}
+
     /** @param list<string> $keys */
     public function execute(
         DicomNode $node,
@@ -31,6 +34,8 @@ final class FindScuCommandExecutor
                 '--cancel', '100', '-to', '5', '-ts', '15', '-ta', '5', '-td', '15',
                 '-aet', $callingAeTitle, '-aec', $calledAeTitle,
             ];
+
+            $arguments = [...$arguments, ...($this->tlsProfiles->resolve($node)?->dcmtkArguments() ?? [])];
 
             foreach ($keys as $key) {
                 $arguments[] = '-k';

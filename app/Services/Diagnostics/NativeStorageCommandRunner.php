@@ -3,6 +3,8 @@
 namespace App\Services\Diagnostics;
 
 use App\Models\DicomNode;
+use App\Services\Dicom\DicomTlsConfigurationException;
+use App\Services\Dicom\DicomTlsProfileResolver;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
@@ -10,6 +12,8 @@ use Throwable;
 
 final class NativeStorageCommandRunner implements StorageCommandRunner
 {
+    public function __construct(private readonly DicomTlsProfileResolver $tlsProfiles = new DicomTlsProfileResolver) {}
+
     public function run(DicomNode $node, string $callingAeTitle, string $calledAeTitle): StorageCommandResult
     {
         $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'hnr-store-'.Str::random(20);
@@ -41,9 +45,12 @@ final class NativeStorageCommandRunner implements StorageCommandRunner
                 return new StorageCommandResult(false, $generator->getExitCode() ?? 1, trim($generator->getErrorOutput()), $instanceUid, generationFailed: true);
             }
 
+            $tlsProfile = $this->tlsProfiles->resolve($node);
+
             $sender = new Process([
                 '/usr/bin/storescu', '-v', '+v', '-rsp', '-to', '5', '-ts', '15', '-ta', '5', '-td', '15',
                 '-aet', $callingAeTitle, '-aec', $calledAeTitle,
+                ...($tlsProfile?->dcmtkArguments() ?? []),
                 $node->host, (string) $node->port, $dicomPath,
             ]);
             $sender->setTimeout(25);
@@ -53,6 +60,8 @@ final class NativeStorageCommandRunner implements StorageCommandRunner
                 $sender->isSuccessful(), $sender->getExitCode() ?? 1,
                 trim($sender->getOutput()."\n".$sender->getErrorOutput()), $instanceUid,
             );
+        } catch (DicomTlsConfigurationException $exception) {
+            return new StorageCommandResult(false, 1, $exception->getMessage(), $instanceUid, tlsConfigurationFailed: true);
         } catch (ProcessTimedOutException $exception) {
             return new StorageCommandResult(false, 1, $exception->getMessage(), $instanceUid, timedOut: true);
         } catch (Throwable $exception) {

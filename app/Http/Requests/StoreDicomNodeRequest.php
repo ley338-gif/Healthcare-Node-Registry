@@ -80,6 +80,13 @@ final class StoreDicomNodeRequest extends FormRequest
                 'required',
                 'boolean',
             ],
+            'tls_profile' => [
+                'nullable',
+                'required_if:tls_enabled,true',
+                'string',
+                'max:64',
+                'regex:/\A[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}\z/',
+            ],
             'supports_echo' => [
                 'required',
                 'boolean',

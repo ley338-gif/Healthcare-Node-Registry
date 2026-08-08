@@ -24,6 +24,7 @@ use Illuminate\Support\Str;
  * @property string $role
  * @property string $status
  * @property bool $tls_enabled
+ * @property string|null $tls_profile
  * @property bool $supports_echo
  * @property bool $supports_store
  * @property bool $supports_query
@@ -50,6 +51,7 @@ final class DicomNode extends Model
         'role',
         'status',
         'tls_enabled',
+        'tls_profile',
         'supports_echo',
         'supports_store',
         'supports_query',

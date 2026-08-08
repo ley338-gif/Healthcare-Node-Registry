@@ -7,7 +7,6 @@
   ist noch nicht umgesetzt.
 - Dokumentfreigabe und kategoriebasierte Mindestaufbewahrung sind umgesetzt; ein automatisierter physischer Löschlauf nach Fristende ist bewusst nicht vorhanden.
 - Historische Entitätsnamen sind nicht als vollständige Snapshots verfügbar.
-- Die Diagnose-Runner unterstützen noch kein DICOM-TLS.
 - Der synthetische Storage-Test deckt derzeit nur die implementierte Secondary-Capture-SOP-Klasse ab; weitere synthetische Storage-SOP-Klassen fehlen.
 
 ## 0.1.1
