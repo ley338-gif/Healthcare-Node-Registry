@@ -27,6 +27,7 @@ final class UpdateSystemRequest extends FormRequest
             'name' => ['required', 'string', 'max:160'],
             'system_type' => ['required', 'string', 'max:80'],
             'status' => ['required', 'string', 'max:40'],
+            'responsible' => ['nullable', 'string', 'max:160'],
 
             'hostname' => ['nullable', 'string', 'max:255'],
             'fqdn' => ['nullable', 'string', 'max:255'],

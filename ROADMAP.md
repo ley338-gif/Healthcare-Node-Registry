@@ -35,7 +35,7 @@ Abgeschlossen.
 - [x] Audit Events
 - [x] Dashboard-Integration
 - [x] Tests
-- [ ] Verantwortlichkeiten
+- [x] Verantwortlichkeiten
 - [x] webbasierte Benutzer- und Rollenverwaltung unter Einstellungen
 
 ## Nächster Sprint

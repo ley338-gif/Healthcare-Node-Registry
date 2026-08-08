@@ -58,6 +58,7 @@ export type SystemDetail = {
     name: string;
     system_type: string;
     status: string;
+    responsible: string | null;
     hostname: string | null;
     fqdn: string | null;
     ip_address: string | null;
@@ -403,6 +404,12 @@ const statusClass = (value: string): string => {
                                 <p class="text-xs font-semibold text-slate-500 uppercase">Inventarnummer</p>
                                 <p class="mt-1 text-sm font-medium text-slate-900">
                                     {{ displayValue(system.inventory_number) }}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-500 uppercase">Verantwortlichkeit</p>
+                                <p class="mt-1 text-sm font-medium text-slate-900">
+                                    {{ displayValue(system.responsible) }}
                                 </p>
                             </div>
                         </div>

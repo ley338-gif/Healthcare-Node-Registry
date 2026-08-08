@@ -5,7 +5,7 @@ document_type: ADR-Index
 chapter: Übersicht
 status: draft
 version: 0.1
-last_updated: 2026-08-02
+last_updated: 2026-08-08
 ---
 
 # Architecture Decision Records
@@ -35,7 +35,12 @@ ADRs dokumentieren langfristig bindende oder schwer umkehrbare technische Entsch
 - [ADR-0009: Audit und Logging](ADR-0009-audit-and-logging.md)
 - [ADR-0010: Import und Export](ADR-0010-import-export.md)
 - [ADR-0011: Discovery-Scan-Architektur](ADR-0011-discovery-scanning.md)
+- [ADR-0012: Fundament des modularen Monolithen](ADR-0012-modular-monolith-foundation.md)
+- [ADR-0013: Isolierte Testausführung](ADR-0013-isolated-test-execution.md)
+- [ADR-0014: Wiederverwendbare Anwendungsshell](ADR-0014-reusable-application-shell.md)
 - [ADR-0015: Audit-Integrität und Aufbewahrung](ADR-0015-audit-integrity-and-retention.md)
+- [ADR-0016: Dokumentfreigabe und Aufbewahrung](ADR-0016-document-approval-and-retention.md)
+- [ADR-0017: Betriebliche Systemverantwortlichkeit](ADR-0017-system-responsibility.md)
 
 ## Offener Konsolidierungsbedarf
 

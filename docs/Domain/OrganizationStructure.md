@@ -16,4 +16,4 @@ Organisation
 
 ## Nicht enthalten
 
-Verantwortliche, Netzwerksegmente, Systeme, DICOM-/HL7-Endpunkte und Mandantenfähigkeit folgen in späteren Sprints.
+Strukturierte Verantwortungszuweisungen für Organisationen, Standorte und Abteilungen, Netzwerksegmente, DICOM-/HL7-Endpunkte und Mandantenfähigkeit folgen in späteren Sprints. Für Systeme ist eine optionale betriebliche Verantwortlichkeit als Freitext vorhanden; Systeme selbst werden in der System Registry verwaltet.

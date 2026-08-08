@@ -17,6 +17,8 @@ final class SystemOverviewExportTest extends TestCase
     public function test_excel_export_contains_system_and_dicom_node_and_respects_filters(): void
     {
         $included = System::factory()->create(['name' => 'PACS ÄÖÜ', 'vendor' => 'Example Medical']);
+        $included->update(['responsible' => 'Team Bildgebung']);
+
         $node = DicomNode::factory()->create([
             'system_id' => $included->id,
             'name' => 'PACS Archiv',
@@ -32,7 +34,7 @@ final class SystemOverviewExportTest extends TestCase
         ]);
         System::factory()->create(['name' => 'Nicht enthalten']);
 
-        $response = $this->actingAs($this->administrator())->get('/systems/export/xlsx?organization='.$included->organization_id);
+        $response = $this->actingAs($this->administrator())->get('/systems/export/xlsx?search=Team%20Bildgebung');
         $response->assertOk()->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         self::assertStringStartsWith('PK', $response->getContent());
 
@@ -41,6 +43,7 @@ final class SystemOverviewExportTest extends TestCase
         self::assertStringContainsString($node->ae_title, $sheet);
         self::assertStringContainsString('10.50.1.20', $sheet);
         self::assertStringContainsString('Management | pacs-mgmt | 10.50.1.99', $sheet);
+        self::assertStringContainsString('Team Bildgebung', $sheet);
         self::assertStringNotContainsString('Nicht enthalten', $sheet);
     }
 
