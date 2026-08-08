@@ -23,6 +23,6 @@ Dieses Kapitel beschreibt die kontrollierte On-Premises-Bereitstellung auf Basis
 - Datenbank- und Dokumentvolume in die Sicherung aufnehmen;
 - Wartungs- und Wiederherstellungsverantwortung benennen.
 
-Führen Sie Installation und Konfiguration nach [Operations](../Deployment/Operations.md) aus und validieren Sie eine Neuinstallation anhand der [Clean-Install-Prüfung](../Deployment/CleanInstallValidation.md). Beispielwerte sind keine Produktionsvorgaben.
+Führen Sie Installation und Konfiguration nach [Operations](../Deployment/Operations.md) aus und validieren Sie eine Neuinstallation anhand der [Clean-Install-Prüfung](../Deployment/CleanInstallValidation.md). Für den mitgelieferten HTTPS-Referenzbetrieb werden `docker-compose.yml` und `docker-compose.https.yml` gemeinsam geladen; der reine Standard-Stack bleibt ausschließlich für lokale oder anderweitig abgeschirmte HTTP-Tests vorgesehen. Beispielwerte sind keine Produktionsvorgaben.
 
 Nach dem Start sind Healthcheck, Anmeldung, initialer Administrator, Schreibzugriff auf private Ablage sowie die Erreichbarkeit erforderlicher Dienste zu prüfen. Der Compose-Stack allein ist noch keine Produktionsfreigabe.

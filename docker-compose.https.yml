@@ -1,0 +1,12 @@
+services:
+  app:
+    environment:
+      SESSION_SECURE_COOKIE: "true"
+
+  web:
+    ports: !override
+      - "${HTTPS_HTTP_PORT:-80}:8080"
+      - "${HTTPS_PORT:-443}:8443"
+    volumes:
+      - ./docker/nginx/https.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${HTTPS_CERTIFICATE_HOST_DIRECTORY:-./docker/https}:/run/secrets/https:ro

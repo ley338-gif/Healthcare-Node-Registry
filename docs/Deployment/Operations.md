@@ -22,6 +22,20 @@
 - Schwachstellenmeldungen verfolgen
 - Release Notes vor Update lesen
 
+## HTTPS-Referenzbetrieb
+
+Der lokale Standard-Stack bleibt über HTTP auf Port 8080 testbar. Für einen produktionsnahen HTTPS-Betrieb wird zusätzlich `docker-compose.https.yml` geladen. Die Überlagerung benötigt Docker Compose 2.24.4 oder neuer, ersetzt die Host-Portfreigabe des `web`-Dienstes, leitet Port 80 permanent auf HTTPS um und terminiert TLS auf Port 443.
+
+Der Betreiber stellt in einem geschützten Host-Verzeichnis `tls.crt` mit vollständiger Server-Zertifikatskette und den zugehörigen privaten Schlüssel `tls.key` bereit. Die Dateien werden nur lesbar eingebunden und dürfen nicht im Repository liegen. In `.env` sind mindestens `APP_URL=https://<dns-name>`, `SESSION_SECURE_COOKIE=true` und `HTTPS_CERTIFICATE_HOST_DIRECTORY=<absoluter-host-pfad>` zu setzen. Die Überlagerung erzwingt das Secure-Flag zusätzlich im `app`-Container, sodass ein versehentlich verbliebener Entwicklungswert keine unsicheren Session-Cookies erzeugt.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.https.yml config --quiet
+docker compose -f docker-compose.yml -f docker-compose.https.yml up --build -d
+docker compose -f docker-compose.yml -f docker-compose.https.yml exec app php artisan registry:doctor
+```
+
+Die Zertifikatskette, DNS-Namen, Dateirechte und Erneuerung müssen auf dem Zielhost geprüft werden. Fehlen Zertifikat oder Schlüssel, startet Nginx absichtlich nicht. Bei einer Zertifikatserneuerung den `web`-Dienst mit beiden Compose-Dateien neu erstellen. Ein vorgeschalteter Unternehmens-Reverse-Proxy kann weiterhin verwendet werden, muss aber mindestens gleichwertige TLS-, Header- und Cookie-Vorgaben umsetzen.
+
 ## Diagnose
 
 Diagnosefunktionen dürfen keine Secrets oder Dokumentinhalte offenlegen. Support-Bundles benötigen explizite Auswahl, Redaction und Auditierung.

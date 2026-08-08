@@ -24,6 +24,8 @@
 
 Abgeschlossen.
 
+- [x] optionales HTTPS-Referenz-Deployment mit HTTP-Weiterleitung, TLS-Härtung und sicheren Session-Vorgaben
+
 ## 0.2.0 – Registry Core
 
 - [x] Organisationen
