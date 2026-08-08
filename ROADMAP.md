@@ -14,9 +14,10 @@
 - [x] berechtigungsgeprüfte Downloads und PDF-Vorschau
 - [x] Dokumentfilter, Gültigkeitsstatus und serverseitige Pagination
 - [x] Dokumentaktionen in der gemeinsamen Registry-Historie
-- [ ] globale Audit-Seite auf der vorbereiteten gemeinsamen Query-Grundlage
-- [ ] Audit-Export, Aufbewahrung und Integritätsnachweis
-- [ ] produktiven Malware-Scanner anbinden und Rescan-Workflow bereitstellen
+- [x] globale Audit-Seite auf der gemeinsamen Query-Grundlage
+- [x] gefilterter, gestreamter Audit-Export als CSV
+- [ ] verbindliche Audit-Aufbewahrung und kryptografischer Integritätsnachweis
+- [x] produktiver ClamAV-Scanner mit fail-closed Fallback und Rescan-Workflow
 - [ ] Dokumentfreigabe, Vier-Augen-Prinzip und verbindliche Aufbewahrungsregeln
 
 ## 0.1.1 – Foundation Hardening
