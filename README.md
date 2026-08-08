@@ -22,6 +22,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - Dashboard mit Registry-Übersicht, letzten Änderungen, Diagnosekennzahlen und Aufgabenhinweisen
 - Organisationsstruktur aus Organisationen, Standorten und Abteilungen
 - Registry für Healthcare-IT-Systeme mit Zuordnung zur Organisationsstruktur und Archivierung
+- Gefilterter Excel-/PDF-Export der System- und DICOM-Knotenübersicht
 - DICOM-Knoten mit AE Title, Host, Port, Rolle, Status und Verifikation
 - DICOM-Verbindungen zwischen registrierten Knoten sowie grafische Netzwerkansicht
 - Globale, berechtigungsgeprüfte Suche

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { FilterX, Search, Server } from '@lucide/vue';
+import { Download, FilterX, Search, Server } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import SystemCreateSlideOver from '../../../Components/registry/systems/SystemCreateSlideOver.vue';
 import SystemEditSlideOver from '../../../Components/registry/systems/SystemEditSlideOver.vue';
@@ -222,6 +222,18 @@ const resetFilters = (): void => {
     );
 };
 
+const exportUrl = (format: 'xlsx' | 'pdf'): string => {
+    const params = new URLSearchParams();
+    if (search.value) params.set('search', search.value);
+    if (type.value) params.set('type', type.value);
+    if (status.value) params.set('status', status.value);
+    if (organization.value !== null) params.set('organization', String(organization.value));
+    if (site.value !== null) params.set('site', String(site.value));
+    if (department.value !== null) params.set('department', String(department.value));
+
+    return `/systems/export/${format}${params.size > 0 ? `?${params.toString()}` : ''}`;
+};
+
 const labelFor = (options: SelectOption[], value: string): string =>
     options.find((option) => option.value === value)?.label ?? value;
 
@@ -289,6 +301,18 @@ const closeEditPanel = (): void => {
             description="Systeme durchsuchen, einordnen und im Kontext ihrer DICOM-Kommunikation prüfen."
         >
             <template #actions>
+                <a
+                    :href="exportUrl('xlsx')"
+                    class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700"
+                >
+                    <Download :size="16" />Excel
+                </a>
+                <a
+                    :href="exportUrl('pdf')"
+                    class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700"
+                >
+                    <Download :size="16" />PDF
+                </a>
                 <a
                     v-if="canManage"
                     href="/systems/import"

@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\Audit\RegistryHistoryService;
 use App\Services\Audit\RegistryHistoryViewService;
 use App\Services\Documents\RegistryDocumentQueryService;
+use App\Services\Reports\SystemOverviewQuery;
 use App\Support\RegistryAudit;
 use App\Support\RegistryDocumentCategory;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +26,7 @@ use Inertia\Response;
 
 final class SystemController extends Controller
 {
-    public function index(Request $request, RegistryDocumentQueryService $documentQueryService): Response
+    public function index(Request $request, RegistryDocumentQueryService $documentQueryService, SystemOverviewQuery $systemOverviewQuery): Response
     {
         Gate::authorize('viewAny', System::class);
 
@@ -38,60 +39,14 @@ final class SystemController extends Controller
         $departmentId = $request->integer('department');
         $selectedPublicId = trim((string) $request->query('selected', ''));
 
-        $systems = System::query()
-            ->with([
-                'organization:id,public_id,name',
-                'site:id,public_id,name',
-                'department:id,public_id,name',
-            ])
-            ->withCount([
-                'dicomNodes as dicom_nodes_count' => fn ($query) => $query
-                    ->active(),
-                'dicomNodes as failed_dicom_nodes_count' => fn ($query) => $query
-                    ->active()
-                    ->whereNotNull('last_verification_status')
-                    ->where('last_verification_status', '!=', 'success'),
-            ])
-            ->whereNull('archived_at')
-            ->when(
-                $search !== '',
-                fn ($query) => $query->where(
-                    fn ($searchQuery) => $searchQuery
-                        ->where('name', 'ilike', "%{$search}%")
-                        ->orWhere('hostname', 'ilike', "%{$search}%")
-                        ->orWhere('fqdn', 'ilike', "%{$search}%")
-                        ->orWhere('ip_address', 'ilike', "%{$search}%")
-                        ->orWhere('vendor', 'ilike', "%{$search}%")
-                        ->orWhere('product', 'ilike', "%{$search}%"),
-                ),
-            )
-            ->when(
-                $type !== '',
-                fn ($query) => $query->where('system_type', $type),
-            )
-            ->when(
-                $status !== '',
-                fn ($query) => $query->where('status', $status),
-            )
-            ->when(
-                $organizationId > 0,
-                fn ($query) => $query->where(
-                    'organization_id',
-                    $organizationId,
-                ),
-            )
-            ->when(
-                $siteId > 0,
-                fn ($query) => $query->where('site_id', $siteId),
-            )
-            ->when(
-                $departmentId > 0,
-                fn ($query) => $query->where(
-                    'department_id',
-                    $departmentId,
-                ),
-            )
-            ->orderBy('name')
+        $systems = $systemOverviewQuery->query([
+            'search' => $search,
+            'type' => $type,
+            'status' => $status,
+            'organization' => $organizationId,
+            'site' => $siteId,
+            'department' => $departmentId,
+        ])
             ->paginate(20)
             ->withQueryString();
 

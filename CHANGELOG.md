@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Gefilterten XLSX-/PDF-Export der System- und DICOM-Knotenübersicht ergänzt und den PDF-Tabellenkern mit der Firewall-/Portmatrix vereinheitlicht.
 - Diagnoseausführung in neun einzeln vergebbare `diagnostics.*`-Berechtigungen aufgeteilt; bestehende Rollen werden migrationssicher übernommen und die Standardrollen `PACS-Administrator` sowie `Nur Lesen` ergänzt.
 - Produktiven ClamAV-Malware-Scanner für Registry-Dokumente ergänzt: interne ClamD-`INSTREAM`-Anbindung, fail-closed Fallback, persistente Signaturdaten, Healthcheck, stündlicher Rescan und Auditierung der Rescan-Ergebnisse.
 - Modality-Worklist-Test benutzerfreundlich überarbeitet: Standardansicht mit Zeitraum-Presets (Heute/Morgen/Benutzerdefiniert) und automatisch aus dem registrierten Knoten übernommener Modalität, Patienten- und AE-Title-Parameter in einem standardmäßig eingeklappten Bereich „Erweiterte DICOM-Einstellungen" mit Hilfetexten; verständliche Ergebnis- und Fehlerdarstellung mit klar gekennzeichneter „Mögliche Ursache" oberhalb der weiterhin vorhandenen technischen Details. Zentrale, konfigurierbare Calling-AE-Titel-Einstellung (`DIAGNOSTIC_CALLING_AE_TITLE`) für alle Node-Diagnosen ergänzt; optionales `modality`-Feld für DICOM-Knoten hinzugefügt. Gleiches Namensprinzip (fachliche Bezeichnung primär, DICOM-Fachbegriff sekundär) auf C-ECHO, C-STORE, C-MOVE/C-GET und Storage Commitment angewendet.
