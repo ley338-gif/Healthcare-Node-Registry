@@ -35,6 +35,7 @@ const props = defineProps<{
     filters: Filters;
     services: string[];
     canManage: boolean;
+    runnableServices: DicomConnection['service'][];
 }>();
 const defaultFilters = (): Filters => ({
     search: '',
@@ -176,6 +177,7 @@ const hasFilters = Object.entries(props.filters).some(
                 :connections="connections.data"
                 :node-options="nodes"
                 :can-manage="canManage"
+                :runnable-services="runnableServices"
                 :empty-title="hasFilters ? 'Keine Verbindungen entsprechen den aktuellen Filtern.' : undefined"
                 :empty-text="hasFilters ? 'Passe die Filter an oder setze sie vollständig zurück.' : undefined"
             />

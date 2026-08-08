@@ -29,7 +29,7 @@ final class TestWorkspaceController extends Controller
             'history_user' => ['nullable', 'uuid'],
             'run' => ['nullable', 'uuid'],
             'node' => ['nullable', 'uuid'],
-            'service' => ['nullable', 'string', 'in:echo,store,worklist,query,move,get'],
+            'service' => ['nullable', 'string', 'in:echo,store,worklist,query'],
             'calling_ae_title' => ['nullable', 'string', 'max:16'],
             'called_ae_title' => ['nullable', 'string', 'max:16'],
         ]);

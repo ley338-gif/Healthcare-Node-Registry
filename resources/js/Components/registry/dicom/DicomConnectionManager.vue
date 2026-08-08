@@ -45,6 +45,7 @@ const props = defineProps<{
     connections: DicomConnection[];
     nodeOptions: DicomNodeOption[];
     canManage: boolean;
+    runnableServices: DicomConnection['service'][];
     emptyTitle?: string;
     emptyText?: string;
 }>();
@@ -107,6 +108,9 @@ const moveForm = useForm({
     called_ae_title: '',
 });
 const getForm = useForm({ confirmed: false, calling_ae_title: '', called_ae_title: '' });
+
+const canRun = (connection: DicomConnection): boolean =>
+    connection.test_enabled && props.runnableServices.includes(connection.service);
 
 const nodeLabel = (node: DicomNodeOption): string => `${node.system.name} · ${node.name} · ${node.ae_title}`;
 
@@ -197,6 +201,8 @@ const duplicate = (connection: DicomConnection): void => {
 };
 
 const openTest = (connection: DicomConnection): void => {
+    if (!canRun(connection)) return;
+
     if (connection.service === 'move') {
         selected.value = connection;
         moveForm.confirmed = false;
@@ -416,7 +422,7 @@ const effectivePort = (connection: DicomConnection): number => connection.port_o
                                     <Eye :size="17" />
                                 </button>
                                 <button
-                                    v-if="connection.test_enabled"
+                                    v-if="canRun(connection)"
                                     type="button"
                                     :aria-label="`${connection.name} testen`"
                                     class="rounded-lg p-2 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700"

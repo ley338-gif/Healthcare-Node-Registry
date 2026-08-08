@@ -15,6 +15,7 @@ use App\Services\Audit\RegistryHistoryService;
 use App\Services\Audit\RegistryHistoryViewService;
 use App\Services\Documents\RegistryDocumentQueryService;
 use App\Services\Reports\SystemOverviewQuery;
+use App\Support\DiagnosticPermission;
 use App\Support\RegistryAudit;
 use App\Support\RegistryDocumentCategory;
 use Illuminate\Http\RedirectResponse;
@@ -333,6 +334,7 @@ final class SystemController extends Controller
             'canManageDicomConnections' => $request
                 ->user()
                 ?->can('create', DicomConnection::class) ?? false,
+            'runnableDicomConnectionServices' => DiagnosticPermission::allowedDicomConnectionServices($request->user()),
             'canManageDicomNodes' => $request
                 ->user()
                 ?->can('create', DicomNode::class) ?? false,
@@ -496,6 +498,7 @@ final class SystemController extends Controller
             'canManageDicomConnections' => $request
                 ->user()
                 ?->can('create', DicomConnection::class) ?? false,
+            'runnableDicomConnectionServices' => DiagnosticPermission::allowedDicomConnectionServices($request->user()),
 
             'canManageDicomNodes' => $request
                 ->user()

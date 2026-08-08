@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\DicomConnection;
 use App\Models\DicomNode;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\DiagnosticPermission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -49,6 +51,21 @@ final class GlobalDicomConnectionOverviewTest extends TestCase
         ]))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('connections.total', 1)
             ->where('connections.data.0.public_id', $matching->public_id));
+    }
+
+    public function test_global_list_exposes_only_authorized_diagnostic_services(): void
+    {
+        $this->seed();
+        $user = User::factory()->create();
+        $role = Role::query()->create(['name' => 'move-operator', 'display_name' => 'Move Operator']);
+        $role->permissions()->attach(Permission::query()->whereIn('name', [
+            'registry.view',
+            DiagnosticPermission::Move->value,
+        ])->pluck('id'));
+        $user->roles()->attach($role);
+
+        $this->actingAs($user)->get('/connections')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('runnableServices', ['move']));
     }
 
     public function test_creation_and_update_are_immediately_visible_in_global_and_system_views(): void

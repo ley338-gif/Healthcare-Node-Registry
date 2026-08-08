@@ -30,6 +30,7 @@ defineProps<{
     canManage: boolean;
     canManageDicomNodes: boolean;
     canManageDicomConnections: boolean;
+    runnableDicomConnectionServices: DicomConnection['service'][];
     history: {
         data: AuditEvent[];
         links: Array<{ url: string | null; label: string; active: boolean }>;
@@ -77,6 +78,7 @@ const editPanelOpen = ref(false);
             :can-manage="canManage"
             :can-manage-dicom-nodes="canManageDicomNodes"
             :can-manage-dicom-connections="canManageDicomConnections"
+            :runnable-dicom-connection-services="runnableDicomConnectionServices"
             :history="history"
             :history-stats="historyStats"
             :history-filters="historyFilters"

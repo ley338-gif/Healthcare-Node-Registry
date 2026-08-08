@@ -116,6 +116,7 @@ const props = withDefaults(
         canManageSelected: boolean;
         canManageDicomNodes: boolean;
         canManageDicomConnections: boolean;
+        runnableDicomConnectionServices: DicomConnection['service'][];
     }>(),
     {
         topologyNodes: () => [],
@@ -501,6 +502,7 @@ const closeEditPanel = (): void => {
                 :can-manage="canManageSelected"
                 :can-manage-dicom-nodes="canManageDicomNodes"
                 :can-manage-dicom-connections="canManageDicomConnections"
+                :runnable-dicom-connection-services="runnableDicomConnectionServices"
                 :documentation="documentation"
                 :documents="documents"
                 :document-categories="documentCategories"

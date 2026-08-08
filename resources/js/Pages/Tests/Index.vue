@@ -277,7 +277,7 @@ onMounted(() => {
     if (!props.connectionPrefill.node) return;
     if (props.connectionPrefill.service === 'store') storageDialogOpen.value = true;
     if (props.connectionPrefill.service === 'worklist') worklistDialogOpen.value = true;
-    if (['query', 'move', 'get'].includes(props.connectionPrefill.service ?? '')) pacsDialogOpen.value = true;
+    if (props.connectionPrefill.service === 'query') pacsDialogOpen.value = true;
 });
 
 const filteredNodes = computed(() => {

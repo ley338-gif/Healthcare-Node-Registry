@@ -104,6 +104,7 @@ const props = withDefaults(
         canManage: boolean;
         canManageDicomNodes: boolean;
         canManageDicomConnections: boolean;
+        runnableDicomConnectionServices: DicomConnection['service'][];
         history?: {
             data: AuditEvent[];
             links: Array<{ url: string | null; label: string; active: boolean }>;
@@ -529,6 +530,7 @@ const statusClass = (value: string): string => {
                     :connections="dicomConnections"
                     :node-options="dicomNodeOptions"
                     :can-manage="canManageDicomConnections"
+                    :runnable-services="runnableDicomConnectionServices"
                 />
             </div>
 
