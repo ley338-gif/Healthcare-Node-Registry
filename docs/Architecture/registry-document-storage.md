@@ -37,16 +37,16 @@ Binärdaten werden nicht in PostgreSQL gespeichert. Die Datenbank enthält aussc
 4. Kontext- beziehungsweise versionsbezogene Duplikaterkennung prüft den Hash.
 5. Der Scanner-Adapter bewertet die temporäre Upload-Datei.
 6. Die Datei wird unter einem UUID-Namen im privaten, nach Jahr und Monat gegliederten Disk gespeichert.
-7. Dokument, Version, Zeiger auf die aktuelle Version und Audit-Ereignis werden transaktional geschrieben.
+7. Dokument, Entwurfsversion, Mindestaufbewahrungsfrist und Audit-Ereignis werden transaktional geschrieben. Bei der ersten Version verweist der aktuelle Zeiger auf den sichtbaren Entwurf; spätere Entwürfe ersetzen die letzte freigegebene Version noch nicht.
 8. Scheitert die Datenbanktransaktion, wird die bereits gespeicherte Datei wieder entfernt.
 
-Neue Versionen sperren den Dokumentdatensatz während der Ermittlung der nächsten Versionsnummer. Alte Versionen bleiben unverändert erhalten. Metadatenänderungen sind ein eigener Anwendungsfall und werden nicht aus einem Versionsupload abgeleitet.
+Neue Versionen sperren den Dokumentdatensatz während der Ermittlung der nächsten Versionsnummer. Alte Versionen bleiben unverändert erhalten. Die Freigabe durch eine vom Uploader verschiedene Person setzt den aktuellen Versionszeiger transaktional. Metadatenänderungen sind ein eigener Anwendungsfall und werden nicht aus einem Versionsupload abgeleitet.
 
 ## Storage- und Zugriffsgrenze
 
 Der Disk `registry_documents` zeigt auf `storage/app/private/registry-documents`, besitzt keine URL und wird von Laravel nicht direkt ausgeliefert. Clientseitige Sichtbarkeit ist keine Zugriffskontrolle: Download und Preview prüfen bei jeder Anfrage Dokumentrecht, Registry-Kontext, Archivstatus, Scanstatus und Dateiexistenz.
 
-Nur Status `clean` ist abrufbar. Die Vorschau prüft zusätzlich serverseitig auf MIME-Typ `application/pdf` und Erweiterung `pdf`. Pfade und Storage-Namen stammen ausschließlich vom Server.
+Nur Scanstatus `clean` zusammen mit Freigabestatus `approved` ist abrufbar. Die Vorschau prüft zusätzlich serverseitig auf MIME-Typ `application/pdf` und Erweiterung `pdf`. Pfade und Storage-Namen stammen ausschließlich vom Server.
 
 ## Audit-Integration
 
@@ -61,7 +61,7 @@ Das persistente Storage-Volume und PostgreSQL sind eine logische Sicherungseinhe
 - verwaiste Storage-Dateien werden gemeldet und nicht ungeprüft gelöscht;
 - archivierte Dokumente und historische Versionen bleiben erhalten.
 
-Der aktuelle Code implementiert Archivierung, aber keine physische Aufbewahrungsbereinigung. Eine spätere Retention muss rechtliche Vorgaben, Audit-Nachweis, konsistente Datei-/Datenbanklöschung und getestete Wiederherstellbarkeit gemeinsam behandeln.
+Der aktuelle Code speichert eine anhand der Kategorie berechnete Mindestaufbewahrungsfrist und blockiert Model-Löschungen vor deren Ablauf. Es gibt bewusst keinen automatischen physischen Löschlauf. Ein späterer Löschprozess muss rechtliche Vorgaben, Audit-Nachweis, konsistente Datei-/Datenbanklöschung und getestete Wiederherstellbarkeit gemeinsam behandeln.
 
 ## Malware-Scanner und Rescan
 

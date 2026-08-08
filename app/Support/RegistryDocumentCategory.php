@@ -49,6 +49,19 @@ enum RegistryDocumentCategory: string
         };
     }
 
+    public function retentionDays(): int
+    {
+        $tier = match ($this) {
+            self::MaintenanceContract, self::SupportContract, self::License, self::FirewallApproval,
+            self::Certificate, self::DataProtection, self::InformationSecurity, self::IsoEvidence => 'long',
+            self::OperationsManual, self::EmergencyManual, self::BackupRecoveryDocumentation,
+            self::Sop, self::TestProtocol => 'standard',
+            default => 'short',
+        };
+
+        return max(1, (int) config("registry_documents.retention_days.{$tier}"));
+    }
+
     /** @return list<array{value: string, label: string}> */
     public static function options(): array
     {

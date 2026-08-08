@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Versionsbezogenen Dokumentfreigabe-Workflow mit serverseitigem Vier-Augen-Prinzip, separatem Freigaberecht, Audit-Ereignissen, Veröffentlichung erst nach Freigabe sowie konfigurierbaren Mindestaufbewahrungsfristen je Kategorie ergänzt.
 - Audit-Trail kryptografisch über eine kanonische SHA-256-Hash-Chain mit gespeichertem Kettenkopf abgesichert; Verifikations- und kontrollierten Prune-Befehl, siebenjährig vorkonfigurierte betreiberabhängige Aufbewahrung, unveränderliche Audit-Modelle, Bestandsverkettung und Manipulations-/Löschungstests ergänzt.
 - DICOM-Testaktionen in Verbindungsansichten werden nur bei passender granularer Diagnoseberechtigung angeboten; C-MOVE und C-GET werden nicht mehr irreführend in den C-FIND-Dialog des Test-Arbeitsbereichs geleitet.
 

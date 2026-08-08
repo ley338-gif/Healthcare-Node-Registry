@@ -14,6 +14,8 @@ use App\Models\System;
 use App\Models\User;
 use App\Services\Documents\RegistryDocumentUploadService;
 use App\Support\RegistryAudit;
+use App\Support\RegistryDocumentApprovalStatus;
+use App\Support\RegistryDocumentCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -61,7 +63,19 @@ final class RegistryDocumentController extends Controller
 
         DB::transaction(function () use ($registryDocument, $context, $user, $validated, $audit): void {
             $before = $registryDocument->only(array_keys($validated));
-            $registryDocument->update([...$validated, 'updated_by' => $user->id]);
+            $category = RegistryDocumentCategory::from($validated['category']);
+            $retentionDays = $category->retentionDays();
+            $retentionUntil = $registryDocument->created_at->addDays($retentionDays);
+            if ($registryDocument->retention_until?->isAfter($retentionUntil)) {
+                $retentionUntil = $registryDocument->retention_until;
+                $retentionDays = $registryDocument->retention_policy_days;
+            }
+            $registryDocument->update([
+                ...$validated,
+                'updated_by' => $user->id,
+                'retention_policy_days' => $retentionDays,
+                'retention_until' => $retentionUntil,
+            ]);
             $after = $registryDocument->only(array_keys($validated));
             $changed = array_keys(array_filter($after, fn (mixed $value, string $field): bool => $value !== $before[$field], ARRAY_FILTER_USE_BOTH));
             if ($changed === []) {
@@ -110,6 +124,87 @@ final class RegistryDocumentController extends Controller
         return back()->with('success', 'Dokument wurde wiederhergestellt.');
     }
 
+    public function submitReview(Request $request, RegistryDocumentVersion $registryDocumentVersion, RegistryAudit $audit): RedirectResponse
+    {
+        $context = $this->context($registryDocumentVersion->document);
+        Gate::authorize('view', $context);
+        Gate::authorize('submitReview', $registryDocumentVersion);
+        abort_if($registryDocumentVersion->document->archived_at !== null, 422, 'Archivierte Dokumente können nicht geprüft werden.');
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+
+        DB::transaction(function () use ($registryDocumentVersion, $context, $user, $audit): void {
+            $version = RegistryDocumentVersion::query()->lockForUpdate()->findOrFail($registryDocumentVersion->id);
+            abort_unless(in_array($version->approval_status, [RegistryDocumentApprovalStatus::Draft, RegistryDocumentApprovalStatus::Rejected], true), 422);
+            $version->update([
+                'approval_status' => RegistryDocumentApprovalStatus::PendingReview,
+                'review_requested_by' => $user->id,
+                'review_requested_at' => now(),
+                'reviewed_by' => null,
+                'reviewed_at' => null,
+                'review_note' => null,
+            ]);
+            $audit->record('document.review_requested', $context, $user, $this->reviewAuditIdentity($version));
+        });
+
+        return back()->with('success', 'Dokumentversion wurde zur Freigabe eingereicht.');
+    }
+
+    public function approve(Request $request, RegistryDocumentVersion $registryDocumentVersion, RegistryAudit $audit): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+        abort_if($user->id === $registryDocumentVersion->uploaded_by, 403, 'Eigene Uploads dürfen nicht selbst freigegeben werden.');
+        $context = $this->context($registryDocumentVersion->document);
+        Gate::authorize('view', $context);
+        Gate::authorize('approve', $registryDocumentVersion);
+        abort_unless($registryDocumentVersion->malware_scan_status === 'clean', 422, 'Nur sauber geprüfte Dateien dürfen freigegeben werden.');
+        $note = $request->validate(['review_note' => ['nullable', 'string', 'max:2000']])['review_note'] ?? null;
+
+        DB::transaction(function () use ($registryDocumentVersion, $context, $user, $note, $audit): void {
+            $version = RegistryDocumentVersion::query()->lockForUpdate()->findOrFail($registryDocumentVersion->id);
+            abort_if($user->id === $version->uploaded_by, 403);
+            abort_unless($version->approval_status === RegistryDocumentApprovalStatus::PendingReview, 422);
+            abort_unless($version->malware_scan_status === 'clean', 422, 'Nur sauber geprüfte Dateien dürfen freigegeben werden.');
+            $version->update([
+                'approval_status' => RegistryDocumentApprovalStatus::Approved,
+                'reviewed_by' => $user->id,
+                'reviewed_at' => now(),
+                'review_note' => $note,
+            ]);
+            $version->document()->update(['current_version_id' => $version->id, 'updated_by' => $user->id]);
+            $audit->record('document.approved', $context, $user, $this->reviewAuditIdentity($version));
+        });
+
+        return back()->with('success', 'Dokumentversion wurde freigegeben.');
+    }
+
+    public function reject(Request $request, RegistryDocumentVersion $registryDocumentVersion, RegistryAudit $audit): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+        abort_if($user->id === $registryDocumentVersion->uploaded_by, 403, 'Eigene Uploads dürfen nicht selbst geprüft werden.');
+        $context = $this->context($registryDocumentVersion->document);
+        Gate::authorize('view', $context);
+        Gate::authorize('reject', $registryDocumentVersion);
+        $note = $request->validate(['review_note' => ['required', 'string', 'max:2000']])['review_note'];
+
+        DB::transaction(function () use ($registryDocumentVersion, $context, $user, $note, $audit): void {
+            $version = RegistryDocumentVersion::query()->lockForUpdate()->findOrFail($registryDocumentVersion->id);
+            abort_if($user->id === $version->uploaded_by, 403);
+            abort_unless($version->approval_status === RegistryDocumentApprovalStatus::PendingReview, 422);
+            $version->update([
+                'approval_status' => RegistryDocumentApprovalStatus::Rejected,
+                'reviewed_by' => $user->id,
+                'reviewed_at' => now(),
+                'review_note' => $note,
+            ]);
+            $audit->record('document.rejected', $context, $user, $this->reviewAuditIdentity($version));
+        });
+
+        return back()->with('success', 'Dokumentversion wurde abgelehnt.');
+    }
+
     public function downloadVersion(Request $request, RegistryDocumentVersion $registryDocumentVersion): StreamedResponse
     {
         abort_unless($request->user()?->hasPermission('documents.download') ?? false, 403);
@@ -119,6 +214,7 @@ final class RegistryDocumentController extends Controller
         abort_unless($context instanceof Organization || $context instanceof Site || $context instanceof Department || $context instanceof System, 404);
         Gate::authorize('view', $context);
         abort_unless($registryDocumentVersion->malware_scan_status === 'clean', 423, 'Die Dokumentversion ist nicht zum Download freigegeben.');
+        abort_unless($registryDocumentVersion->approval_status === RegistryDocumentApprovalStatus::Approved, 423, 'Die Dokumentversion wartet noch auf Freigabe.');
         abort_unless(Storage::disk($registryDocumentVersion->storage_disk)->exists($registryDocumentVersion->storage_path), 404);
 
         return Storage::disk($registryDocumentVersion->storage_disk)->download(
@@ -137,6 +233,7 @@ final class RegistryDocumentController extends Controller
         abort_unless($context instanceof Organization || $context instanceof Site || $context instanceof Department || $context instanceof System, 404);
         Gate::authorize('view', $context);
         abort_unless($registryDocumentVersion->malware_scan_status === 'clean', 423, 'Die Dokumentversion ist nicht zur Vorschau freigegeben.');
+        abort_unless($registryDocumentVersion->approval_status === RegistryDocumentApprovalStatus::Approved, 423, 'Die Dokumentversion wartet noch auf Freigabe.');
         abort_unless($registryDocumentVersion->mime_type === 'application/pdf' && $registryDocumentVersion->file_extension === 'pdf', 415);
         $disk = Storage::disk($registryDocumentVersion->storage_disk);
         abort_unless($disk->exists($registryDocumentVersion->storage_path), 404);
@@ -192,5 +289,18 @@ final class RegistryDocumentController extends Controller
     private function auditIdentity(RegistryDocument $document): array
     {
         return ['document_public_id' => $document->public_id, 'document_title' => $document->title, 'status' => 'success'];
+    }
+
+    /** @return array<string, mixed> */
+    private function reviewAuditIdentity(RegistryDocumentVersion $version): array
+    {
+        return [
+            'document_public_id' => $version->document->public_id,
+            'document_title' => $version->document->title,
+            'version_public_id' => $version->public_id,
+            'version_number' => $version->version_number,
+            'approval_status' => $version->approval_status->value,
+            'status' => 'success',
+        ];
     }
 }

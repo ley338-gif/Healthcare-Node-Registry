@@ -20,6 +20,7 @@ final class RbacBootstrapper
         'documents.archive' => 'Dokumente archivieren',
         'documents.download' => 'Dokumente herunterladen',
         'documents.manage_versions' => 'Dokumentversionen verwalten',
+        'documents.approve' => 'Dokumentversionen freigeben',
         'discovery.view' => 'Discovery anzeigen',
         'discovery.run' => 'Discovery-Läufe starten',
         'discovery.manage' => 'Discovery verwalten',
