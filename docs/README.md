@@ -44,6 +44,7 @@ Die gewachsene technische Dokumentation bleibt erhalten. Bis zu ihrer kontrollie
 - [Diagnose-Workspace](Healthcare/DiagnosticTestWorkspace.md)
 - [Authentifizierung](Security/Authentication.md) und [Zugriffskontrolle](Security/AccessControl.md)
 - [Audit-Workspace](Features/audit-workspace.md)
+- [Export der System- und Knotenübersicht](Features/system-overview-export.md)
 - [Registry-Dokumentation](Features/registry-documentation.md)
 - [Benutzerverwaltung](Features/UserManagement.md)
 - [Vorlage für Versionshinweise](Releases/RELEASE_NOTES_TEMPLATE.md)

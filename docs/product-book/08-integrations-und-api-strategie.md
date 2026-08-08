@@ -302,7 +302,7 @@ Ein freigegebener Export benötigt:
 - sichere Dateinamen und Response-Header;
 - dokumentierte Aufbewahrungs- und Weitergabeverantwortung.
 
-Der aktuelle Audit- und Diagnoseexport erfüllt nur seinen jeweils begrenzten Fachzweck. Ein vollständiger Registry-Export ist nicht als verfügbar dokumentiert.
+Audit- und Diagnoseexporte erfüllen weiterhin ihren jeweils begrenzten Fachzweck. Zusätzlich ist eine gefilterte System- und DICOM-Knotenübersicht als XLSX und PDF verfügbar; sie ist kein vollständiger Datenbankexport und keine Registry-API.
 
 ## Identitäts- und Verzeichnisintegration
 
@@ -497,7 +497,7 @@ Maschinenlesbare Verträge können die Referenz ergänzen, ersetzen aber nicht f
 |---|---|---|
 | Webzugriff | interne sessionbasierte HNR-Routen | getrennte externe API-Authentisierung |
 | Suche | internes berechtigungsgeprüftes JSON-Format | kein veröffentlichter Suchvertrag |
-| Exporte | Audit-CSV und Test-JSON/-CSV | versionierte Registry-Exporte |
+| Exporte | Audit-CSV, Test-JSON/-CSV und System-/Knotenübersicht als XLSX/PDF | weitere versionierte Registry-Exporte |
 | Import | nicht allgemein verfügbar | versioniertes CSV mit Dry Run und Bericht |
 | DICOM | kontrollierte Diagnose gegen registrierte Ziele | TLS und weitere Dienste nach Sicherheitsdesign |
 | Identität | lokale Benutzer und RBAC | OIDC, LDAP/AD, gegebenenfalls SAML und MFA |

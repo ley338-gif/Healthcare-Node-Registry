@@ -38,6 +38,7 @@ use App\Http\Controllers\SiteController;
 use App\Http\Controllers\StorageCommitmentDiagnosticController;
 use App\Http\Controllers\StorageDiagnosticController;
 use App\Http\Controllers\SystemController;
+use App\Http\Controllers\SystemOverviewExportController;
 use App\Http\Controllers\TestWorkspaceController;
 use App\Http\Controllers\WorklistDiagnosticController;
 use Illuminate\Support\Facades\Route;
@@ -114,6 +115,9 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/systems', [SystemController::class, 'index'])
         ->name('systems.index');
+    Route::get('/systems/export/{format}', SystemOverviewExportController::class)
+        ->whereIn('format', ['xlsx', 'pdf'])
+        ->name('systems.export');
     Route::get('/systems/import', [RegistryImportController::class, 'index'])->name('systems.import.index');
     Route::post('/systems/import/preview', [RegistryImportController::class, 'preview'])->name('systems.import.preview');
     Route::post('/systems/import/{token}', [RegistryImportController::class, 'store'])->name('systems.import.store');
