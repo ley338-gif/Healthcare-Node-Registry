@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\RunDiscoveryScanJob;
+use App\Models\DiscoveryAllowedNetwork;
 use App\Models\DiscoveryRun;
 use App\Models\Permission;
 use App\Models\Role;
@@ -49,6 +50,29 @@ final class DiscoveryRunCreationTest extends TestCase
 
         $response->assertSessionHasErrors(['ip_range']);
         $this->assertDatabaseCount('discovery_runs', 0);
+    }
+
+    public function test_target_range_must_be_fully_covered_by_an_active_allowed_network(): void
+    {
+        Queue::fake();
+        $user = $this->createRunner();
+        DiscoveryAllowedNetwork::query()->delete();
+        DiscoveryAllowedNetwork::query()->create([
+            'cidr' => '10.20.0.0/24',
+            'description' => 'Explicitly authorized test network',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->post('/discovery/runs', $this->validPayload([
+            'ip_range' => '10.20.0.248/29',
+        ]))->assertSessionHasNoErrors();
+
+        $this->actingAs($user)->post('/discovery/runs', $this->validPayload([
+            'name' => 'Outside authorization',
+            'ip_range' => '10.20.1.0/29',
+        ]))->assertSessionHasErrors(['ip_range']);
+
+        self::assertSame(1, DiscoveryRun::query()->count());
     }
 
     public function test_a_range_exceeding_the_configured_maximum_is_rejected(): void
