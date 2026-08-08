@@ -5,7 +5,7 @@ document_type: Produktbuch
 chapter: 2
 status: draft
 version: 0.1
-last_updated: 2026-08-02
+last_updated: 2026-08-08
 ---
 
 # Produktkonzept und Funktionsumfang
@@ -73,7 +73,7 @@ Für ausgewählte Organisationseinheiten stehen strukturierte Dokumentation, Dok
 
 ### Systeme
 
-Systeme bilden technische Anwendungen und Infrastrukturkomponenten ab. Zu den verfügbaren Angaben gehören unter anderem Systemtyp, Status, Host- und Netzwerkangaben, Hersteller- und Produktinformationen sowie die organisatorische Zuordnung.
+Systeme bilden technische Anwendungen und Infrastrukturkomponenten ab. Zu den verfügbaren Angaben gehören unter anderem Systemtyp, Status, mehrere Netzwerkinterfaces, Hersteller- und Produktinformationen, eine optionale betriebliche Verantwortlichkeit sowie die organisatorische Zuordnung.
 
 Ein System-Workspace bündelt Stammdaten, DICOM-Knoten, Kommunikationsbeziehungen, strukturierte Dokumentation, Dokumente und Änderungshistorie. Archivierte Systeme bleiben historisch nachvollziehbar, stehen aber nicht wie aktive Systeme für reguläre Bearbeitungs- und Navigationsvorgänge zur Verfügung.
 
@@ -92,7 +92,7 @@ Die HNR behandelt einen DICOM-Knoten als fachliches Kommunikationsobjekt und nic
 
 ### DICOM-Kommunikationsbeziehungen
 
-Kommunikationsbeziehungen verbinden Quell- und Zielknoten für einen definierten DICOM-Dienst. Unterstützte Modellierungen umfassen Echo, Storage, Modality Worklist, Query sowie vorgesehene Move- und Get-Beziehungen. Die bloße Modellierbarkeit eines Dienstes bedeutet nicht, dass für ihn bereits eine aktive Diagnosefunktion verfügbar ist.
+Kommunikationsbeziehungen verbinden Quell- und Zielknoten für einen definierten DICOM-Dienst. Unterstützte Modellierungen umfassen Echo, Storage, Modality Worklist, Query, Move und Get. Die bloße Modellierbarkeit eines Dienstes bedeutet weiterhin nicht, dass eine konkrete Verbindung erfolgreich oder dauerhaft verfügbar ist.
 
 Die Topologie visualisiert registrierte Knoten, Systeme und Kommunikationsbeziehungen. Sie dient der Orientierung und technischen Dokumentation, nicht der automatischen Netzwerkerkennung.
 
@@ -104,14 +104,17 @@ Der Test-Workspace führt kontrollierte technische Prüfungen gegen registrierte
 - DICOM C-ECHO;
 - Modality-Worklist-C-FIND;
 - PACS Study Root C-FIND;
-- kontrollierten synthetischen C-STORE;
+- kontrollierten synthetischen C-STORE mit Secondary-Capture-, CT- und MR-Objekten;
+- autorisierte C-MOVE- und C-GET-Prüfungen mit serverseitig festgelegter synthetischer Study UID;
+- synthetische MPPS-N-CREATE-/N-SET-Prüfung;
+- synthetisches Storage Commitment mit korreliertem N-EVENT-REPORT;
 - Capability-Matrix durch Association Negotiation;
 - serverseitige Analyse bereitgestellter DICOM-Dateien;
 - wiederverwendbare Testprofile;
 - persistenten Testverlauf;
 - bereinigten JSON- und CSV-Export von Diagnoseergebnissen.
 
-Schreibende oder potenziell datenverändernde Prüfungen verwenden strengere Berechtigungen und Bestätigungen. Die Tests ersetzen keine klinische oder herstellerseitige Systemvalidierung. Details und Sicherheitsgrenzen beschreibt der [Diagnose-Workspace](../Healthcare/DiagnosticTestWorkspace.md).
+Jeder ausführbare DICOM-Diagnosetyp gegen registrierte Knoten besitzt ein eigenes Recht. Schreibende oder potenziell datenverändernde Prüfungen verwenden zusätzliche Bestätigungen. Für registrierte Diagnoseziele kann DICOM-TLS über benannte Zertifikatsprofile ohne Klartext-Fallback erzwungen werden. Die Tests ersetzen keine klinische oder herstellerseitige Systemvalidierung. Details und Sicherheitsgrenzen beschreibt der [Diagnose-Workspace](../Healthcare/DiagnosticTestWorkspace.md).
 
 ### Strukturierte Dokumentation
 
@@ -126,19 +129,21 @@ Die private Dokumentenablage ordnet Dokumente einem Registry-Kontext zu. Der akt
 - unveränderliche Dateiversionen;
 - SHA-256-Prüfsummen und Duplikaterkennung;
 - serverseitige Dateityp-, Größen- und Signaturprüfung;
-- eine Malware-Scanner-Schnittstelle;
+- eine ClamAV-Anbindung mit fail-closed Fallback und Rescan-Prozess;
 - berechtigungsgeprüften Download;
 - abgesicherte PDF-Vorschau;
+- versionenbezogene Freigabe mit serverseitigem Vier-Augen-Prinzip;
+- kategoriebasierte Mindestaufbewahrung;
 - Suche, Filter und serverseitige Seitennavigation;
 - Archivierung und Audit-Ereignisse.
 
-Die vorhandene Scanner-Schnittstelle ist kein Nachweis, dass in jeder Installation bereits ein produktiver Malware-Scanner angebunden ist. Betriebs- und Sicherheitsgrenzen beschreibt die [Registry-Dokumentation](../Features/registry-documentation.md).
+Das Docker-Referenzsetup enthält ClamAV. Ist der Scanner deaktiviert oder nicht erreichbar, bleiben betroffene Versionen mit dem Status `unavailable` privat und für Download und Vorschau gesperrt, bis ein Rescan erfolgreich war. Betriebs- und Sicherheitsgrenzen beschreibt die [Registry-Dokumentation](../Features/registry-documentation.md).
 
 ### Änderungshistorie und Audit
 
 Die HNR verwendet eine gemeinsame append-only Ereignisquelle für Registry-Änderungen, Dokumentaktionen, Tests und administrative Vorgänge. Kontextbezogene Historien stehen in Registry-Workspaces zur Verfügung.
 
-Der zentrale Audit-Arbeitsbereich bietet Suche, Filter, Ereignisgruppen, Vorher-/Nachher-Darstellung, Detailansicht, direkte Navigation zu verfügbaren Objekten und CSV-Export. Der Zugriff ist berechtigungsgeprüft. Weitere Einzelheiten enthält die Dokumentation zum [Audit-Workspace](../Features/audit-workspace.md).
+Der zentrale Audit-Arbeitsbereich bietet Suche, Filter, Ereignisgruppen, Vorher-/Nachher-Darstellung, Detailansicht, direkte Navigation zu verfügbaren Objekten und CSV-Export. Eine interne SHA-256-Hash-Chain, der Verifikationsbefehl `registry:audit-verify` und ein auf abgelaufene älteste Einträge begrenzter Prune-Prozess ergänzen die konfigurierbare Aufbewahrung. Der Zugriff ist berechtigungsgeprüft. Weitere Einzelheiten enthält die Dokumentation zum [Audit-Workspace](../Features/audit-workspace.md).
 
 ### Benutzer, Rollen und Berechtigungen
 
@@ -184,21 +189,13 @@ Die folgenden Themen sind dokumentiert, aber noch nicht als vollständig verfüg
 
 Zentrale Pflegeoberflächen für fachliche Referenzdaten können fest hinterlegte Werte schrittweise ersetzen. Kandidaten sind unter anderem Hersteller, Systemtypen, DICOM-Dienste, Dokumentkategorien und Portprofile. Umfang und Datenführerschaft müssen vor der Umsetzung festgelegt werden.
 
-### Feingranulare Diagnoseberechtigungen
+### Weitergehende Verantwortlichkeitsmodellierung
 
-Netzwerk, C-ECHO, Modality Worklist und PACS Query besitzen getrennte Berechtigungen. Konfigurierbare Netzwerkfreigaben, Timeouts und Parallelitätsgrenzen bleiben als weitere Härtung vorgesehen.
+Systeme besitzen ein optionales Feld für die betriebliche Verantwortlichkeit. Strukturierte Verantwortliche, Rollen oder Zuständigkeiten für Organisationen, Standorte und Abteilungen sind noch nicht modelliert.
 
-### Dokumentfreigabe und Aufbewahrung
+### Weitergehende Betriebs- und Sicherheitsintegration
 
-Dokumentfreigabe, Vier-Augen-Prinzip, verbindliche Aufbewahrungsregeln und ein produktiver Malware-Scan- beziehungsweise Rescan-Prozess sind geplante Ausbaustufen.
-
-### Audit-Aufbewahrung und Integritätsnachweis
-
-Weitergehende Aufbewahrungssteuerung und formale Integritätsnachweise für Audit-Daten sind geplant. Der aktuelle CSV-Export ist nicht mit einem vollständigen Compliance-Archiv gleichzusetzen.
-
-### Verantwortlichkeiten
-
-Eine weitergehende fachliche Modellierung von System- und Betriebsverantwortlichkeiten ist vorgesehen. Bis zu ihrer Umsetzung dürfen Zuständigkeiten nicht aus nicht vorhandenen Datenfeldern abgeleitet werden.
+Discovery-TLS, eine externe signierte Verankerung der internen Audit-Hash-Chain und ein automatisierter physischer Löschworkflow für abgelaufene Dokumentversionen sind nicht umgesetzt. Der Audit-CSV-Export ist kein vollständiges Compliance-Archiv.
 
 ## Langfristige Entwicklungsrichtungen
 
@@ -207,8 +204,6 @@ Langfristig können folgende Themen bewertet werden:
 - OIDC, LDAP/Active Directory und bei nachgewiesenem Bedarf SAML;
 - Mehrfaktor-Authentisierung;
 - eine öffentlich dokumentierte, versionierte Produkt-API;
-- abgesicherte DICOM-TLS-Unterstützung für Diagnosefunktionen;
-- weitere DICOM-Funktionen wie C-MOVE oder C-GET nach gesondertem Sicherheitsdesign;
 - Auswertungen und Dashboards auf Basis vorhandener Ereignisgruppen;
 - kontrollierte Integrationen mit führenden Infrastruktur- oder Identitätssystemen.
 

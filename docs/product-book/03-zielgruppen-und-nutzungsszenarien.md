@@ -5,7 +5,7 @@ document_type: Produktbuch
 chapter: 3
 status: draft
 version: 0.1
-last_updated: 2026-08-02
+last_updated: 2026-08-08
 ---
 
 # Zielgruppen und Nutzungsszenarien
@@ -187,7 +187,7 @@ Die konkrete Rollengestaltung ist eine Betreiberentscheidung. Sie soll dem Prinz
 **Ablauf:**
 
 1. Eine berechtigte Person prüft oder ergänzt Organisation, Standort und Abteilung.
-2. Sie legt das System mit verfügbaren technischen Stammdaten an.
+2. Sie legt das System mit verfügbaren technischen Stammdaten und bei Bedarf einer betrieblichen Verantwortlichkeit an.
 3. Sie ergänzt einen oder mehrere DICOM-Knoten mit AE-Titel, Host, Port, Rolle und Diensten.
 4. Sie modelliert bekannte Kommunikationsbeziehungen zu vorhandenen Zielknoten.
 5. Sie ergänzt strukturierte Dokumentation oder zugehörige Dokumente.
@@ -195,7 +195,7 @@ Die konkrete Rollengestaltung ist eine Betreiberentscheidung. Sie soll dem Prinz
 
 **Ergebnis:** System, DICOM-Knoten und Kommunikationsbeziehungen sind gemeinsam auffindbar und historisch nachvollziehbar.
 
-Hinweis: Eine eigenständige strukturierte Verantwortlichkeitsfunktion ist geplant. Bis zu ihrer Umsetzung dürfen nicht vorhandene Verantwortlichkeitsangaben nicht vorausgesetzt werden.
+Die betriebliche Verantwortlichkeit ist aktuell eine optionale Angabe am System und kein organisationsweites Zuständigkeits- oder Eskalationsmodell.
 
 ### Eine DICOM-Kommunikationsstörung eingrenzen
 
@@ -251,12 +251,13 @@ Die HNR stellt keine klinische Diagnose und bestätigt nicht die vollständige F
 2. Sie erfasst Dokumentmetadaten und lädt einen erlaubten Dateityp hoch.
 3. Die HNR prüft Dateityp, Signatur, Größe, Prüfsumme und den verfügbaren Malware-Scanstatus.
 4. Spätere Dateistände werden als unveränderliche Versionen ergänzt.
-5. Berechtigte Personen können als sauber bewertete Dateistände herunterladen oder unterstützte PDF-Dateien anzeigen.
-6. Upload, Versionierung, Metadatenänderung und Archivierung werden auditiert.
+5. Eine berechtigte Person fordert die Prüfung an; eine vom Uploader verschiedene Person mit Freigaberecht genehmigt oder verwirft die Version.
+6. Nur genehmigte und malwareseitig saubere Versionen können heruntergeladen oder als unterstützte PDF-Dateien angezeigt werden.
+7. Upload, Versionierung, Freigabe, Metadatenänderung und Archivierung werden auditiert.
 
 **Ergebnis:** Dokument und Versionen bleiben dem fachlichen Kontext zugeordnet und anhand ihrer Integritätsmerkmale nachvollziehbar.
 
-Ein produktiver Malware-Scanner ist nicht automatisch in jeder Installation verfügbar. Nicht als sauber bewertete Dateien werden nicht regulär freigegeben.
+Das Docker-Referenzsetup stellt ClamAV bereit. Bei deaktiviertem oder nicht erreichbarem Scanner bleiben nicht als sauber bewertete Dateien fail-closed gesperrt.
 
 ### Eine Änderung nachvollziehen
 
@@ -290,13 +291,9 @@ Ein produktiver Malware-Scanner ist nicht automatisch in jeder Installation verf
 
 Die folgenden Szenarien sind noch nicht als vollständig verfügbar zu behandeln.
 
-### Verantwortlichkeiten strukturiert pflegen
+### Verantwortlichkeiten organisationsweit strukturiert pflegen
 
-Geplant ist eine eindeutigere Modellierung fachlicher und technischer Verantwortlichkeiten. Erst nach Umsetzung und Dokumentationsfreigabe können Nutzungsszenarien verbindlich auf hinterlegte Verantwortliche verweisen.
-
-### Dokumente formal freigeben
-
-Dokumentfreigabe, Vier-Augen-Prinzip und verbindliche Aufbewahrungsregeln sind geplant. Der aktuelle Dokumentstatus ist nicht mit einem vollständigen formalen Freigabeworkflow gleichzusetzen.
+Über die optionale betriebliche Angabe am System hinaus ist eine strukturierte Zuordnung von Personen, Rollen oder Abteilungen zu Verantwortungs- und Eskalationsaufgaben nicht verfügbar.
 
 ### Externen Support begrenzt autorisieren
 

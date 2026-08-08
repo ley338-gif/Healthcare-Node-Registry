@@ -5,7 +5,7 @@ document_type: Produktbuch
 chapter: 10
 status: draft
 version: 0.1
-last_updated: 2026-08-02
+last_updated: 2026-08-08
 ---
 
 # Produktgovernance und Verantwortlichkeiten
@@ -289,7 +289,7 @@ Die Produktgovernance:
 - bildet kein vollständiges Qualitätsmanagementsystem einer Organisation ab;
 - ersetzt keine arbeits-, gesellschafts- oder vertragsrechtlichen Befugnisse;
 - führt keine zweite Rollen- oder Berechtigungsarchitektur in der Anwendung ein;
-- behauptet keine fest eingebaute Vier-Augen-Freigabe, solange diese nicht implementiert ist;
+- überträgt die implementierte Vier-Augen-Freigabe für Dokumentversionen nicht pauschal auf andere Produkt- oder Prozessfreigaben;
 - macht aus einer Roadmap keine Liefer- oder Terminzusage;
 - überträgt Betreiberverantwortung nicht auf den Hersteller;
 - erklärt eine technische Entscheidung nicht automatisch zur Produktfreigabe.
@@ -311,4 +311,3 @@ Dieses Kapitel ist zu überprüfen, wenn sich Produktorganisation, Freigabemodel
 - [Risikoregister](../Compliance/RiskRegister.md)
 - [CAPA](../Compliance/CAPA.md)
 - [Dokumentations-Masterspezifikation](../DOCUMENTATION_MASTER_SPECIFICATION.md)
-

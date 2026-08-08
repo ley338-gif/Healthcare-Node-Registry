@@ -5,7 +5,7 @@ document_type: Produktbuch
 chapter: 5
 status: draft
 version: 0.1
-last_updated: 2026-08-02
+last_updated: 2026-08-08
 ---
 
 # Sicherheits- und Datenschutzkonzept
@@ -210,10 +210,10 @@ Der aktuelle Uploadpfad verwendet:
 - Prüfung von Erweiterung, erkanntem MIME-Typ und Dateisignatur;
 - konfigurierbare Größenbegrenzung;
 - SHA-256-Prüfsumme und Duplikaterkennung;
-- eine Malware-Scanner-Schnittstelle;
+- eine ClamAV-Anbindung mit fail-closed Fallback;
 - restriktive Behandlung nicht als sauber bewerteter Dateien.
 
-Die vorhandene Schnittstelle bedeutet nicht, dass ein produktiver Malware-Scanner bereits in jeder Installation angebunden ist. Ohne produktive Scannerintegration ist der entsprechende Betriebsprozess unvollständig.
+Das Docker-Referenzsetup enthält einen internen ClamAV-Dienst und einen stündlichen Rescan-Prozess. Ist die Integration deaktiviert oder ClamD nicht erreichbar, wird der Scanstatus `unavailable` gesetzt und die Datei bleibt gesperrt.
 
 ### Download und Vorschau
 
@@ -221,7 +221,7 @@ Jeder Zugriff wird erneut autorisiert. Dateien werden nicht über dauerhafte öf
 
 ### Versionen und Integrität
 
-Dokumentversionen sind unveränderlich. SHA-256 dient als Integritätsmerkmal und zur Duplikaterkennung, ist aber allein kein kryptografisch signierter Freigabenachweis. Formale Dokumentfreigaben und verbindliche Aufbewahrungsregeln sind geplant.
+Dokumentversionen sind unveränderlich. SHA-256 dient als Integritätsmerkmal und zur Duplikaterkennung, ist aber kein kryptografisch signierter Freigabenachweis. Der versionenbezogene Freigabestatus erzwingt serverseitig, dass Uploader die eigene Version nicht genehmigen können. Kategoriebasierte Mindestaufbewahrungsfristen verhindern vorzeitiges Löschen; ein automatisierter physischer Löschlauf nach Fristende ist nicht vorhanden.
 
 ## Protokollierung und Audit
 
@@ -246,7 +246,7 @@ Vorher-/Nachher-Werte werden nur für relevante Änderungen dargestellt. Vollst�
 
 Zeitpunkte werden konsistent gespeichert und für Benutzer lokal dargestellt. Produktive Systeme benötigen zuverlässige Zeitsynchronisation.
 
-Audit ist append-only ausgelegt. Ein formaler Integritätsnachweis, verbindliche Aufbewahrungssteuerung und ein kontrollierter Löschprozess sind geplant und nicht Bestandteil des aktuellen vollständigen Funktionsumfangs.
+Audit ist append-only ausgelegt. Jeder Eintrag ist Teil einer internen SHA-256-Hash-Chain mit gespeichertem Kettenkopf; `registry:audit-verify` erkennt Änderungen und Lücken. Die konfigurierbare Aufbewahrung wird durch unveränderliche Modelle und einen auf abgelaufene älteste Einträge begrenzten Prune-Prozess durchgesetzt. Eine externe signierte Verankerung gegen Angreifer mit vollständigem Datenbank-Schreibzugriff ist nicht umgesetzt.
 
 ## Datenschutz
 
@@ -311,7 +311,7 @@ Weitere Anforderungen beschreibt [Backup und Wiederherstellung](../Deployment/Ba
 | Authentisierung | sichere lokale Sitzungs- und Passwortmechanismen | HTTPS, sichere Konfiguration, Kontenprüfung |
 | Autorisierung | serverseitige Rollen- und Berechtigungsprüfung | angemessenes Rollenkonzept und Access Reviews |
 | Netzwerkdiagnose | registrierte Ziele, Validierung, Timeouts, Berechtigungen | Firewall, Egress-Begrenzung, Zielsystemfreigaben |
-| Dokumente | private Ablage, Validierung, Prüfsummen, Zugriffskontrolle | produktiver Scanner, zulässige Inhalte, Aufbewahrung |
+| Dokumente | private Ablage, Validierung, Prüfsummen, ClamAV, Vier-Augen-Freigabe und Mindestaufbewahrung | zulässige Inhalte, Fristfestlegung und kontrollierte Löschverfahren |
 | Datenschutz | Datenminimierung und Maskierung definierter Inhalte | Rechtsgrundlage, Zweck, Fristen, Betroffenenverfahren |
 | Audit | strukturierte append-only Ereignisquelle | Zeitsynchronisation, Review, Aufbewahrung und Exportkontrolle |
 | Backup | dokumentierte Daten- und Storage-Zusammenhänge | Backupbetrieb, Schutz, Restore-Test und Freigabe |
@@ -323,11 +323,11 @@ Weitere Anforderungen beschreibt [Backup und Wiederherstellung](../Deployment/Ba
 |---|---|---|
 | Anmeldung | lokale serverseitige Sitzung | MFA und externe Identitätsanbieter |
 | Berechtigungen | RBAC, Policies und gesonderte sensible Rechte | organisatorische Scopes und zeitliche Begrenzung |
-| DICOM-Ziele | aktive registrierte Knoten | konfigurierbare CIDR-Allowlist |
-| Diagnose-Transport | begrenzte TCP-/DICOM-Aufrufe | DICOM-TLS und zentrale Parallelitätsgrenzen |
-| Dokumentprüfung | Allowlist, Signatur, Hash, Scanner-Schnittstelle | produktiver Scanner und Rescan-Prozess |
-| Dokumentkontrolle | Versionen, Archivierung und Zugriff | formale Freigabe und Aufbewahrungsregeln |
-| Audit | Ereignisgruppen, Filter, Details und CSV | Integritätsnachweis und Aufbewahrungssteuerung |
+| DICOM-Ziele | aktive registrierte Knoten; CIDR-Allowlist für Discovery | Discovery-TLS und weitere installationsbezogene Egress-Härtung |
+| Diagnose-Transport | begrenzte TCP-/DICOM-Aufrufe und optionales DICOM-TLS ohne Klartext-Fallback | zentrale Parallelitätsgrenzen für direkte Diagnoseläufe |
+| Dokumentprüfung | Allowlist, Signatur, Hash, ClamAV und Rescan | installationsbezogene Scannerüberwachung |
+| Dokumentkontrolle | Versionen, Vier-Augen-Freigabe und Mindestaufbewahrung | kontrollierter physischer Löschprozess nach Fristende |
+| Audit | Ereignisgruppen, CSV, interne Hash-Chain und kontrollierte Aufbewahrung | externe signierte Verankerung |
 | Datenschutz | keine erforderlichen Patientendaten, Maskierung definierter Schlüssel | vollständige Lösch-, Anonymisierungs- und Auskunftsverfahren |
 
 ## Sicherheitsrelevante Nicht-Ziele

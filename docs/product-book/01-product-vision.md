@@ -5,7 +5,7 @@ document_type: Produktbuch
 chapter: 1
 status: draft
 version: 0.1
-last_updated: 2026-08-02
+last_updated: 2026-08-08
 ---
 
 # Produktvision
@@ -176,7 +176,6 @@ Die langfristige Produktentwicklung orientiert sich am betrieblichen Mehrwert un
 
 - weitergehende konfigurierbare Referenzdaten und Verwaltungsoberflächen;
 - feinere Berechtigungen und organisatorische Geltungsbereiche;
-- verbindliche Dokumentfreigaben und Aufbewahrungsregeln;
 - zusätzliche abgesicherte DICOM-Diagnosefunktionen;
 - standardisierte, versionierte Schnittstellen;
 - Anbindung externer Identitätsanbieter wie OIDC oder LDAP/Active Directory;
