@@ -53,6 +53,63 @@ final class DicomNodeManagementTest extends TestCase
         ]);
     }
 
+    public function test_modality_is_stored_and_normalized_to_uppercase(): void
+    {
+        $user = $this->createRegistryManager();
+        $system = System::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->post(
+                "/systems/{$system->public_id}/dicom-nodes",
+                $this->validPayload(['modality' => 'dx']),
+            );
+
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('dicom_nodes', [
+            'system_id' => $system->id,
+            'modality' => 'DX',
+        ]);
+    }
+
+    public function test_dicom_node_can_be_created_without_a_modality(): void
+    {
+        $user = $this->createRegistryManager();
+        $system = System::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->post(
+                "/systems/{$system->public_id}/dicom-nodes",
+                $this->validPayload(),
+            );
+
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('dicom_nodes', [
+            'system_id' => $system->id,
+            'modality' => null,
+        ]);
+    }
+
+    public function test_invalid_modality_is_rejected(): void
+    {
+        $user = $this->createRegistryManager();
+        $system = System::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->post(
+                "/systems/{$system->public_id}/dicom-nodes",
+                $this->validPayload(['modality' => 'in valid!']),
+            );
+
+        $response->assertSessionHasErrors(['modality']);
+
+        $this->assertDatabaseCount('dicom_nodes', 0);
+    }
+
     public function test_invalid_dicom_node_data_is_rejected(): void
     {
         $user = $this->createRegistryManager();
@@ -158,6 +215,32 @@ final class DicomNodeManagementTest extends TestCase
         $this->assertDatabaseHas('security_events', [
             'event_type' => 'registry.dicom_node.updated',
             'subject_type' => DicomNode::class,
+        ]);
+    }
+
+    public function test_registry_manager_can_update_the_modality_of_a_dicom_node(): void
+    {
+        $user = $this->createRegistryManager();
+        $dicomNode = DicomNode::factory()->create(['modality' => 'CT']);
+
+        $response = $this
+            ->actingAs($user)
+            ->put(
+                "/dicom-nodes/{$dicomNode->public_id}",
+                $this->validPayload([
+                    'name' => $dicomNode->name,
+                    'ae_title' => $dicomNode->ae_title,
+                    'host' => $dicomNode->host,
+                    'port' => $dicomNode->port,
+                    'modality' => 'dx',
+                ]),
+            );
+
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('dicom_nodes', [
+            'id' => $dicomNode->id,
+            'modality' => 'DX',
         ]);
     }
 

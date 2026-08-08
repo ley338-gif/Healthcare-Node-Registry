@@ -9,13 +9,17 @@ use Throwable;
 
 final class NativeDicomEchoCommandRunner implements DicomEchoCommandRunner
 {
+    public function __construct(
+        private readonly string $callingAeTitle = '',
+    ) {}
+
     public function run(DicomNode $dicomNode): DicomEchoCommandResult
     {
         $process = new Process([
             '/usr/bin/echoscu',
             '-v',
             '-aet',
-            'NODE_REGISTRY',
+            $this->callingAeTitle !== '' ? $this->callingAeTitle : (string) config('diagnostics.default_calling_ae_title'),
             '-aec',
             $dicomNode->ae_title,
             '-to',

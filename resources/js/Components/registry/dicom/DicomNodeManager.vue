@@ -33,6 +33,7 @@ export type DicomNode = {
     public_id: string;
     name: string;
     ae_title: string;
+    modality: string | null;
     host: string;
     port: number;
     role: 'scu' | 'scp' | 'both';
@@ -110,6 +111,7 @@ const activeServices = (node: DicomNode): string[] =>
 const emptyForm = () => ({
     name: '',
     ae_title: '',
+    modality: '',
     host: '',
     port: 11112,
     role: 'both' as DicomNode['role'],
@@ -162,6 +164,7 @@ watch(
 
         editForm.name = node.name;
         editForm.ae_title = node.ae_title;
+        editForm.modality = node.modality ?? '';
         editForm.host = node.host;
         editForm.port = node.port;
         editForm.role = node.role;
@@ -556,6 +559,23 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                             </label>
 
                             <label>
+                                <span class="text-sm font-medium text-slate-700"> Modalität </span>
+                                <input
+                                    v-model="createForm.modality"
+                                    type="text"
+                                    maxlength="16"
+                                    placeholder="z. B. DX, CT, MR"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm uppercase"
+                                />
+                                <span class="mt-1 block text-xs text-slate-500">
+                                    Wird bei Worklist-Tests dieses Knotens automatisch vorbelegt.
+                                </span>
+                                <span v-if="createForm.errors.modality" class="mt-1 block text-xs text-red-600">
+                                    {{ createForm.errors.modality }}
+                                </span>
+                            </label>
+
+                            <label>
                                 <span class="text-sm font-medium text-slate-700"> Host/IP * </span>
                                 <input
                                     v-model="createForm.host"
@@ -712,6 +732,23 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                                 />
                                 <span v-if="editForm.errors.ae_title" class="mt-1 block text-xs text-red-600">
                                     {{ editForm.errors.ae_title }}
+                                </span>
+                            </label>
+
+                            <label>
+                                <span class="text-sm font-medium text-slate-700"> Modalität </span>
+                                <input
+                                    v-model="editForm.modality"
+                                    type="text"
+                                    maxlength="16"
+                                    placeholder="z. B. DX, CT, MR"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm uppercase"
+                                />
+                                <span class="mt-1 block text-xs text-slate-500">
+                                    Wird bei Worklist-Tests dieses Knotens automatisch vorbelegt.
+                                </span>
+                                <span v-if="editForm.errors.modality" class="mt-1 block text-xs text-red-600">
+                                    {{ editForm.errors.modality }}
                                 </span>
                             </label>
 

@@ -30,6 +30,7 @@ import {
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import Pagination from '../../Components/Pagination.vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
+import { resolveWorklistDateRange, type WorklistDateMode } from './dicomWorklistDatePresets';
 
 type NamedContext = { public_id: string; name: string };
 
@@ -119,6 +120,7 @@ type TestNode = {
     public_id: string;
     name: string;
     ae_title: string;
+    modality: string | null;
     host: string;
     port: number;
     role: string;
@@ -175,6 +177,7 @@ const props = defineProps<{
     historyUsers: NamedContext[];
     profiles: TestProfile[];
     canManageProfiles: boolean;
+    defaultCallingAeTitle: string;
     connectionPrefill: {
         node: string | null;
         service: string | null;
@@ -209,8 +212,11 @@ const historyType = ref(props.historyFilters.history_type ?? '');
 const historyStatus = ref(props.historyFilters.history_status ?? '');
 const historyUser = ref(props.historyFilters.history_user ?? '');
 const today = new Intl.DateTimeFormat('en-CA').format(new Date());
+const worklistDateMode = ref<WorklistDateMode>('today');
+const worklistCustomFrom = ref('');
+const worklistCustomTo = ref('');
 const worklistForm = useForm({
-    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? props.defaultCallingAeTitle,
     called_ae_title: props.connectionPrefill.called_ae_title ?? '',
     scheduled_station_ae_title: '',
     examination_date: today,
@@ -221,7 +227,7 @@ const worklistForm = useForm({
     accession_number: '',
 });
 const pacsForm = useForm({
-    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? props.defaultCallingAeTitle,
     called_ae_title: props.connectionPrefill.called_ae_title ?? '',
     patient_name: '',
     patient_id: '',
@@ -237,28 +243,28 @@ const profileForm = useForm({
     description: '',
     test_type: 'network',
     dicom_node_public_id: '',
-    calling_ae_title: 'NODE_REGISTRY',
+    calling_ae_title: props.defaultCallingAeTitle,
     configuration: {} as Record<string, string>,
     timeout_seconds: 15,
     enabled: true,
 });
 const storageForm = useForm({
     confirmed: false,
-    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? props.defaultCallingAeTitle,
     called_ae_title: props.connectionPrefill.called_ae_title ?? '',
 });
 const mppsForm = useForm({
     confirmed: false,
-    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? props.defaultCallingAeTitle,
     called_ae_title: props.connectionPrefill.called_ae_title ?? '',
 });
 const storageCommitmentForm = useForm({
     confirmed: false,
-    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? props.defaultCallingAeTitle,
     called_ae_title: props.connectionPrefill.called_ae_title ?? '',
 });
 const capabilityForm = useForm({
-    calling_ae_title: props.connectionPrefill.calling_ae_title ?? 'NODE_REGISTRY',
+    calling_ae_title: props.connectionPrefill.calling_ae_title ?? props.defaultCallingAeTitle,
     called_ae_title: props.connectionPrefill.called_ae_title ?? '',
 });
 const fileAnalysisForm = useForm<{ dicom_file: File | null }>({ dicom_file: null });
@@ -342,6 +348,23 @@ const worklistResults = computed<WorklistItem[]>(() => {
     const results = displayedDiagnosticResult.value.details.results;
 
     return Array.isArray(results) ? (results as WorklistItem[]) : [];
+});
+
+const worklistPossibleCauses: Record<string, string> = {
+    association_rejected:
+        'Der konfigurierte Calling AE Title wird möglicherweise vom Worklist-Server nicht akzeptiert.',
+    connection_refused: 'Der Worklist-Dienst läuft möglicherweise nicht auf dem hinterlegten Host/Port.',
+    timeout:
+        'Der Worklist-Server antwortet möglicherweise nicht rechtzeitig oder ist über das Netzwerk nicht erreichbar.',
+};
+
+const worklistPossibleCause = computed<string | null>(() => {
+    if (displayedDiagnosticResult.value?.testType !== 'worklist') return null;
+    if (displayedDiagnosticResult.value.status === 'success') return null;
+
+    const failureType = displayedDiagnosticResult.value.details.failureType;
+
+    return typeof failureType === 'string' ? (worklistPossibleCauses[failureType] ?? null) : null;
 });
 
 type CapabilityCell = { sopClass: string; transferSyntax: string; status: string; verification: string };
@@ -451,21 +474,47 @@ const runNetworkTest = (): void => {
     );
 };
 
+const applyWorklistDateMode = (mode: WorklistDateMode): void => {
+    worklistDateMode.value = mode;
+    const range = resolveWorklistDateRange(mode, today, {
+        from: worklistCustomFrom.value,
+        to: worklistCustomTo.value,
+    });
+    worklistForm.examination_date = range.examinationDate;
+    worklistForm.examination_date_to = range.examinationDateTo;
+};
+
+const applyWorklistCustomRange = (): void => {
+    if (worklistDateMode.value !== 'custom') return;
+    applyWorklistDateMode('custom');
+};
+
 const openWorklistTest = (): void => {
     if (selectedNode.value === null || !props.canRunWorklist || !selectedNode.value.supports_worklist) return;
 
+    worklistForm.calling_ae_title = props.defaultCallingAeTitle;
     worklistForm.called_ae_title = selectedNode.value.ae_title;
+    worklistForm.scheduled_station_ae_title = '';
+    worklistForm.modality = selectedNode.value.modality ?? '';
+    worklistForm.patient_name = '';
+    worklistForm.patient_id = '';
+    worklistForm.accession_number = '';
+    worklistCustomFrom.value = '';
+    worklistCustomTo.value = '';
+    applyWorklistDateMode('today');
+    worklistForm.clearErrors();
     worklistDialogOpen.value = true;
 };
 
 const resetWorklistFilters = (): void => {
     worklistForm.scheduled_station_ae_title = '';
-    worklistForm.examination_date = today;
-    worklistForm.examination_date_to = '';
-    worklistForm.modality = '';
+    worklistForm.modality = selectedNode.value?.modality ?? '';
     worklistForm.patient_name = '';
     worklistForm.patient_id = '';
     worklistForm.accession_number = '';
+    worklistCustomFrom.value = '';
+    worklistCustomTo.value = '';
+    applyWorklistDateMode('today');
     worklistForm.clearErrors();
 };
 
@@ -554,7 +603,7 @@ const editProfile = (profile: TestProfile): void => {
     profileForm.description = profile.description ?? '';
     profileForm.test_type = profile.test_type;
     profileForm.dicom_node_public_id = profile.dicom_node.public_id;
-    profileForm.calling_ae_title = profile.calling_ae_title ?? 'NODE_REGISTRY';
+    profileForm.calling_ae_title = profile.calling_ae_title ?? props.defaultCallingAeTitle;
     profileForm.configuration = Object.fromEntries(
         Object.entries(profile.configuration).map(([key, value]) => [key, value ?? '']),
     );
@@ -965,7 +1014,7 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                                 class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                                 @click="openStorageTest"
                             >
-                                <Send :size="16" />Testobjekt senden
+                                <Send :size="16" />Testbild senden
                             </button>
                         </article>
 
@@ -992,7 +1041,7 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                             >
                                 <LoaderCircle v-if="echoProcessing" :size="16" class="animate-spin" />
                                 <Stethoscope v-else :size="16" />
-                                C-ECHO starten
+                                Erreichbarkeit testen
                             </button>
                         </article>
 
@@ -1079,7 +1128,7 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                                 class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                                 @click="openStorageCommitmentTest"
                             >
-                                <Archive :size="16" />Commitment testen
+                                <Archive :size="16" />Speicherbestätigung prüfen
                             </button>
                         </article>
                     </div>
@@ -1112,7 +1161,33 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                     <div v-if="resultExpanded" class="border-t border-slate-200 p-5">
                         <div v-if="displayedDiagnosticResult" class="space-y-4">
                             <div>
+                                <div
+                                    v-if="displayedDiagnosticResult.testType === 'worklist'"
+                                    class="flex items-center gap-2"
+                                >
+                                    <CheckCircle2
+                                        v-if="displayedDiagnosticResult.status === 'success'"
+                                        :size="18"
+                                        class="shrink-0 text-emerald-600"
+                                    />
+                                    <CircleAlert v-else :size="18" class="shrink-0 text-red-600" />
+                                    <p
+                                        class="text-sm font-semibold"
+                                        :class="
+                                            displayedDiagnosticResult.status === 'success'
+                                                ? 'text-emerald-700'
+                                                : 'text-red-700'
+                                        "
+                                    >
+                                        {{
+                                            displayedDiagnosticResult.status === 'success'
+                                                ? 'Worklist erfolgreich abgefragt'
+                                                : 'Worklist konnte nicht abgefragt werden'
+                                        }}
+                                    </p>
+                                </div>
                                 <p
+                                    v-else
                                     class="text-sm font-semibold"
                                     :class="
                                         displayedDiagnosticResult.status === 'success'
@@ -1124,8 +1199,28 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                                 </p>
                                 <p class="mt-1 text-xs text-slate-500">
                                     {{ testTypeLabel(displayedDiagnosticResult.testType) }} ·
-                                    {{ displayedDiagnosticResult.durationMilliseconds }} ms
+                                    <template
+                                        v-if="
+                                            displayedDiagnosticResult.testType === 'worklist' &&
+                                            displayedDiagnosticResult.status === 'success'
+                                        "
+                                        >{{ worklistResults.length }} Einträge gefunden ·
+                                    </template>
+                                    Antwortzeit: {{ displayedDiagnosticResult.durationMilliseconds }} ms
                                 </p>
+                                <p
+                                    v-if="displayedDiagnosticResult.testType === 'worklist'"
+                                    class="mt-1 text-sm text-slate-600"
+                                >
+                                    {{ displayedDiagnosticResult.summary }}
+                                </p>
+                                <div
+                                    v-if="worklistPossibleCause"
+                                    class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800"
+                                >
+                                    <span class="font-semibold">Mögliche Ursache:</span>
+                                    {{ worklistPossibleCause }}
+                                </div>
                             </div>
 
                             <div
@@ -1687,64 +1782,173 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                         <X :size="20" />
                     </button>
                 </div>
-                <form class="mt-6 space-y-5" @submit.prevent="runWorklistTest">
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <label class="text-sm font-medium text-slate-700"
-                            >Calling AE Title<input
-                                v-model="worklistForm.calling_ae_title"
-                                maxlength="16"
-                                required
-                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm" /></label
-                        ><label class="text-sm font-medium text-slate-700"
-                            >Called AE Title<input
-                                v-model="worklistForm.called_ae_title"
-                                maxlength="16"
-                                required
-                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm" /></label
-                        ><label class="text-sm font-medium text-slate-700"
-                            >Station AE<input
-                                v-model="worklistForm.scheduled_station_ae_title"
-                                maxlength="16"
-                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm" /></label
-                        ><label class="text-sm font-medium text-slate-700"
-                            >Modalität<input
+                <form class="mt-6 space-y-6" @submit.prevent="runWorklistTest">
+                    <section class="space-y-4">
+                        <h3 class="text-sm font-semibold text-slate-950">Filter</h3>
+
+                        <div>
+                            <p class="text-sm font-medium text-slate-700">Zeitraum</p>
+                            <div class="mt-1.5 inline-flex rounded-xl border border-slate-300 p-1">
+                                <button
+                                    type="button"
+                                    class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                                    :class="
+                                        worklistDateMode === 'today'
+                                            ? 'bg-violet-600 text-white'
+                                            : 'text-slate-600 hover:bg-slate-100'
+                                    "
+                                    @click="applyWorklistDateMode('today')"
+                                >
+                                    Heute
+                                </button>
+                                <button
+                                    type="button"
+                                    class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                                    :class="
+                                        worklistDateMode === 'tomorrow'
+                                            ? 'bg-violet-600 text-white'
+                                            : 'text-slate-600 hover:bg-slate-100'
+                                    "
+                                    @click="applyWorklistDateMode('tomorrow')"
+                                >
+                                    Morgen
+                                </button>
+                                <button
+                                    type="button"
+                                    class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                                    :class="
+                                        worklistDateMode === 'custom'
+                                            ? 'bg-violet-600 text-white'
+                                            : 'text-slate-600 hover:bg-slate-100'
+                                    "
+                                    @click="applyWorklistDateMode('custom')"
+                                >
+                                    Benutzerdefiniert
+                                </button>
+                            </div>
+                            <div v-if="worklistDateMode === 'custom'" class="mt-3 grid gap-4 sm:grid-cols-2">
+                                <label class="text-sm font-medium text-slate-700"
+                                    >Von<input
+                                        v-model="worklistCustomFrom"
+                                        type="date"
+                                        class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                        @change="applyWorklistCustomRange" /></label
+                                ><label class="text-sm font-medium text-slate-700"
+                                    >Bis einschließlich<input
+                                        v-model="worklistCustomTo"
+                                        type="date"
+                                        class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                        @change="applyWorklistCustomRange"
+                                /></label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-sm font-medium text-slate-700">Modalität</p>
+                            <p
+                                v-if="selectedNode.modality"
+                                class="mt-1.5 inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 font-mono text-sm text-slate-700"
+                            >
+                                {{ selectedNode.modality }}
+                                <span class="font-sans text-xs font-normal text-slate-500"
+                                    >– vom System übernommen</span
+                                >
+                            </p>
+                            <input
+                                v-else
                                 v-model="worklistForm.modality"
                                 maxlength="16"
-                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
-                        ><label class="text-sm font-medium text-slate-700"
-                            >Untersuchungsdatum<input
-                                v-model="worklistForm.examination_date"
-                                type="date"
-                                required
-                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
-                        ><label class="text-sm font-medium text-slate-700"
-                            >Bis einschließlich<input
-                                v-model="worklistForm.examination_date_to"
-                                type="date"
-                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
-                        ><label class="text-sm font-medium text-slate-700"
-                            >Patientenname<input
-                                v-model="worklistForm.patient_name"
-                                maxlength="128"
-                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
-                        ><label class="text-sm font-medium text-slate-700"
-                            >Patient-ID<input
-                                v-model="worklistForm.patient_id"
-                                maxlength="64"
-                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
-                        ><label class="text-sm font-medium text-slate-700 sm:col-span-2"
-                            >Accession Number<input
-                                v-model="worklistForm.accession_number"
-                                maxlength="64"
-                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
-                        /></label>
-                    </div>
+                                placeholder="optional, z. B. DX"
+                                class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm sm:w-64"
+                            />
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <label class="text-sm font-medium text-slate-700"
+                                >Patientenname <span class="font-normal text-slate-400">(optional)</span
+                                ><input
+                                    v-model="worklistForm.patient_name"
+                                    maxlength="128"
+                                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
+                            ><label class="text-sm font-medium text-slate-700"
+                                >Patienten-ID <span class="font-normal text-slate-400">(optional)</span
+                                ><input
+                                    v-model="worklistForm.patient_id"
+                                    maxlength="64"
+                                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label
+                            ><label class="text-sm font-medium text-slate-700 sm:col-span-2"
+                                >Accession Number <span class="font-normal text-slate-400">(optional)</span
+                                ><input
+                                    v-model="worklistForm.accession_number"
+                                    maxlength="64"
+                                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                            /></label>
+                        </div>
+                    </section>
+
                     <div
                         v-if="Object.keys(worklistForm.errors).length"
                         class="rounded-xl bg-red-50 p-3 text-sm text-red-700"
                     >
                         <p v-for="message in worklistForm.errors" :key="message">{{ message }}</p>
                     </div>
+
+                    <details class="rounded-xl border border-slate-200 p-4">
+                        <summary class="cursor-pointer text-sm font-semibold text-slate-700">
+                            Erweiterte DICOM-Einstellungen
+                        </summary>
+                        <div class="mt-4 space-y-4">
+                            <div>
+                                <label class="text-sm font-medium text-slate-700"
+                                    >Calling AE Title<input
+                                        v-model="worklistForm.calling_ae_title"
+                                        maxlength="16"
+                                        required
+                                        class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                                /></label>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    AE Title, mit dem sich HNR beim Worklist-Server meldet.
+                                </p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700"
+                                    >Called AE Title<input
+                                        v-model="worklistForm.called_ae_title"
+                                        maxlength="16"
+                                        required
+                                        class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                                /></label>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    AE Title des Worklist-Dienstes, der abgefragt wird.
+                                </p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700"
+                                    >Station AE<input
+                                        v-model="worklistForm.scheduled_station_ae_title"
+                                        maxlength="16"
+                                        class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                                /></label>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    Optional. Beschränkt die Worklist auf eine bestimmte Station bzw. Modalität.
+                                </p>
+                            </div>
+                            <div v-if="selectedNode.modality">
+                                <label class="text-sm font-medium text-slate-700"
+                                    >Modalität überschreiben<input
+                                        v-model="worklistForm.modality"
+                                        maxlength="16"
+                                        class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                /></label>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    Überschreibt die für {{ selectedNode.name }} hinterlegte Modalität ({{
+                                        selectedNode.modality
+                                    }}) nur für diese Abfrage.
+                                </p>
+                            </div>
+                        </div>
+                    </details>
+
                     <p class="text-xs leading-5 text-slate-500">
                         Die Abfrage wird ausschließlich im Backend gegen diesen registrierten Knoten ausgeführt.
                         Temporäre Filter verändern den Knoten nicht.
@@ -1759,12 +1963,18 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                         ><button
                             type="submit"
                             :disabled="worklistForm.processing"
-                            class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                            class="inline-flex flex-col items-center gap-0.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
                         >
-                            <LoaderCircle v-if="worklistForm.processing" :size="16" class="animate-spin" /><FlaskConical
-                                v-else
-                                :size="16"
-                            />{{ worklistForm.processing ? 'Abfrage läuft' : 'C-FIND starten' }}
+                            <span class="inline-flex items-center gap-2">
+                                <LoaderCircle
+                                    v-if="worklistForm.processing"
+                                    :size="16"
+                                    class="animate-spin"
+                                /><FlaskConical v-else :size="16" />{{
+                                    worklistForm.processing ? 'Abfrage läuft' : 'Worklist abfragen'
+                                }}
+                            </span>
+                            <span class="text-[10px] font-normal text-violet-200">DICOM C-FIND</span>
                         </button>
                     </div>
                 </form>

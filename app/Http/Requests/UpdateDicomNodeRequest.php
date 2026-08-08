@@ -41,6 +41,12 @@ final class UpdateDicomNodeRequest extends FormRequest
                     ->where('port', $this->input('port'))
                     ->ignore($dicomNode?->id),
             ],
+            'modality' => [
+                'nullable',
+                'string',
+                'max:16',
+                'regex:/^[A-Z0-9]+$/i',
+            ],
             'host' => [
                 'required',
                 'string',
@@ -119,6 +125,7 @@ final class UpdateDicomNodeRequest extends FormRequest
         return [
             'ae_title.regex' => 'Der AE Title darf nur Buchstaben, Zahlen, Leerzeichen, Bindestriche und Unterstriche enthalten.',
             'ae_title.unique' => 'Dieser DICOM-Endpunkt ist für das System bereits registriert.',
+            'modality.regex' => 'Die Modalität darf nur Buchstaben und Zahlen enthalten (z. B. DX, CT, MR).',
             'port.between' => 'Der Port muss zwischen 1 und 65535 liegen.',
         ];
     }

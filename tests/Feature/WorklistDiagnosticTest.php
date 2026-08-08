@@ -77,6 +77,23 @@ final class WorklistDiagnosticTest extends TestCase
         ]);
     }
 
+    public function test_identical_calling_and_called_ae_titles_are_accepted(): void
+    {
+        $user = $this->createRegistryManager();
+        $node = DicomNode::factory()->create(['supports_worklist' => true, 'ae_title' => 'SAME_AE']);
+        $this->useCommand(new WorklistCommandResult(true, 0, '', '<responses/>'));
+
+        $this->actingAs($user)
+            ->post("/tests/worklist/{$node->public_id}", [
+                ...$this->validInput($node),
+                'calling_ae_title' => 'SAME_AE',
+                'called_ae_title' => 'SAME_AE',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success')
+            ->assertSessionDoesntHaveErrors();
+    }
+
     public function test_invalid_filters_are_rejected_before_execution(): void
     {
         $user = $this->createRegistryManager();

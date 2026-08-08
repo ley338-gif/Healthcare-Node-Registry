@@ -24,6 +24,25 @@ Alle Verbindungen und externen Prozesse werden im Laravel-Backend ausgeführt. D
 
 Testprofile speichern wiederverwendbare Parameter. Testläufe erscheinen paginiert im Verlauf und können als JSON oder, für tabellarische Ergebnisse, als CSV exportiert werden.
 
+## Standardansicht vs. erweiterte DICOM-Einstellungen
+
+Die Testdialoge sind fachlich beschriftet und verwenden nach Möglichkeit bereits registrierte Daten, statt sie erneut abzufragen:
+
+| Dialog | fachliche Beschriftung | technische Bezeichnung |
+|---|---|---|
+| Modality Worklist | „Worklist abfragen" | DICOM C-FIND |
+| C-ECHO / Knotenverifikation | „Erreichbarkeit testen" | DICOM C-ECHO |
+| DICOM Storage | „Testbild senden" | DICOM C-STORE |
+| Storage Commitment | „Speicherbestätigung prüfen" | DICOM Storage Commitment (C-STORE, N-ACTION, N-EVENT-REPORT) |
+| C-MOVE / C-GET | „Abruf testen" | DICOM C-MOVE / DICOM C-GET |
+
+Am ausführlichsten umgesetzt ist der Modality-Worklist-Dialog, da er die meisten Parameter besitzt:
+
+- **Standardansicht**: Zeitraum als Presets „Heute" (Vorauswahl), „Morgen" oder „Benutzerdefiniert"; Modalität als schreibgeschützte Anzeige „`<Wert>` – vom System übernommen", sofern für den `DicomNode` eine Modalität hinterlegt ist; optionale Patientenfilter (Patientenname, Patienten-ID, Accession Number).
+- **„Erweiterte DICOM-Einstellungen"** (standardmäßig eingeklappt, `<details>`-Element): Calling AE Title, Called AE Title, Station AE sowie – falls eine Knoten-Modalität hinterlegt ist – eine Override-Option, um sie nur für diese Abfrage zu ersetzen. Jedes Feld trägt einen kurzen Hilfetext.
+
+Called AE Title wird immer aus dem registrierten `DicomNode` übernommen und ist nicht redundant einzugeben. Calling AE Title wird aus der zentralen Konfiguration `diagnostics.default_calling_ae_title` vorbelegt (siehe unten), bleibt aber in den erweiterten Einstellungen änderbar. Die technischen Parameter selbst wurden nicht verändert oder entfernt.
+
 ## Architektur
 
 Zentrale Typen unter `App\Services\Diagnostics`:
@@ -89,9 +108,13 @@ Eine konfigurierbare CIDR-Allowlist existiert derzeit nicht. Der Anwendungsschut
 
 ## Calling und Called AE Titles
 
-Der Called AE Title bezeichnet die Ziel-AE und wird standardmäßig vom Knoten übernommen. Der Calling AE Title bezeichnet die Registry als SCU; vorgeschlagen wird `NODE_REGISTRY`. Beide sind maximal 16 Zeichen lang und werden serverseitig validiert.
+Der Called AE Title bezeichnet die Ziel-AE (den abgefragten Dienst) und wird immer vom registrierten `DicomNode` übernommen. Der Calling AE Title bezeichnet HNR bzw. dessen Test-SCU als Absender der Association. Beide Werte sind fachlich unabhängig: Sie dürfen identisch sein (DICOM lässt das ausdrücklich zu) und werden von Backend und Frontend nie automatisch gleichgesetzt, nur weil aktuell derselbe Wert vorliegt.
 
-Das Zielsystem muss den Calling AE Title für den gewünschten Dienst freigeben. Ein erreichbarer TCP-Port oder erfolgreicher C-ECHO beweist nicht, dass Worklist, Query oder Storage autorisiert sind.
+Der Vorschlagswert für den Calling AE Title stammt aus der zentralen Konfiguration `config('diagnostics.default_calling_ae_title')` (Umgebungsvariable `DIAGNOSTIC_CALLING_AE_TITLE`, Standard weiterhin `NODE_REGISTRY` zur Abwärtskompatibilität mit bestehenden PACS-Freigaben). Dieselbe Konfiguration liefert sowohl den Vorbelegungswert im Frontend (`TestWorkspaceController` reicht sie als `defaultCallingAeTitle`-Prop durch) als auch den tatsächlich von `DicomEchoService`/`NativeDicomEchoCommandRunner` verwendeten Calling-AE-Titel bei der Knotenverifikation. Wird ein eigener Test-AE gewünscht (z. B. `HNR_TEST`), genügt das Setzen der Umgebungsvariable; der Wert bleibt in den erweiterten DICOM-Einstellungen jedes Tests zusätzlich pro Abfrage überschreibbar.
+
+Beide Felder sind maximal 16 Zeichen lang und werden serverseitig validiert. Das Zielsystem muss den Calling AE Title für den gewünschten Dienst freigeben. Ein erreichbarer TCP-Port oder erfolgreicher C-ECHO beweist nicht, dass Worklist, Query oder Storage autorisiert sind.
+
+Die von HNR bewusst getrennt gehaltene Discovery-Konfiguration (`config('discovery.default_calling_ae_title')`, Standard `HNR_DISCOVERY`) ist von dieser zentralen Test-Konfiguration unberührt – siehe [DICOM.md](DICOM.md).
 
 ## Timeouts
 
@@ -114,6 +137,8 @@ Prüft TCP, Association, Verification SOP Class und DIMSE-Antwort. Die bestehend
 ### C-FIND
 
 Worklist verwendet das MWL Information Model, PACS Query Study Root. Keine Treffer sind ein technischer Erfolg mit `resultCount = 0`. Antwortmengen sind begrenzt. C-MOVE und C-GET werden nicht ausgeführt. Patient Name, ID, Geburtsdatum und Accession Number werden im Verlauf maskiert.
+
+Für die Modality Worklist zeigt das Frontend bei einem Fehlschlag zusätzlich zur serverseitig klassifizierten Zusammenfassung (`details.failureType`, z. B. `association_rejected`, `connection_refused`, `timeout`) einen ausdrücklich als Vermutung gekennzeichneten „Mögliche Ursache"-Hinweis. Es werden keine Ursachen behauptet, die aus dem Fehler nicht eindeutig hervorgehen; die rohe DCMTK-Ausgabe bleibt unverändert über „Technische Details" pro Prüfschritt einsehbar.
 
 ### C-STORE
 

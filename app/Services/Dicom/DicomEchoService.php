@@ -48,7 +48,7 @@ class DicomEchoService
                 host: $dicomNode->host,
                 port: $dicomNode->port,
                 calledAeTitle: $dicomNode->ae_title,
-                callingAeTitle: 'NODE_REGISTRY',
+                callingAeTitle: (string) config('diagnostics.default_calling_ae_title'),
                 dicomNodePublicId: $dicomNode->public_id,
                 systemPublicId: $dicomNode->system->public_id,
             ),

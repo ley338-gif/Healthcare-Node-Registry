@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
  * @property int $system_id
  * @property string $name
  * @property string $ae_title
+ * @property string|null $modality
  * @property string $host
  * @property int $port
  * @property int|null $last_verification_duration_ms
@@ -43,6 +44,7 @@ final class DicomNode extends Model
         'system_id',
         'name',
         'ae_title',
+        'modality',
         'host',
         'port',
         'role',
@@ -72,11 +74,19 @@ final class DicomNode extends Model
             }
 
             $node->ae_title = strtoupper(trim($node->ae_title));
+
+            if (filled($node->modality)) {
+                $node->modality = strtoupper(trim($node->modality));
+            }
         });
 
         self::updating(function (DicomNode $node): void {
             if ($node->isDirty('ae_title')) {
                 $node->ae_title = strtoupper(trim($node->ae_title));
+            }
+
+            if ($node->isDirty('modality') && filled($node->modality)) {
+                $node->modality = strtoupper(trim($node->modality));
             }
         });
     }

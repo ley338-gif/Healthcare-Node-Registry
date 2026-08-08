@@ -44,6 +44,24 @@ final class DicomNodeModelTest extends TestCase
         );
     }
 
+    public function test_modality_is_normalized_to_uppercase_on_create_and_update(): void
+    {
+        $node = DicomNode::factory()->create(['modality' => 'dx']);
+
+        $this->assertSame('DX', $node->modality);
+
+        $node->update(['modality' => 'ct']);
+
+        $this->assertSame('CT', $node->fresh()->modality);
+    }
+
+    public function test_modality_may_be_null(): void
+    {
+        $node = DicomNode::factory()->create(['modality' => null]);
+
+        $this->assertNull($node->modality);
+    }
+
     public function test_active_scope_excludes_archived_dicom_nodes(): void
     {
         $system = System::factory()->create();

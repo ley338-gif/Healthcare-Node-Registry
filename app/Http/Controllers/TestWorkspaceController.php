@@ -48,6 +48,7 @@ final class TestWorkspaceController extends Controller
                 'system_id',
                 'name',
                 'ae_title',
+                'modality',
                 'host',
                 'port',
                 'role',
@@ -74,6 +75,7 @@ final class TestWorkspaceController extends Controller
                 'public_id' => $node->public_id,
                 'name' => $node->name,
                 'ae_title' => $node->ae_title,
+                'modality' => $node->modality,
                 'host' => $node->host,
                 'port' => $node->port,
                 'role' => $node->role,
@@ -226,6 +228,7 @@ final class TestWorkspaceController extends Controller
                     ],
                 ]),
             'canManageProfiles' => $request->user()?->hasPermission('registry.manage') ?? false,
+            'defaultCallingAeTitle' => (string) config('diagnostics.default_calling_ae_title'),
             'connectionPrefill' => [
                 'node' => $filters['node'] ?? null,
                 'service' => $filters['service'] ?? null,
