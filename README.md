@@ -443,7 +443,7 @@ Ein Restore ist destruktiv und erfordert die explizite Bestätigung:
 .\scripts\restore.ps1 -BackupDirectory .\backups\registry-YYYYMMDD-HHMMSS -ConfirmRestore
 ```
 
-Das Skript prüft die im Manifest gespeicherten SHA-256-Werte, stoppt während des Restores den Webdienst, stellt Datenbank und privaten Storage wieder her, leert Laravel-Caches und führt anschließend `registry:doctor` aus.
+Das Skript prüft die im Manifest gespeicherten SHA-256-Werte sowie Datenbank- und Archivformat, stoppt erst danach den Webdienst, stellt Datenbank und privaten Storage wieder her, leert Laravel-Caches und führt anschließend `registry:doctor` aus. Bei restriktiver Windows Execution Policy können die versionierten Skripte einmalig mit `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ...` gestartet werden. Schlägt der Restore nach dem Stoppen fehl, bleibt der Webdienst zum Schutz vor einem inkonsistenten Zustand gestoppt.
 
 ## API
 

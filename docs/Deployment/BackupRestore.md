@@ -15,7 +15,14 @@
 .\scripts\restore.ps1 -BackupDirectory .\backups\registry-YYYYMMDD-HHMMSS -ConfirmRestore
 ```
 
-Die Skripte prüfen SHA-256-Werte. Sie verschlüsseln das Backup nicht automatisch, da Schlüsselverwaltung und Zielsystem installationsspezifisch festgelegt werden müssen.
+Blockiert eine restriktive Windows Execution Policy lokale Skripte, können die versionierten Repository-Skripte einmalig ohne dauerhafte Richtlinienänderung ausgeführt werden:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\backup.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restore.ps1 -BackupDirectory .\backups\registry-YYYYMMDD-HHMMSS -ConfirmRestore
+```
+
+Die Skripte prüfen native Docker-Exitcodes, Datenbank- und Archivformat sowie SHA-256-Werte. Ein Restore validiert beide Sicherungen vor dem Stoppen des Webdienstes. Schlägt ein Restore nach diesem Punkt fehl, bleibt der Webdienst zum Schutz vor einem inkonsistenten Zustand gestoppt. Die Skripte verschlüsseln das Backup nicht automatisch, da Schlüsselverwaltung und Zielsystem installationsspezifisch festgelegt werden müssen.
 
 ## Anforderungen
 

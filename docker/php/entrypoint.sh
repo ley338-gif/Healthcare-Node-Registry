@@ -6,6 +6,7 @@ mkdir -p \
     /var/www/html/storage/framework/sessions \
     /var/www/html/storage/framework/views \
     /var/www/html/storage/logs \
+    /var/www/html/storage/app/private \
     /var/www/html/bootstrap/cache
 
 chown -R www-data:www-data /var/www/html/storage
@@ -17,4 +18,4 @@ if [ "$1" = "php-fpm" ]; then
     exec docker-php-entrypoint "$@"
 fi
 
-exec su -s /bin/sh -c "docker-php-entrypoint $*" www-data
+exec su -s /bin/sh -c 'exec "$@"' www-data -- registry-entrypoint docker-php-entrypoint "$@"
