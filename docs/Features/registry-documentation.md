@@ -17,13 +17,15 @@ Die Oberfläche verwendet die bestehenden Workspace-Cards und ein sektionenweise
 
 Ein Registry-Dokument enthält fachliche Metadaten wie Titel, Beschreibung, Kategorie, Sichtbarkeit, Gültigkeitszeitraum, Vertragsreferenz und Schlagwörter. Es gehört polymorph genau einer Organisation, einem Standort, einer Abteilung oder einem System.
 
-Jeder Upload erzeugt eine separate Version mit fortlaufender Versionsnummer, Original- und Storage-Dateiname, erkanntem MIME-Typ, Erweiterung, Größe, SHA-256, Uploader, Uploadzeit, Änderungshinweis und Malware-Status. `current_version_id` verweist über einen zusammengesetzten Fremdschlüssel ausschließlich auf eine Version desselben Dokuments. Eine neue Version verändert die fachlichen Dokumentmetadaten nicht und löscht ältere Versionen oder Dateien nicht.
+Jeder Upload erzeugt eine separate Version mit fortlaufender Versionsnummer, Original- und Storage-Dateiname, erkanntem MIME-Typ, Erweiterung, Größe, SHA-256, Uploader, Uploadzeit, Änderungshinweis, Malware- und Freigabestatus. `current_version_id` verweist über einen zusammengesetzten Fremdschlüssel ausschließlich auf die zuletzt freigegebene Version desselben Dokuments. Eine neue Version verändert die fachlichen Dokumentmetadaten nicht, ersetzt die aktuelle Version erst nach Freigabe und löscht ältere Versionen oder Dateien nicht.
 
 Dokumente werden archiviert statt physisch gelöscht. Archivierte Dokumente sind weder bearbeitbar noch herunterladbar und akzeptieren keine neuen Versionen. Auch archivierte Registry-Kontexte akzeptieren keine neuen Dokumente.
 
 ## Kategorien und Gültigkeit
 
 Die zentrale Kategorie-Taxonomie umfasst Verträge, Lizenzen, Herstellerdokumentation, Handbücher, Installations- und Netzwerkunterlagen, Firewallfreigaben, Betriebs- und Notfallhandbücher, Backup-/Recovery-Dokumentation, SOPs, Zertifikate, Datenschutz, Informationssicherheit, ISO-Nachweise, Schnittstellendokumentation, Testprotokolle und Sonstiges.
+
+Jede Kategorie ist einer konfigurierbaren Mindestaufbewahrung zugeordnet. Technische Unterlagen verwenden standardmäßig 1.095 Tage, Betriebs-/Notfall-/SOP-/Testunterlagen 2.555 Tage und Verträge, Lizenzen sowie Compliance-Nachweise 3.650 Tage. Die Werte werden über `REGISTRY_DOCUMENT_RETENTION_SHORT_DAYS`, `REGISTRY_DOCUMENT_RETENTION_STANDARD_DAYS` und `REGISTRY_DOCUMENT_RETENTION_LONG_DAYS` gesetzt. Beim Upload werden Frist und angewendete Dauer am Dokument gespeichert. Ein späterer Kategorienwechsel darf die bestehende Frist nicht verkürzen. Model-Löschungen vor Fristende werden serverseitig abgewiesen; Archivierung bleibt möglich.
 
 Aus `valid_from`, `valid_until`, Archivstatus und dem konfigurierten Warnzeitraum wird ein Status abgeleitet: noch nicht gültig, gültig, läuft bald ab, abgelaufen oder archiviert. Der Warnzeitraum beträgt standardmäßig 60 Tage und kann über `REGISTRY_DOCUMENT_EXPIRY_WARNING_DAYS` angepasst werden.
 
@@ -57,7 +59,13 @@ SHA-256 dient als Integritätsmerkmal und zur Duplikaterkennung. Derselbe Inhalt
 
 Bei `REGISTRY_DOCUMENT_MALWARE_SCANNER_ENABLED=true` verwendet die Anwendung `ClamAvMalwareScanner` und überträgt Uploads per ClamD-`INSTREAM` an den internen Dienst `clamav:3310`. Port 3310 wird nicht auf dem Host veröffentlicht. Ist ClamAV deaktiviert, bindet die Anwendung `UnavailableMalwareScanner`; ist ClamD nicht erreichbar, liefert der Adapter ebenfalls `unavailable`. In beiden Fällen bleibt die Datei privat und gesperrt.
 
-Der Scheduler führt stündlich `registry-documents:rescan --limit=250` aus. Das Kommando kann zusätzlich manuell ausgeführt werden und prüft `pending`, `failed` und `unavailable` erneut. Ein erfolgreicher Rescan setzt den Status auf `clean` und gibt die Version über die bestehenden Controller-Prüfungen frei. `infected` bleibt terminal gesperrt. Ergebnisse werden als `document.scan_rescanned` ohne rohe Scanner-Ausgabe am Registry-Kontext auditiert.
+Der Scheduler führt stündlich `registry-documents:rescan --limit=250` aus. Das Kommando kann zusätzlich manuell ausgeführt werden und prüft `pending`, `failed` und `unavailable` erneut. Ein erfolgreicher Rescan setzt den Status auf `clean`; abrufbar wird die Version zusätzlich erst nach fachlicher Freigabe. `infected` bleibt terminal gesperrt. Ergebnisse werden als `document.scan_rescanned` ohne rohe Scanner-Ausgabe am Registry-Kontext auditiert.
+
+## Freigabe und Vier-Augen-Prinzip
+
+Neue Versionen beginnen als `draft`. Berechtigte Versionsverwalter reichen sie als `pending_review` ein. Eine zweite Person mit `documents.approve` kann die Version freigeben oder mit Begründung ablehnen. Der Uploader darf seine eigene Version auch als Systemadministrator nicht freigeben oder ablehnen; diese Regel wird zusätzlich zur Policy unmittelbar im schreibenden Controller und innerhalb der gesperrten Datenbanktransaktion geprüft.
+
+Nur `approved` und zugleich malwareseitig `clean` bewertete Versionen sind als Download oder PDF-Vorschau abrufbar. Bei einer neuen Version bleibt die bisherige freigegebene Version aktuell, bis die Nachfolgeversion genehmigt wurde. Der Dokument-Slideover zeigt Freigabestatus, Prüfer, Prüfnotiz und die verfügbaren Aktionen. Benutzer ohne Freigaberecht sehen ausdrücklich, dass die Version auf eine zweite Person wartet.
 
 ## Ablaufhinweise
 
@@ -81,19 +89,19 @@ Die Dokumentenfunktionen verwenden das bestehende RBAC und zusätzlich die Polic
 - `documents.archive`: archivieren und wiederherstellen
 - `documents.download`: saubere Version herunterladen
 - `documents.manage_versions`: neue Version anlegen
+- `documents.approve`: fremde Versionen freigeben oder ablehnen
 
 Die Datei liegt auf dem nicht öffentlich ausgelieferten Disk `registry_documents` unter `storage/app/private/registry-documents`. Downloads und Vorschauen erfolgen ausschließlich über autorisierte Controller-Endpunkte. Downloads verwenden `Content-Disposition: attachment` und `X-Content-Type-Options: nosniff`. Die PDF-Vorschau verwendet `inline`, private No-Store-Header, `SAMEORIGIN` und eine restriktive Content-Security-Policy.
 
 ## Audit und Historie
 
-Dokumentaktionen verwenden `RegistryAudit` und dieselbe append-only Ereignisquelle `security_events` wie die übrige Registry. Upload, neue Version, Metadatenänderung, Archivierung, Wiederherstellung sowie fehlgeschlagene oder infizierte Scans werden am zugeordneten Registry-Kontext protokolliert und erscheinen in dessen bestehender Historie.
+Dokumentaktionen verwenden `RegistryAudit` und dieselbe kryptografisch verkettete Ereignisquelle `security_events` wie die übrige Registry. Upload, neue Version, Einreichung, Freigabe, Ablehnung, Metadatenänderung, Archivierung, Wiederherstellung sowie fehlgeschlagene oder infizierte Scans werden am zugeordneten Registry-Kontext protokolliert und erscheinen in dessen bestehender Historie.
 
 Dateiinhalte, interne Storage-Pfade und rohe Scanner-Ausgaben werden nicht in Audit-Metadaten übernommen. Downloads und Vorschauzugriffe erzeugen derzeit kein eigenes Audit-Ereignis.
 
 ## Bekannte Einschränkungen
 
-- Es gibt keine automatische Quarantäne oder physische Löschung infizierter Dateien und keinen konfigurierbaren Retention-Job.
-- Es gibt keinen Freigabe- oder Vier-Augen-Workflow.
+- Es gibt keine automatische Quarantäne oder physische Löschung infizierter Dateien und keinen automatischen Löschlauf nach Ablauf der Mindestaufbewahrung.
 - Vorschau ist ausschließlich für saubere PDF-Versionen verfügbar; Office-, Bild-, Text- und ZIP-Dateien werden nicht inline dargestellt.
 - ZIP-Dateien werden nicht entpackt oder inhaltlich analysiert.
 - `restricted` ist als Sichtbarkeit gespeichert; eine über die bestehenden Kontext- und Dokumentrechte hinausgehende Feld- oder Mandantentrennung ist nicht implementiert.
@@ -103,4 +111,4 @@ Dateiinhalte, interne Storage-Pfade und rohe Scanner-Ausgaben werden nicht in Au
 
 PostgreSQL und `storage/app/private/registry-documents` bilden gemeinsam den vollständigen Dokumentbestand. Backup und Restore müssen beide Teile aus demselben konsistenten Sicherungszeitpunkt umfassen. Ein Datenbank-Restore ohne die passenden Dateien erzeugt nicht abrufbare Versionen; ein Storage-Restore ohne die passenden Metadaten erzeugt verwaiste Dateien.
 
-Nach einem Restore sind mindestens Versionsanzahl, `current_version_id`, Dateiexistenz, Größe und SHA-256 stichprobenartig zu prüfen. Archivierte Dokumente und alte Versionen werden genauso wiederhergestellt wie aktive Daten. Bis eine verbindliche Aufbewahrungsrichtlinie und ein getesteter Löschprozess vorliegen, dürfen Dokumente und Versionen nicht außerhalb eines kontrollierten Administrationsverfahrens entfernt werden.
+Nach einem Restore sind mindestens Versionsanzahl, `current_version_id`, Dateiexistenz, Größe, SHA-256, Freigabe- und Aufbewahrungsstatus stichprobenartig zu prüfen. Archivierte Dokumente und alte Versionen werden genauso wiederhergestellt wie aktive Daten. Ein späterer physischer Löschprozess muss Datenbank und privaten Storage konsistent behandeln und darf erst nach `retention_until` arbeiten.

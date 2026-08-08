@@ -308,6 +308,9 @@ DICOM-Zielports werden pro registriertem Knoten gespeichert und sind keine einge
 | `DIAGNOSTIC_STORAGE_COMMITMENT_HOST_PORT` | Auf dem Docker-Host veröffentlichter Callback-Port | `11113` |
 | `DIAGNOSTIC_STORAGE_COMMITMENT_EVENT_TIMEOUT` | Wartezeit auf den N-EVENT-REPORT in Sekunden | `30` |
 | `REGISTRY_DOCUMENT_EXPIRY_WARNING_DAYS` | Vorlauf für Ablaufwarnungen | `60` |
+| `REGISTRY_DOCUMENT_RETENTION_SHORT_DAYS` | Mindestaufbewahrung für technische Standardunterlagen | `1095` |
+| `REGISTRY_DOCUMENT_RETENTION_STANDARD_DAYS` | Mindestaufbewahrung für Betriebs-, Notfall-, SOP- und Testunterlagen | `2555` |
+| `REGISTRY_DOCUMENT_RETENTION_LONG_DAYS` | Mindestaufbewahrung für Verträge, Lizenzen und Compliance-Nachweise | `3650` |
 | `REGISTRY_DOCUMENT_MALWARE_SCANNER_ENABLED` | ClamAV-Adapter aktivieren; bei `false` wird sicher auf `UnavailableMalwareScanner` zurückgefallen | `true` |
 | `REGISTRY_DOCUMENT_MALWARE_SCANNER_HOST` | ClamD-Hostname im internen Netz | `clamav` |
 | `REGISTRY_DOCUMENT_MALWARE_SCANNER_PORT` | ClamD-TCP-Port | `3310` |

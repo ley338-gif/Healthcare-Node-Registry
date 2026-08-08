@@ -32,6 +32,8 @@ use Illuminate\Support\Str;
  * @property int $created_by
  * @property int $updated_by
  * @property CarbonImmutable|null $archived_at
+ * @property int $retention_policy_days
+ * @property CarbonImmutable $retention_until
  * @property CarbonImmutable $created_at
  * @property CarbonImmutable $updated_at
  * @property-read string $validity_status
@@ -59,6 +61,8 @@ final class RegistryDocument extends Model
         'created_by',
         'updated_by',
         'archived_at',
+        'retention_policy_days',
+        'retention_until',
     ];
 
     protected static function booted(): void
@@ -66,6 +70,11 @@ final class RegistryDocument extends Model
         self::creating(function (RegistryDocument $document): void {
             if (blank($document->public_id)) {
                 $document->public_id = (string) Str::uuid7();
+            }
+        });
+        self::deleting(function (RegistryDocument $document): void {
+            if ($document->retention_until?->isFuture()) {
+                throw new \LogicException('Dokument darf vor Ablauf der Aufbewahrungsfrist nicht gelöscht werden.');
             }
         });
     }
@@ -78,6 +87,8 @@ final class RegistryDocument extends Model
             'valid_from' => 'immutable_date',
             'valid_until' => 'immutable_date',
             'archived_at' => 'immutable_datetime',
+            'retention_policy_days' => 'integer',
+            'retention_until' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
         ];

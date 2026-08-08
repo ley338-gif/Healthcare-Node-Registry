@@ -18,7 +18,7 @@
 - [x] gefilterter, gestreamter Audit-Export als CSV
 - [x] verbindliche Audit-Aufbewahrung und kryptografischer Integritätsnachweis
 - [x] produktiver ClamAV-Scanner mit fail-closed Fallback und Rescan-Workflow
-- [ ] Dokumentfreigabe, Vier-Augen-Prinzip und verbindliche Aufbewahrungsregeln
+- [x] Dokumentfreigabe, Vier-Augen-Prinzip und verbindliche Aufbewahrungsregeln
 
 ## 0.1.1 – Foundation Hardening
 

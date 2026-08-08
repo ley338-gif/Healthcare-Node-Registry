@@ -31,6 +31,7 @@ final class RegistryDocumentVersionFactory extends Factory
             'uploaded_at' => now(),
             'change_note' => null,
             'malware_scan_status' => 'pending',
+            'approval_status' => 'approved',
             'malware_scan_message' => null,
             'metadata' => [],
         ];

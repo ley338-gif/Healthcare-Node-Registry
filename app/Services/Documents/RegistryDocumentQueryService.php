@@ -32,7 +32,9 @@ final class RegistryDocumentQueryService
     {
         $query = $context->documents()->getQuery()->with([
             'currentVersion.uploadedByUser:id,public_id,name',
+            'currentVersion.reviewedByUser:id,public_id,name',
             'versions.uploadedByUser:id,public_id,name',
+            'versions.reviewedByUser:id,public_id,name',
         ]);
         $this->applyFilters($query, $filters);
 
@@ -48,7 +50,9 @@ final class RegistryDocumentQueryService
         $query = RegistryDocument::query()->with([
             'documentable',
             'currentVersion.uploadedByUser:id,public_id,name',
+            'currentVersion.reviewedByUser:id,public_id,name',
             'versions.uploadedByUser:id,public_id,name',
+            'versions.reviewedByUser:id,public_id,name',
         ]);
         $entityType = $this->value($filters, 'document_entity_type');
         $model = match ($entityType) {

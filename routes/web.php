@@ -91,6 +91,12 @@ Route::middleware('auth')->group(function (): void {
         ->name('registry-document-versions.download');
     Route::get('/registry-document-versions/{registryDocumentVersion}/preview', [RegistryDocumentController::class, 'previewVersion'])
         ->name('registry-document-versions.preview');
+    Route::post('/registry-document-versions/{registryDocumentVersion}/submit-review', [RegistryDocumentController::class, 'submitReview'])
+        ->name('registry-document-versions.submit-review');
+    Route::post('/registry-document-versions/{registryDocumentVersion}/approve', [RegistryDocumentController::class, 'approve'])
+        ->name('registry-document-versions.approve');
+    Route::post('/registry-document-versions/{registryDocumentVersion}/reject', [RegistryDocumentController::class, 'reject'])
+        ->name('registry-document-versions.reject');
 
     Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
     Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');
