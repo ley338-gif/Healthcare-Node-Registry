@@ -109,7 +109,7 @@ final class RegistryDocumentUploadTest extends TestCase
         self::assertSame(1, RegistryDocumentVersion::query()->count());
     }
 
-    public function test_new_version_becomes_current_and_keeps_previous_version(): void
+    public function test_new_version_waits_for_approval_and_keeps_previous_current_version(): void
     {
         Storage::fake('registry_documents');
         $system = System::factory()->create();
@@ -127,9 +127,9 @@ final class RegistryDocumentUploadTest extends TestCase
 
         $document->refresh();
         self::assertSame(2, $document->versions()->count());
-        self::assertNotSame($firstVersionId, $document->current_version_id);
-        self::assertSame(2, $document->currentVersion?->version_number);
-        self::assertSame('Vertrag verlängert', $document->currentVersion?->change_note);
+        self::assertSame($firstVersionId, $document->current_version_id);
+        self::assertSame(1, $document->currentVersion?->version_number);
+        self::assertSame('draft', $document->versions()->where('version_number', 2)->firstOrFail()->approval_status->value);
         $this->assertDatabaseHas('security_events', ['event_type' => 'document.version_uploaded', 'subject_public_id' => $system->public_id]);
     }
 
@@ -163,7 +163,7 @@ final class RegistryDocumentUploadTest extends TestCase
         self::assertSame('Technische Vertragsunterlagen', $document->description);
         self::assertSame('MAINT-42', $document->contract_reference);
         self::assertSame(['wartung', 'kritisch'], $document->tags);
-        self::assertNotSame($firstVersion->id, $document->current_version_id);
+        self::assertSame($firstVersion->id, $document->current_version_id);
         self::assertTrue($document->versions()->whereKey($firstVersion->id)->exists());
         Storage::disk('registry_documents')->assertExists($firstVersion->storage_path);
     }

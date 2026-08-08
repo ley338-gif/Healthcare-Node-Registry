@@ -129,6 +129,9 @@ const action = (value: string) =>
         logout: 'Logout',
         imported: 'Import',
         exported: 'Export',
+        review_requested: 'Freigabe angefordert',
+        approved: 'Freigegeben',
+        rejected: 'Abgelehnt',
     })[value.split('.').at(-1) ?? ''] ?? value.replaceAll('.', ' · ');
 const badge = (value: string) =>
     value.includes('failed')

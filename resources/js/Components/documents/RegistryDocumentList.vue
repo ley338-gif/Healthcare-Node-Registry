@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { Archive, ArchiveRestore, ChevronDown, Download, Eye, FileText, Pencil, Upload } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import RegistryDocumentUploadSlideover from './RegistryDocumentUploadSlideover.vue';
@@ -20,6 +20,11 @@ export type RegistryDocumentVersionItem = {
     change_note: string | null;
     uploaded_at: string;
     uploaded_by_user?: { name: string };
+    approval_status: 'draft' | 'pending_review' | 'approved' | 'rejected';
+    approval_status_label: string;
+    reviewed_by_user?: { name: string };
+    reviewed_at: string | null;
+    review_note: string | null;
 };
 
 export type RegistryDocumentItem = {
@@ -72,6 +77,8 @@ const props = withDefaults(
     }>(),
     { showFilters: false, showContext: false, standalone: false, focusDocumentPublicId: undefined },
 );
+const permissions = computed(() => (usePage().props.auth as { permissions?: string[] })?.permissions ?? []);
+const canApprove = computed(() => permissions.value.includes('documents.approve'));
 
 const uploadOpen = ref(false);
 const versionDocument = ref<RegistryDocumentItem | null>(null);
@@ -133,6 +140,13 @@ const scanClasses = (status: string): string =>
         failed: 'bg-red-50 text-red-700 ring-red-200',
         infected: 'bg-red-50 text-red-700 ring-red-200',
     })[status] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
+const approvalClasses = (status: RegistryDocumentVersionItem['approval_status']): string =>
+    ({
+        draft: 'bg-slate-100 text-slate-700 ring-slate-200',
+        pending_review: 'bg-amber-50 text-amber-800 ring-amber-200',
+        approved: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+        rejected: 'bg-red-50 text-red-700 ring-red-200',
+    })[status];
 const toggleVersions = (document: RegistryDocumentItem): void => {
     expandedDocumentId.value = expandedDocumentId.value === document.public_id ? null : document.public_id;
 };
@@ -340,7 +354,7 @@ const resetFilters = (): void => {
                         <th class="px-4 py-3">Version</th>
                         <th class="px-4 py-3">Datei</th>
                         <th class="px-4 py-3">Gültigkeit</th>
-                        <th class="px-4 py-3">Scanstatus</th>
+                        <th class="px-4 py-3">Freigabe / Scan</th>
                         <th class="px-4 py-3"><span class="sr-only">Aktionen</span></th>
                     </tr>
                 </thead>
@@ -390,6 +404,12 @@ const resetFilters = (): void => {
                             >
                                 {{ scanLabel(item.current_version.malware_scan_status) }}
                             </span>
+                            <span
+                                v-if="item.current_version"
+                                class="mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset"
+                                :class="approvalClasses(item.current_version.approval_status)"
+                                >{{ item.current_version.approval_status_label }}</span
+                            >
                             <span v-else class="text-sm text-slate-500">{{ item.status }}</span>
                         </td>
                         <td class="px-4 py-4 text-right">
@@ -406,7 +426,8 @@ const resetFilters = (): void => {
                                     v-if="
                                         canPreview &&
                                         item.current_version?.mime_type === 'application/pdf' &&
-                                        item.current_version.malware_scan_status === 'clean'
+                                        item.current_version.malware_scan_status === 'clean' &&
+                                        item.current_version.approval_status === 'approved'
                                     "
                                     type="button"
                                     class="inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-900"
@@ -477,7 +498,12 @@ const resetFilters = (): void => {
                                     >Aktuell</span
                                 ><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{
                                     scanLabel(version.malware_scan_status)
-                                }}</span>
+                                }}</span
+                                ><span
+                                    class="rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset"
+                                    :class="approvalClasses(version.approval_status)"
+                                    >{{ version.approval_status_label }}</span
+                                >
                             </div>
                             <p class="mt-2 truncate text-sm font-medium text-slate-800">
                                 {{ version.original_filename }}
@@ -489,19 +515,19 @@ const resetFilters = (): void => {
                         </div>
                         <div class="flex gap-2">
                             <button
-                                v-if="
-                                    canPreview &&
-                                    version.mime_type === 'application/pdf' &&
-                                    version.malware_scan_status === 'clean'
-                                "
+                                v-if="canPreview"
                                 type="button"
                                 class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                                 @click="openPreview(expandedDocument, version)"
                             >
-                                <Eye :size="15" /> Vorschau
+                                <Eye :size="15" /> Details
                             </button>
                             <a
-                                v-if="canDownload && version.malware_scan_status === 'clean'"
+                                v-if="
+                                    canDownload &&
+                                    version.malware_scan_status === 'clean' &&
+                                    version.approval_status === 'approved'
+                                "
                                 :href="`/registry-document-versions/${version.public_id}/download`"
                                 class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                                 ><Download :size="15" /> Herunterladen</a
@@ -536,6 +562,7 @@ const resetFilters = (): void => {
             :version="previewVersion"
             :can-download="canDownload"
             :can-manage-versions="canManageVersions"
+            :can-approve="canApprove"
             @close="closePreview"
             @new-version="uploadVersionFromPreview"
         />

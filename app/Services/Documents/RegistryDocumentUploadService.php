@@ -59,6 +59,8 @@ final class RegistryDocumentUploadService
                     'contract_reference' => $attributes['contract_reference'] ?? null,
                     'tags' => array_values(array_unique($attributes['tags'] ?? [])),
                     'created_by' => $user->id, 'updated_by' => $user->id,
+                    'retention_policy_days' => RegistryDocumentCategory::from($attributes['category'])->retentionDays(),
+                    'retention_until' => now()->addDays(RegistryDocumentCategory::from($attributes['category'])->retentionDays()),
                 ]);
                 $version = $document->versions()->create([
                     'version_number' => 1, 'original_filename' => $this->safeOriginalName($file),
@@ -67,6 +69,7 @@ final class RegistryDocumentUploadService
                     'size_bytes' => $inspection['size_bytes'], 'sha256' => $inspection['sha256'],
                     'uploaded_by' => $user->id, 'uploaded_at' => now(), 'change_note' => null,
                     'malware_scan_status' => $scan->status, 'malware_scan_message' => $scan->message,
+                    'approval_status' => 'draft',
                     'metadata' => [],
                 ]);
                 $document->update(['current_version_id' => $version->id]);
@@ -112,8 +115,9 @@ final class RegistryDocumentUploadService
                     'size_bytes' => $inspection['size_bytes'], 'sha256' => $inspection['sha256'],
                     'uploaded_by' => $user->id, 'uploaded_at' => now(), 'change_note' => $changeNote,
                     'malware_scan_status' => $scan->status, 'malware_scan_message' => $scan->message, 'metadata' => [],
+                    'approval_status' => 'draft',
                 ]);
-                $locked->update(['current_version_id' => $version->id, 'updated_by' => $user->id]);
+                $locked->update(['updated_by' => $user->id]);
                 $this->audit->record('document.version_uploaded', $context, $user, [
                     'document_public_id' => $locked->public_id, 'version_public_id' => $version->public_id,
                     'document_title' => $locked->title, 'version_number' => $version->version_number,

@@ -31,6 +31,8 @@ final class RegistryDocumentFactory extends Factory
             'created_by' => User::factory(),
             'updated_by' => User::factory(),
             'archived_at' => null,
+            'retention_policy_days' => RegistryDocumentCategory::Other->retentionDays(),
+            'retention_until' => now()->addDays(RegistryDocumentCategory::Other->retentionDays()),
         ];
     }
 }
