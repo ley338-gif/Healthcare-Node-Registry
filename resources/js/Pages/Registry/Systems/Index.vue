@@ -47,6 +47,7 @@ type SystemItem = {
     name: string;
     system_type: string;
     status: string;
+    responsible: string | null;
     hostname: string | null;
     fqdn: string | null;
     ip_address: string | null;

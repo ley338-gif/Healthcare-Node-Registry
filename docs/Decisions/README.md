@@ -40,6 +40,7 @@ ADRs dokumentieren langfristig bindende oder schwer umkehrbare technische Entsch
 - [ADR-0014: Wiederverwendbare Anwendungsshell](ADR-0014-reusable-application-shell.md)
 - [ADR-0015: Audit-Integrität und Aufbewahrung](ADR-0015-audit-integrity-and-retention.md)
 - [ADR-0016: Dokumentfreigabe und Aufbewahrung](ADR-0016-document-approval-and-retention.md)
+- [ADR-0017: Betriebliche Systemverantwortlichkeit](ADR-0017-system-responsibility.md)
 - [ADR-0018: DICOM-TLS für Diagnose-Runner](ADR-0018-dicom-tls-diagnostics.md)
 - [ADR-0019: Synthetische Storage-SOP-Classes](ADR-0019-synthetic-storage-sop-classes.md)
 

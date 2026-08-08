@@ -91,6 +91,8 @@ final class SystemFactory extends Factory
             'operating_system_version' => fake()->optional()->numerify('##.#'),
             'serial_number' => fake()->optional()->bothify('SN-########'),
             'inventory_number' => fake()->optional()->bothify('INV-#####'),
+            'responsible' => null,
+            'criticality' => null,
             'description' => fake()->optional()->sentence(),
             'notes' => null,
             'archived_at' => null,

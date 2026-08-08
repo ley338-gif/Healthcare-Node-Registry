@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Organization;
 use App\Models\Role;
+use App\Models\SecurityEvent;
 use App\Models\System;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,6 +31,7 @@ final class SystemManagementTest extends TestCase
                 'name' => 'PACS Produktion',
                 'system_type' => 'pacs',
                 'status' => 'active',
+                'responsible' => 'Team Medizintechnik',
                 'hostname' => 'pacs01',
                 'fqdn' => 'pacs01.example.local',
                 'ip_address' => '10.10.10.20',
@@ -46,6 +48,7 @@ final class SystemManagementTest extends TestCase
             'name' => 'PACS Produktion',
             'system_type' => 'pacs',
             'status' => 'active',
+            'responsible' => 'Team Medizintechnik',
             'hostname' => 'pacs01',
             'ip_address' => '10.10.10.20',
         ]);
@@ -67,6 +70,7 @@ final class SystemManagementTest extends TestCase
                 'system_type' => '',
                 'status' => '',
                 'ip_address' => 'keine-ip-adresse',
+                'responsible' => str_repeat('x', 161),
             ]);
 
         $response->assertSessionHasErrors([
@@ -75,6 +79,7 @@ final class SystemManagementTest extends TestCase
             'system_type',
             'status',
             'ip_address',
+            'responsible',
         ]);
 
         $this->assertDatabaseCount('systems', 0);
@@ -87,6 +92,7 @@ final class SystemManagementTest extends TestCase
         $system = System::factory()->create([
             'name' => 'Altes PACS',
             'status' => 'active',
+            'responsible' => 'Team Alt',
         ]);
 
         $response = $this
@@ -98,6 +104,7 @@ final class SystemManagementTest extends TestCase
                 'name' => 'Neues PACS',
                 'system_type' => 'pacs',
                 'status' => 'maintenance',
+                'responsible' => 'Team Infrastruktur',
                 'hostname' => 'pacs02',
                 'ip_address' => '10.20.30.40',
             ]);
@@ -110,6 +117,7 @@ final class SystemManagementTest extends TestCase
             'id' => $system->id,
             'name' => 'Neues PACS',
             'status' => 'maintenance',
+            'responsible' => 'Team Infrastruktur',
             'hostname' => 'pacs02',
             'ip_address' => '10.20.30.40',
         ]);
@@ -117,6 +125,14 @@ final class SystemManagementTest extends TestCase
         $this->assertDatabaseHas('security_events', [
             'event_type' => 'registry.system.updated',
         ]);
+
+        $event = SecurityEvent::query()
+            ->where('event_type', 'registry.system.updated')
+            ->where('subject_public_id', $system->public_id)
+            ->firstOrFail();
+
+        $this->assertSame('Team Alt', $event->metadata['before']['responsible']);
+        $this->assertSame('Team Infrastruktur', $event->metadata['after']['responsible']);
     }
 
     public function test_registry_manager_can_archive_a_system(): void

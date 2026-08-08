@@ -41,7 +41,8 @@ final class SystemOverviewQuery
                     ->orWhere('fqdn', 'ilike', "%{$search}%")
                     ->orWhere('ip_address', 'ilike', "%{$search}%"))
                 ->orWhere('vendor', 'ilike', "%{$search}%")
-                ->orWhere('product', 'ilike', "%{$search}%")))
+                ->orWhere('product', 'ilike', "%{$search}%")
+                ->orWhere('responsible', 'ilike', "%{$search}%")))
             ->when(filled($filters['type'] ?? null), fn ($query) => $query->where('system_type', $filters['type']))
             ->when(filled($filters['status'] ?? null), fn ($query) => $query->where('status', $filters['status']))
             ->when((int) ($filters['organization'] ?? 0) > 0, fn ($query) => $query->where('organization_id', $filters['organization']))
@@ -91,6 +92,7 @@ final class SystemOverviewQuery
                     'operating_system_version' => $system->operating_system_version,
                     'inventory_number' => $system->inventory_number,
                     'serial_number' => $system->serial_number,
+                    'responsible' => $system->responsible,
                     'dicom_node' => $node?->name,
                     'ae_title' => $node?->ae_title,
                     'modality' => $node?->modality,
