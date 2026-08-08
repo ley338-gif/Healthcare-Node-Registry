@@ -5,7 +5,7 @@ document_type: Roadmap
 chapter: Übersicht
 status: draft
 version: 0.1
-last_updated: 2026-08-06
+last_updated: 2026-08-08
 ---
 
 # Roadmap: Mögliche Version-2-Funktionen für Discovery
@@ -30,6 +30,6 @@ Diese Funktionen sind bewusst **nicht** Bestandteil des DICOM Discovery & Topolo
 - Automatische Änderungsberichte zwischen zwei Discovery-Läufen
 - Echte Multi-Prozess- oder Redis-gestützte Parallelität für sehr große, zeitkritische Scans (siehe ADR-0011)
 - Anwendungsspezifischer Healthcheck für den `worker`-Container
-- Sichtbarkeit/Bearbeitbarkeit von "Verantwortlicher" und "Kritikalität" in der allgemeinen Systeme-Oberfläche (aktuell nur über die Discovery-Übernahme setzbar, siehe `docs/limitations.md`)
+- Sichtbarkeit/Bearbeitbarkeit der "Kritikalität" in der allgemeinen Systeme-Oberfläche (aktuell nur über die Discovery-Übernahme setzbar, siehe `docs/limitations.md`)
 
 Siehe `docs/limitations.md` für Einschränkungen des aktuellen MVP.

@@ -21,6 +21,8 @@ use Illuminate\Support\Str;
  * @property string $name
  * @property string $system_type
  * @property string $status
+ * @property string|null $responsible
+ * @property string|null $criticality
  * @property CarbonImmutable|null $archived_at
  * @property string|null $hostname Deprecated mirror of the primary network interface
  * @property string|null $fqdn Deprecated mirror of the primary network interface

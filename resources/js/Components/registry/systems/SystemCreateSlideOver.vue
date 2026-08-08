@@ -45,6 +45,7 @@ const form = useForm({
     name: '',
     system_type: '',
     status: 'active',
+    responsible: '',
     hostname: '',
     fqdn: '',
     ip_address: '',
@@ -192,6 +193,22 @@ const submit = (): void => {
                                         </select>
                                     </label>
                                 </div>
+
+                                <label class="block">
+                                    <span class="text-sm font-medium text-slate-700">Verantwortlichkeit</span>
+
+                                    <input
+                                        v-model="form.responsible"
+                                        type="text"
+                                        maxlength="160"
+                                        placeholder="z. B. Team Medizintechnik"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                    />
+
+                                    <span v-if="form.errors.responsible" class="mt-1 block text-xs text-red-600">
+                                        {{ form.errors.responsible }}
+                                    </span>
+                                </label>
                             </div>
                         </section>
 
