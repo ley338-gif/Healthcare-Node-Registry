@@ -7,6 +7,7 @@ use App\Models\DicomNode;
 use App\Services\Diagnostics\DiagnosticTestRecorder;
 use App\Services\Diagnostics\DiagnosticTestStatus;
 use App\Services\Diagnostics\DicomStorageTest;
+use App\Services\Diagnostics\SyntheticStorageSopClass;
 use App\Support\DiagnosticPermission;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
@@ -26,12 +27,13 @@ final class StorageDiagnosticController extends Controller
             return back()->with('error', 'Für diesen DICOM-Knoten ist Storage nicht aktiviert.');
         }
 
-        $result = $test->run($dicomNode, strtoupper($request->validated('calling_ae_title')), strtoupper($request->validated('called_ae_title')));
+        $sopClass = SyntheticStorageSopClass::from($request->validated('sop_class'));
+        $result = $test->run($dicomNode, strtoupper($request->validated('calling_ae_title')), strtoupper($request->validated('called_ae_title')), $sopClass);
         DB::transaction(function () use ($request, $dicomNode, $result, $recorder, $audit): void {
             $recorder->record($result, $dicomNode, $request->user());
             $audit->record('diagnostics.storage.completed', $dicomNode, $request->user(), [
                 'test_id' => $result->testId, 'status' => $result->status->value,
-                'sop_class_uid' => '1.2.840.10008.5.1.4.1.1.7',
+                'sop_class_uid' => $result->details['sopClassUid'],
                 'sop_instance_uid' => $result->details['sopInstanceUid'],
                 'system_public_id' => $dicomNode->system->public_id,
             ]);

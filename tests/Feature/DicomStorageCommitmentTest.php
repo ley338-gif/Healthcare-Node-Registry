@@ -11,6 +11,7 @@ use App\Services\Diagnostics\StorageCommandResult;
 use App\Services\Diagnostics\StorageCommandRunner;
 use App\Services\Diagnostics\StorageCommitmentCommandResult;
 use App\Services\Diagnostics\StorageCommitmentCommandRunner;
+use App\Services\Diagnostics\SyntheticStorageSopClass;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -99,7 +100,7 @@ final readonly class FakeCommitmentStorageRunner implements StorageCommandRunner
 {
     public function __construct(private StorageCommandResult $result) {}
 
-    public function run(DicomNode $node, string $callingAeTitle, string $calledAeTitle): StorageCommandResult
+    public function run(DicomNode $node, string $callingAeTitle, string $calledAeTitle, SyntheticStorageSopClass $sopClass = SyntheticStorageSopClass::SecondaryCapture): StorageCommandResult
     {
         return $this->result;
     }

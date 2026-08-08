@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Kontrollierten synthetischen C-STORE um auswählbare Secondary-Capture-, CT- und MR-Image-Storage-Objekte mit serverseitiger SOP-Class-Validierung, korrekten Auditdaten und rückstandsfreier lokaler Erzeugung erweitert.
 - Optionale betriebliche Verantwortlichkeit von Systemen in Anlage, Bearbeitung, Detailansicht, Suche und XLSX-Export eingebunden; Änderungen werden mit Vorher-/Nachher-Wert im bestehenden Registry-Audit protokolliert.
 - DICOM-TLS für alle Diagnose-Runner ergänzt: benannte, schreibgeschützt eingebundene Zertifikatsprofile, gegenseitige Zertifikatsprüfung für DCMTK/Python/PHP, TLS-geschützter Storage-Commitment-Callback und fail-closed Verhalten ohne Klartext-Fallback.
 - Versionsbezogenen Dokumentfreigabe-Workflow mit serverseitigem Vier-Augen-Prinzip, separatem Freigaberecht, Audit-Ereignissen, Veröffentlichung erst nach Freigabe sowie konfigurierbaren Mindestaufbewahrungsfristen je Kategorie ergänzt.

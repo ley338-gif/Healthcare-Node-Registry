@@ -31,6 +31,27 @@ final class DiagnosticTestProfileTest extends TestCase
         ]);
     }
 
+    public function test_manager_can_store_only_supported_synthetic_storage_class_in_profile(): void
+    {
+        $user = $this->manager();
+        $node = DicomNode::factory()->create(['supports_store' => true]);
+        $input = [
+            ...$this->input($node),
+            'test_type' => 'dicom_storage',
+            'configuration' => [
+                'sop_class' => 'mr_image',
+                'called_ae_title' => $node->ae_title,
+            ],
+        ];
+
+        $this->actingAs($user)->post('/tests/profiles', $input)->assertSessionHas('success');
+        self::assertSame('mr_image', DiagnosticTestProfile::query()->latest('id')->firstOrFail()->configuration['sop_class']);
+
+        $this->actingAs($user)
+            ->post('/tests/profiles', [...$input, 'configuration' => ['sop_class' => 'invalid']])
+            ->assertSessionHasErrors('configuration.sop_class');
+    }
+
     public function test_manager_can_update_and_archive_profile(): void
     {
         $user = $this->manager();

@@ -182,7 +182,7 @@ Diagnosefunktionen stellen ausgehende Netzwerkverbindungen her und benötigen de
 - Ausgaben werden begrenzt und interne Pfade maskiert.
 - Patientenschlüssel werden vor Persistenz und Export bereinigt.
 - C-STORE benötigt ein gesondertes Recht und eine ausdrückliche Bestätigung.
-- Storage verwendet ein synthetisches Secondary-Capture-Testobjekt.
+- Storage verwendet ausschließlich auswählbare synthetische Secondary-Capture-, CT- oder MR-Testobjekte.
 - Temporäre lokale Testdateien werden kontrolliert entfernt.
 - Tests, Storage, Dateianalyse und Exporte erzeugen Audit-Ereignisse.
 

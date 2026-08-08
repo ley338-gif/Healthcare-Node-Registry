@@ -236,7 +236,7 @@ Die HNR stellt keine klinische Diagnose und bestätigt nicht die vollständige F
 
 1. Eine ausdrücklich berechtigte Person wählt einen geeigneten DICOM-Knoten.
 2. Die Oberfläche verlangt eine bewusste Bestätigung.
-3. Die HNR erzeugt und überträgt ein kontrolliertes synthetisches Secondary-Capture-Testobjekt.
+3. Die Person wählt Secondary Capture, CT oder MR; die HNR erzeugt und überträgt das kontrollierte synthetische Testobjekt.
 4. Das Ergebnis wird gespeichert und auditiert.
 
 **Ergebnis:** Der Storage-Pfad kann kontrolliert geprüft werden, ohne ein bereitgestelltes Patientenbild als reguläres Testobjekt zu verwenden.

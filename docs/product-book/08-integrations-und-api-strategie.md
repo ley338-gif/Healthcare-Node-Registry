@@ -354,7 +354,7 @@ Die HNR ist kein DICOM-SCP, Router, Gateway oder klinisches Archiv.
 
 ### Langfristige Erweiterungen
 
-DICOM-TLS für registrierte Diagnoseziele sowie kontrollierte C-MOVE- und C-GET-Tests sind umgesetzt. Discovery-TLS und weitere synthetische Storage-SOP-Klassen bleiben mögliche spätere Ausbaustufen und benötigen jeweils eigene Sicherheits-, Netzwerk-, Datenminimierungs- und Betriebsentscheidungen.
+DICOM-TLS für registrierte Diagnoseziele, kontrollierte C-MOVE- und C-GET-Tests sowie synthetische Secondary-Capture-, CT- und MR-Storage-Objekte sind umgesetzt. Discovery-TLS bleibt eine mögliche spätere Ausbaustufe und benötigt eine eigene Sicherheits-, Netzwerk-, Datenminimierungs- und Betriebsentscheidung.
 
 ## HL7-v2-Kontext
 

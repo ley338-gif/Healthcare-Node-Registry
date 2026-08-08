@@ -39,7 +39,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - Diagnose-Workspace mit Verlauf, Profilen und JSON-/CSV-Ergebnisexport
 - Netzwerkprüfung und DICOM C-ECHO
 - Modality-Worklist-C-FIND und PACS-Study-Root-C-FIND
-- Kontrollierter C-STORE eines synthetischen Secondary-Capture-Objekts
+- Kontrollierter C-STORE auswählbarer synthetischer Secondary-Capture-, CT- und MR-Objekte
 - Autorisierte C-MOVE- und C-GET-Tests mit serverseitig konfigurierten synthetischen Study-UIDs
 - Autorisierter MPPS-Test mit synthetischem N-CREATE und anschließendem N-SET auf `COMPLETED`
 - Autorisiertes Storage Commitment mit synthetischem C-STORE, N-ACTION und korreliertem N-EVENT-REPORT
@@ -89,7 +89,7 @@ PHP, Composer, PostgreSQL, Node.js und DCMTK müssen bei dieser Variante nicht a
 - Composer 2
 - PostgreSQL 18
 - Node.js 24 und npm
-- DCMTK für native DICOM-Diagnosen (`echoscu`, `findscu`, `movescu`, `getscu`, `img2dcm`, `storescu`, `dcmdump`, `dump2dcm`)
+- DCMTK für native DICOM-Diagnosen (`echoscu`, `findscu`, `movescu`, `getscu`, `storescu`, `dcmdump`, `dump2dcm`)
 - Python 3 mit `venv`, `pynetdicom==3.0.4` und `pydicom==3.0.1` unter `/opt/registry-dicom` für MPPS und Storage Commitment
 
 Für einen reproduzierbaren Betrieb wird Docker empfohlen.
@@ -302,6 +302,7 @@ DICOM-Zielports werden pro registriertem Knoten gespeichert und sind keine einge
 | `QUEUE_CONNECTION` | Laravel-Queue-Backend; verarbeitet vom `worker`-Dienst (`database`, keine Redis-Abhängigkeit) | `database` |
 | `FILESYSTEM_DISK` | Standard-Dateisystem | `local` |
 | `DIAGNOSTIC_CALLING_AE_TITLE` | Standardmäßiger Calling AE Title für DICOM-Diagnosen | `NODE_REGISTRY` |
+| `DIAGNOSTIC_PYTHON_BINARY` | Python-Interpreter der isolierten DICOM-Laufzeit | `/opt/registry-dicom/bin/python` |
 | `DIAGNOSTIC_MOVE_TEST_STUDY_UID` | Ausschließlich serverseitig konfigurierte Test-Study-UID für C-MOVE | synthetische UID aus `.env.example` |
 | `DIAGNOSTIC_GET_TEST_STUDY_UID` | Ausschließlich serverseitig konfigurierte Test-Study-UID für C-GET | synthetische UID aus `.env.example` |
 | `DIAGNOSTIC_STORAGE_COMMITMENT_CALLBACK_PORT` | Interner Callback-Port für N-EVENT-REPORT | `11113` |

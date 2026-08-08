@@ -14,7 +14,7 @@ Alle Verbindungen und externen Prozesse werden im Laravel-Backend ausgeführt. D
 | C-ECHO | DCMTK `echoscu` und bestehender `DicomEchoService` | Association, Verification SOP Class, DIMSE-Status |
 | Modality Worklist | DCMTK `findscu`, MWL Information Model | C-FIND samt Scheduled Procedure Step Sequence |
 | PACS Query | DCMTK `findscu`, Study Root | C-FIND auf Studienebene; kein C-MOVE/C-GET |
-| DICOM Storage | `img2dcm` und `storescu` | tatsächlicher C-STORE eines synthetischen Secondary Capture |
+| DICOM Storage | `pydicom` und `storescu` | tatsächlicher C-STORE eines synthetischen Secondary-Capture-, CT- oder MR-Objekts |
 | Capability-Matrix | native A-ASSOCIATE-Negotiation | SOP-Class-/Transfer-Syntax-Kontexte; kein C-STORE |
 | C-MOVE | DCMTK `movescu`, Study Root | kontrollierter Abruf einer serverseitig konfigurierten synthetischen Study UID |
 | C-GET | DCMTK `getscu`, Study Root | kontrollierter Abruf; empfangene lokale Dateien werden immer gelöscht |
@@ -148,13 +148,21 @@ Für die Modality Worklist zeigt das Frontend bei einem Fehlschlag zusätzlich z
 
 ### C-STORE
 
-C-STORE benötigt ausdrückliche Bestätigung. Das Secondary-Capture-Objekt verwendet ausschließlich:
+C-STORE benötigt ausdrückliche Bestätigung. Vor dem Start wird eine der serverseitig vorgegebenen SOP Classes ausgewählt:
+
+- Secondary Capture Image Storage (`1.2.840.10008.5.1.4.1.1.7`)
+- CT Image Storage (`1.2.840.10008.5.1.4.1.1.2`)
+- MR Image Storage (`1.2.840.10008.5.1.4.1.1.4`)
+
+Jedes Objekt verwendet ausschließlich:
 
 - Patient Name `DICOMNODE^TEST`
 - Patient ID `TEST-[Zeitstempel]`
 - Study Description `DICOM Connectivity Test`
 
-Das Objekt kann im Zielsystem gespeichert, weitergeleitet oder archiviert werden. Aufräumen dort ist Betreiberaufgabe. Lokale BMP-, DICOM- und Verzeichnisartefakte werden immer gelöscht.
+Die 1×1-Pixel-Datensätze enthalten minimale synthetische, SOP-Class-spezifische Metadaten. Das Objekt kann im Zielsystem gespeichert, weitergeleitet oder archiviert werden. Aufräumen dort ist Betreiberaufgabe. Lokale DICOM- und Verzeichnisartefakte werden immer gelöscht.
+
+Die SOP Class kann auch in einem gespeicherten Storage-Testprofil hinterlegt werden. Das Ausführen eines solchen Profils öffnet lediglich den vorbefüllten Storage-Dialog; die ausdrückliche Bestätigung wird nie gespeichert und ist vor jedem C-STORE erneut erforderlich.
 
 ### Capability-Matrix
 
@@ -166,7 +174,7 @@ MPPS benötigt eine ausdrückliche Autorisierungsbestätigung. Der Test erzeugt 
 
 ## DCMTK- und Python-Voraussetzungen
 
-Das PHP-Containerimage installiert DCMTK sowie die hashgebundenen Python-Pakete `pynetdicom==3.0.4` und `pydicom==3.0.1`. Benötigt werden `echoscu`, `findscu`, `movescu`, `getscu`, `img2dcm`, `storescu`, `dcmdump` sowie `dump2dcm` für Integrationstests. Getestet ist DCMTK 3.6.7. Nach Upgrades sind Parser- und Integrationsfälle erneut auszuführen.
+Das PHP-Containerimage installiert DCMTK sowie die hashgebundenen Python-Pakete `pynetdicom==3.0.4` und `pydicom==3.0.1`. Benötigt werden `echoscu`, `findscu`, `movescu`, `getscu`, `storescu`, `dcmdump` sowie `dump2dcm` für Integrationstests. Die synthetischen Storage-Objekte werden mit `pydicom` erzeugt. Der Interpreter stammt aus `DIAGNOSTIC_PYTHON_BINARY` (Standard `/opt/registry-dicom/bin/python`); eine abweichende Laufzeit muss dieselben hashgeprüften Pakete aus `docker/php/requirements-dicom.txt` enthalten. Getestet ist DCMTK 3.6.7. Nach Upgrades sind Parser- und Integrationsfälle erneut auszuführen.
 
 ## Firewall und Netzwerk
 
@@ -184,7 +192,7 @@ Bei `tls_enabled=true` verwenden sämtliche DICOM-Diagnose-Associations das refe
 
 ## Bekannte Einschränkungen
 
-- Storage nur als Secondary Capture; kein CT, MR, PDF oder SR
+- Storage unterstützt Secondary Capture, CT und MR; kein PDF oder SR
 - Capability-Matrix ist Association-only
 - keine zentrale Abbruchfunktion, Queue oder Parallelitätssteuerung
 - keine CIDR-Allowlist oder zentrale Timeout-Konfiguration
@@ -206,6 +214,5 @@ Feature-Tests decken Berechtigungen, Erfolg, Timeout, Protokollfehler, Maskierun
 
 - granulare Einzelrechte für ungefährliche Tests
 - konfigurierbare Zielnetz-Allowlist, Timeouts und Parallelitätsgrenzen
-- weitere synthetische Storage-Objekttypen
 - Aufbewahrungs- und Löschregeln für Diagnoseverläufe
 - PDF-Bericht, sobald eine projektweite PDF-Infrastruktur existiert

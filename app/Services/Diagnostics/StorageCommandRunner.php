@@ -6,5 +6,10 @@ use App\Models\DicomNode;
 
 interface StorageCommandRunner
 {
-    public function run(DicomNode $node, string $callingAeTitle, string $calledAeTitle): StorageCommandResult;
+    public function run(
+        DicomNode $node,
+        string $callingAeTitle,
+        string $calledAeTitle,
+        SyntheticStorageSopClass $sopClass = SyntheticStorageSopClass::SecondaryCapture,
+    ): StorageCommandResult;
 }

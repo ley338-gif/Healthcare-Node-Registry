@@ -54,7 +54,7 @@ DICOM Nodes, Diagnose-Workspace und zugehörige Stammdaten sind umgesetzt.
 - [x] granulare Einzelrechte für alle ausführbaren Diagnosefunktionen
 - [x] konfigurierbare CIDR-Allowlist, Timeouts und Parallelitätsgrenzen für Discovery
 - [x] DICOM-TLS für Diagnose-Runner
-- [ ] weitere synthetische Storage-SOP-Classes
+- [x] weitere synthetische Storage-SOP-Classes
 - [x] C-MOVE/C-GET nach separatem Sicherheitsdesign
 - [x] synthetischer MPPS-Test mit N-CREATE und N-SET
 - [x] synthetisches Storage Commitment mit N-ACTION und korreliertem N-EVENT-REPORT

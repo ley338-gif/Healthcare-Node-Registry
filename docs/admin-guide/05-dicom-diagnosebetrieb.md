@@ -16,6 +16,6 @@ Freigaben sollten Zieladresse, Port, Dienst, Calling AE, verantwortliche Stelle 
 
 Der für alle Node-Diagnosen vorgeschlagene Calling AE Title stammt aus der Umgebungsvariable `DIAGNOSTIC_CALLING_AE_TITLE` (Standard `NODE_REGISTRY`, siehe `config/diagnostics.php`). Er lässt sich installationsweit umstellen, z. B. auf einen dedizierten Test-AE wie `HNR_TEST`; das Zielsystem muss diesen AE Title für den jeweiligen Dienst freigeben. Bleibt die Variable unverändert, ändert sich das bestehende Verhalten nicht. Die vom Discovery-Modul verwendete Calling-AE-Konfiguration (`DISCOVERY_DEFAULT_CALLING_AE`, Standard `HNR_DISCOVERY`) ist davon unabhängig.
 
-C-STORE sendet ein synthetisches Secondary-Capture-Objekt. Klären Sie vor der Freigabe, ob es gespeichert oder weitergeleitet wird und wie es im Zielsystem bereinigt wird. Patientendaten dürfen nicht als Testgrundlage verwendet werden.
+C-STORE sendet wahlweise ein synthetisches Secondary-Capture-, CT- oder MR-Objekt. Klären Sie vor der Freigabe, ob es gespeichert oder weitergeleitet wird und wie es im Zielsystem bereinigt wird. Patientendaten dürfen nicht als Testgrundlage verwendet werden.
 
 Timeouts, Befehlsausgaben und Verlauf sind begrenzt. Eine zentrale CIDR-Allowlist und installationsweite Parallelitätssteuerung sind derzeit nicht verfügbar; Egress-Kontrolle bleibt daher wesentlich. Siehe [Diagnose-Workspace](../Healthcare/DiagnosticTestWorkspace.md).
