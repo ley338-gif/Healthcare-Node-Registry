@@ -5,7 +5,7 @@ document_type: Produktbuch
 chapter: 7
 status: draft
 version: 0.1
-last_updated: 2026-08-02
+last_updated: 2026-08-08
 ---
 
 # Produktlebenszyklus und Roadmap
@@ -241,23 +241,21 @@ Die detaillierte Arbeitsroadmap wird außerhalb dieses Kapitels gepflegt. Auf Pr
 
 ### Datenqualität und Verwaltung
 
-- strukturierte Verantwortlichkeiten;
+- strukturierte Verantwortlichkeiten über die optionale Systemangabe hinaus;
 - konfigurierbare Referenzdaten und zugehörige Verwaltungsoberflächen;
 - weitere Konsistenzprüfungen und kontrollierte Pflegeverfahren.
 
-### Dokumente und Audit
+### Dokumente und Audit – weitergehende Härtung
 
-- produktive Malware-Scanner-Anbindung und Rescan-Prozess;
-- Dokumentfreigabe und Vier-Augen-Prinzip;
-- verbindliche Aufbewahrungsregeln;
-- Audit-Aufbewahrung und formaler Integritätsnachweis.
+- externe signierte Verankerung der internen Audit-Hash-Chain;
+- kontrollierter physischer Löschprozess für Dokumente nach Ablauf der Mindestaufbewahrung;
+- installationsbezogene Nachweise für Scannerbetrieb, Aufbewahrung und Restore.
 
 ### Diagnosehärtung
 
 - weitere installationsbezogene Härtung der Diagnoseausführung;
-- konfigurierbare CIDR-Allowlist, Timeouts und Parallelitätsgrenzen;
-- DICOM-TLS;
-- C-MOVE und C-GET erst nach eigenständigem Sicherheitsdesign.
+- zentrale Parallelitätsgrenzen für direkte Diagnoseläufe;
+- DICOM-TLS als Discovery-Prüfoption.
 
 ### Identität und Schnittstellen
 

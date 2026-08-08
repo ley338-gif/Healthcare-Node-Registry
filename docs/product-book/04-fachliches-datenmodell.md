@@ -5,7 +5,7 @@ document_type: Produktbuch
 chapter: 4
 status: draft
 version: 0.1
-last_updated: 2026-08-02
+last_updated: 2026-08-08
 ---
 
 # Fachliches Datenmodell
@@ -29,7 +29,7 @@ Beschrieben wird das aktuell implementierte Kernmodell für:
 - Benutzer, Rollen und Berechtigungen;
 - Änderungshistorie und Audit.
 
-Geplante Referenzdaten, Verantwortlichkeiten, organisatorische Berechtigungsbereiche und externe Integrationen werden ausdrücklich vom aktuellen Modell getrennt.
+Geplante Referenzdaten, eine über das optionale Systemfeld hinausgehende Verantwortlichkeitsmodellierung, organisatorische Berechtigungsbereiche und externe Integrationen werden ausdrücklich vom aktuellen Modell getrennt.
 
 ## Modellierungsgrundsätze
 
@@ -132,6 +132,7 @@ Das aktuelle Systemmodell umfasst insbesondere:
 - Betriebssystem und Betriebssystemversion;
 - Serien- und Inventarnummer;
 - Beschreibung und interne Hinweise;
+- optionale betriebliche Verantwortlichkeit als Freitext;
 - Archivierungszeitpunkt.
 
 Systemtyp und Status stammen aktuell aus zentral in der Anwendung bereitgestellten Auswahlwerten. Eine administrierbare Referenzdatenoberfläche ist geplant und nicht Teil des gegenwärtigen Datenmodells.
@@ -252,9 +253,10 @@ Jeder Upload erzeugt eine eigenständige Version. Zu den wesentlichen Merkmalen 
 - Dateigröße und SHA-256-Prüfsumme;
 - Storage-Pfad;
 - Malware-Scanstatus und optionale Meldung;
+- Freigabestatus, Prüfer, Prüfzeitpunkt und optionale Prüfnotiz;
 - Änderungshinweis, Uploader und Uploadzeitpunkt.
 
-Das Dokument verweist auf genau eine aktuelle Version. Frühere Versionen bleiben erhalten. Eine Version kann nicht nachträglich einem anderen Dokument zugeordnet werden. Die vollständigen Integritätsregeln beschreibt die [Architektur der Dokumentenablage](../Architecture/registry-document-storage.md).
+Das Dokument verweist auf genau eine aktuelle, genehmigte Version. Frühere Versionen bleiben erhalten. Eine Version kann nicht nachträglich einem anderen Dokument zugeordnet werden. Das Dokument speichert außerdem die bei Anlage festgelegte kategoriebasierte Mindestaufbewahrung. Die vollständigen Integritätsregeln beschreibt die [Architektur der Dokumentenablage](../Architecture/registry-document-storage.md).
 
 ## Identität und Zugriff
 
@@ -282,7 +284,7 @@ Ein Audit-Ereignis beschreibt eine eingetretene fachliche, technische oder admin
 - strukturierte Metadaten;
 - Ereigniszeitpunkt.
 
-Audit-Ereignisse bilden eine append-only Ereignisquelle. Sie ersetzen keine aktuellen Fachobjekte, sondern verweisen auf deren Änderungen und Zustandsübergänge. Ereignisgruppen dienen der Filterung und späteren Auswertung, verändern aber nicht den fachlichen Ereignistyp.
+Audit-Ereignisse bilden eine append-only Ereignisquelle und sind über Vorgänger- und Ereignishash intern verkettet. Sie ersetzen keine aktuellen Fachobjekte, sondern verweisen auf deren Änderungen und Zustandsübergänge. Ereignisgruppen dienen der Filterung und späteren Auswertung, verändern aber nicht den fachlichen Ereignistyp.
 
 ## Zentrale Beziehungsregeln
 
@@ -297,7 +299,7 @@ Audit-Ereignisse bilden eine append-only Ereignisquelle. Sie ersetzen keine aktu
 | Testprofil | DICOM-Knoten | erstellender Benutzer |
 | Strukturierte Dokumentation | Registry-Kontext | aktualisierender Benutzer |
 | Dokument | Registry-Kontext | aktuelle Dokumentversion |
-| Dokumentversion | Dokument und Uploader | keine |
+| Dokumentversion | Dokument und Uploader | anfordernder Benutzer und Prüfer |
 | Benutzer | keine fachliche Elternbeziehung | Rollen |
 | Rolle | keine fachliche Elternbeziehung | Benutzer und Berechtigungen |
 | Audit-Ereignis | Ereignistyp und Zeitpunkt | Akteur und Objektverweis |
@@ -335,10 +337,9 @@ Bezeichnungen wie „online“, „gesund“ oder „erreichbar“ dürfen nicht
 
 Die folgenden Modellbereiche sind geplant oder langfristig vorgesehen und nicht als aktuell verfügbar zu behandeln:
 
-- strukturierte technische und fachliche Verantwortlichkeiten;
+- strukturierte technische und fachliche Verantwortlichkeiten über das optionale Systemfeld hinaus;
 - administrierbare Referenzdaten für Hersteller, Systemtypen, Dienste, Kategorien oder Portprofile;
 - organisatorische Berechtigungsbereiche;
-- formale Dokumentfreigaben und Aufbewahrungsregeln;
 - externe Identitäten und Verzeichniszuordnungen;
 - stabile Verträge für eine öffentlich dokumentierte Produkt-API;
 - zusätzliche DICOM-Diagnose- und Integrationsobjekte nach gesondertem Sicherheitsdesign.
