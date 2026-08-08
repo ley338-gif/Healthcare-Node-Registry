@@ -14,30 +14,38 @@ final class NativeStorageCommandRunner implements StorageCommandRunner
 {
     public function __construct(private readonly DicomTlsProfileResolver $tlsProfiles = new DicomTlsProfileResolver) {}
 
-    public function run(DicomNode $node, string $callingAeTitle, string $calledAeTitle): StorageCommandResult
-    {
+    public function run(
+        DicomNode $node,
+        string $callingAeTitle,
+        string $calledAeTitle,
+        SyntheticStorageSopClass $sopClass = SyntheticStorageSopClass::SecondaryCapture,
+    ): StorageCommandResult {
         $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'hnr-store-'.Str::random(20);
-        $imagePath = $directory.DIRECTORY_SEPARATOR.'test.bmp';
         $dicomPath = $directory.DIRECTORY_SEPARATOR.'test.dcm';
         $uidRoot = '1.2.826.0.1.3680043.10.987';
         $suffix = now()->format('YmdHis').random_int(100000, 999999);
         $studyUid = "{$uidRoot}.1.{$suffix}";
         $seriesUid = "{$uidRoot}.2.{$suffix}";
         $instanceUid = "{$uidRoot}.3.{$suffix}";
+        $frameOfReferenceUid = "{$uidRoot}.4.{$suffix}";
         $patientId = 'TEST-'.now()->format('YmdHis');
 
         try {
             if (! mkdir($directory, 0700) && ! is_dir($directory)) {
                 throw new \RuntimeException('Temporäres Verzeichnis konnte nicht erstellt werden.');
             }
-            file_put_contents($imagePath, $this->bitmap());
             $generator = new Process([
-                '/usr/bin/img2dcm', '-i', 'BMP', '-sc',
-                '-k', 'PatientName=DICOMNODE^TEST', '-k', "PatientID={$patientId}",
-                '-k', 'StudyDescription=DICOM Connectivity Test', '-k', "StudyInstanceUID={$studyUid}",
-                '-k', "SeriesInstanceUID={$seriesUid}", '-k', "SOPInstanceUID={$instanceUid}",
-                $imagePath, $dicomPath,
+                '/opt/registry-dicom/bin/python', base_path('scripts/dicom_storage_test_object.py'),
             ]);
+            $generator->setInput(json_encode([
+                'output_path' => $dicomPath,
+                'sop_class' => $sopClass->value,
+                'study_instance_uid' => $studyUid,
+                'series_instance_uid' => $seriesUid,
+                'sop_instance_uid' => $instanceUid,
+                'frame_of_reference_uid' => $frameOfReferenceUid,
+                'patient_id' => $patientId,
+            ], JSON_THROW_ON_ERROR));
             $generator->setTimeout(10);
             $generator->run();
 
@@ -67,7 +75,7 @@ final class NativeStorageCommandRunner implements StorageCommandRunner
         } catch (Throwable $exception) {
             return new StorageCommandResult(false, 1, $exception->getMessage(), $instanceUid, generationFailed: true);
         } finally {
-            foreach ([$dicomPath, $imagePath] as $path) {
+            foreach ([$dicomPath] as $path) {
                 if (is_file($path)) {
                     unlink($path);
                 }
@@ -76,14 +84,5 @@ final class NativeStorageCommandRunner implements StorageCommandRunner
                 rmdir($directory);
             }
         }
-    }
-
-    private function bitmap(): string
-    {
-        $pixelData = "\x00\x00\x00\x00";
-
-        return 'BM'.pack('VvvV', 58, 0, 0, 54)
-            .pack('V3v2V6', 40, 1, 1, 1, 24, 0, 4, 2835, 2835, 0, 0)
-            .$pixelData;
     }
 }

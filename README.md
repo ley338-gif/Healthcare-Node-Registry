@@ -39,7 +39,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - Diagnose-Workspace mit Verlauf, Profilen und JSON-/CSV-Ergebnisexport
 - Netzwerkprüfung und DICOM C-ECHO
 - Modality-Worklist-C-FIND und PACS-Study-Root-C-FIND
-- Kontrollierter C-STORE eines synthetischen Secondary-Capture-Objekts
+- Kontrollierter C-STORE auswählbarer synthetischer Secondary-Capture-, CT- und MR-Objekte
 - Autorisierte C-MOVE- und C-GET-Tests mit serverseitig konfigurierten synthetischen Study-UIDs
 - Autorisierter MPPS-Test mit synthetischem N-CREATE und anschließendem N-SET auf `COMPLETED`
 - Autorisiertes Storage Commitment mit synthetischem C-STORE, N-ACTION und korreliertem N-EVENT-REPORT
@@ -89,7 +89,7 @@ PHP, Composer, PostgreSQL, Node.js und DCMTK müssen bei dieser Variante nicht a
 - Composer 2
 - PostgreSQL 18
 - Node.js 24 und npm
-- DCMTK für native DICOM-Diagnosen (`echoscu`, `findscu`, `movescu`, `getscu`, `img2dcm`, `storescu`, `dcmdump`, `dump2dcm`)
+- DCMTK für native DICOM-Diagnosen (`echoscu`, `findscu`, `movescu`, `getscu`, `storescu`, `dcmdump`, `dump2dcm`)
 - Python 3 mit `venv`, `pynetdicom==3.0.4` und `pydicom==3.0.1` unter `/opt/registry-dicom` für MPPS und Storage Commitment
 
 Für einen reproduzierbaren Betrieb wird Docker empfohlen.

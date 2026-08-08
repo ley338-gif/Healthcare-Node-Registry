@@ -43,7 +43,7 @@ Jeder fachlich kritische Wert sollte eine Herkunft besitzen:
 
 ## Datenschutz
 
-Die Registry speichert keine hochgeladenen DICOM-Dateien und benötigt keine echten Patientendaten. Der kontrollierte Storage-Test erzeugt kurzzeitig ein synthetisches Secondary-Capture-Objekt und kann dieses nach ausdrücklicher Bestätigung an ein Zielsystem senden. Dateianalysen und lokale Testartefakte werden nach Verarbeitung gelöscht. Details: [Diagnostic Test Workspace](DiagnosticTestWorkspace.md).
+Die Registry speichert keine hochgeladenen DICOM-Dateien und benötigt keine echten Patientendaten. Der kontrollierte Storage-Test erzeugt kurzzeitig ein auswählbares synthetisches Secondary-Capture-, CT- oder MR-Objekt und kann dieses nach ausdrücklicher Bestätigung an ein Zielsystem senden. Dateianalysen und lokale Testartefakte werden nach Verarbeitung gelöscht. Details: [Diagnostic Test Workspace](DiagnosticTestWorkspace.md).
 
 ## Discovery-C-ECHO gegenüber verifizierten Knoten
 

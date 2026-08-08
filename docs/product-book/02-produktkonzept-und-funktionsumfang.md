@@ -208,7 +208,6 @@ Langfristig können folgende Themen bewertet werden:
 - Mehrfaktor-Authentisierung;
 - eine öffentlich dokumentierte, versionierte Produkt-API;
 - abgesicherte DICOM-TLS-Unterstützung für Diagnosefunktionen;
-- zusätzliche synthetische Storage-SOP-Klassen;
 - weitere DICOM-Funktionen wie C-MOVE oder C-GET nach gesondertem Sicherheitsdesign;
 - Auswertungen und Dashboards auf Basis vorhandener Ereignisgruppen;
 - kontrollierte Integrationen mit führenden Infrastruktur- oder Identitätssystemen.

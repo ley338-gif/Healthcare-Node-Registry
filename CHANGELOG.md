@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Kontrollierten synthetischen C-STORE um auswählbare Secondary-Capture-, CT- und MR-Image-Storage-Objekte mit serverseitiger SOP-Class-Validierung, korrekten Auditdaten und rückstandsfreier lokaler Erzeugung erweitert.
 - DICOM-TLS für alle Diagnose-Runner ergänzt: benannte, schreibgeschützt eingebundene Zertifikatsprofile, gegenseitige Zertifikatsprüfung für DCMTK/Python/PHP, TLS-geschützter Storage-Commitment-Callback und fail-closed Verhalten ohne Klartext-Fallback.
 - Versionsbezogenen Dokumentfreigabe-Workflow mit serverseitigem Vier-Augen-Prinzip, separatem Freigaberecht, Audit-Ereignissen, Veröffentlichung erst nach Freigabe sowie konfigurierbaren Mindestaufbewahrungsfristen je Kategorie ergänzt.
 - Audit-Trail kryptografisch über eine kanonische SHA-256-Hash-Chain mit gespeichertem Kettenkopf abgesichert; Verifikations- und kontrollierten Prune-Befehl, siebenjährig vorkonfigurierte betreiberabhängige Aufbewahrung, unveränderliche Audit-Modelle, Bestandsverkettung und Manipulations-/Löschungstests ergänzt.

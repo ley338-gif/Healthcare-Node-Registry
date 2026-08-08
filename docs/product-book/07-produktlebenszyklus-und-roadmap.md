@@ -257,7 +257,6 @@ Die detaillierte Arbeitsroadmap wird außerhalb dieses Kapitels gepflegt. Auf Pr
 - weitere installationsbezogene Härtung der Diagnoseausführung;
 - konfigurierbare CIDR-Allowlist, Timeouts und Parallelitätsgrenzen;
 - DICOM-TLS;
-- weitere synthetische Storage-SOP-Klassen;
 - C-MOVE und C-GET erst nach eigenständigem Sicherheitsdesign.
 
 ### Identität und Schnittstellen

@@ -61,7 +61,7 @@ final class DiagnosticTestProfileController extends Controller
             'name' => $validated['name'], 'description' => $validated['description'] ?? null,
             'test_type' => $validated['test_type'], 'dicom_node_id' => $node->id,
             'calling_ae_title' => isset($validated['calling_ae_title']) ? strtoupper($validated['calling_ae_title']) : null,
-            'configuration' => $validated['configuration'], 'timeout_seconds' => $validated['timeout_seconds'],
+            'configuration' => $validated['configuration'] ?? [], 'timeout_seconds' => $validated['timeout_seconds'],
             'enabled' => $validated['enabled'],
         ];
     }

@@ -254,6 +254,7 @@ const storageForm = useForm({
     confirmed: false,
     calling_ae_title: props.connectionPrefill.calling_ae_title ?? props.defaultCallingAeTitle,
     called_ae_title: props.connectionPrefill.called_ae_title ?? '',
+    sop_class: 'secondary_capture',
 });
 const mppsForm = useForm({
     confirmed: false,
@@ -272,6 +273,18 @@ const capabilityForm = useForm({
 const fileAnalysisForm = useForm<{ dicom_file: File | null }>({ dicom_file: null });
 
 const selectedNode = computed(() => props.nodes.find((node) => node.public_id === selectedNodeId.value) ?? null);
+
+watch(
+    () => profileForm.test_type,
+    (testType) => {
+        if (editingProfileId.value === null && testType === 'dicom_storage') {
+            profileForm.configuration = {
+                sop_class: storageForm.sop_class,
+                called_ae_title: storageForm.called_ae_title,
+            };
+        }
+    },
+);
 
 onMounted(() => {
     if (!props.connectionPrefill.node) return;
@@ -588,6 +601,8 @@ const runPacsQuery = (): void => {
 const profileConfiguration = (type: string): Record<string, string> => {
     if (type === 'worklist') return { ...worklistForm.data(), called_ae_title: worklistForm.called_ae_title };
     if (type === 'pacs_query') return { ...pacsForm.data(), called_ae_title: pacsForm.called_ae_title };
+    if (type === 'dicom_storage')
+        return { sop_class: storageForm.sop_class, called_ae_title: storageForm.called_ae_title };
     return {};
 };
 
@@ -615,7 +630,8 @@ const editProfile = (profile: TestProfile): void => {
 };
 
 const saveProfile = (): void => {
-    if (editingProfileId.value === null) profileForm.configuration = profileConfiguration(profileForm.test_type);
+    if (editingProfileId.value === null && profileForm.test_type !== 'dicom_storage')
+        profileForm.configuration = profileConfiguration(profileForm.test_type);
     const options = {
         preserveScroll: true,
         onSuccess: () => {
@@ -629,6 +645,16 @@ const saveProfile = (): void => {
 const executeProfile = (profile: TestProfile): void => {
     if (!profile.enabled) return;
     selectedNodeId.value = profile.dicom_node.public_id;
+    if (profile.test_type === 'dicom_storage') {
+        const node = props.nodes.find((candidate) => candidate.public_id === profile.dicom_node.public_id);
+        if (!node?.supports_store) return;
+        storageForm.calling_ae_title = profile.calling_ae_title ?? props.defaultCallingAeTitle;
+        storageForm.called_ae_title = profile.configuration.called_ae_title ?? node.ae_title;
+        storageForm.sop_class = profile.configuration.sop_class ?? 'secondary_capture';
+        storageForm.confirmed = false;
+        storageDialogOpen.value = true;
+        return;
+    }
     router.post(`/tests/profiles/${profile.public_id}/execute`, {}, { preserveScroll: true });
 };
 
@@ -636,6 +662,11 @@ const canExecuteProfile = (profile: TestProfile): boolean => {
     if (profile.test_type === 'network' || profile.test_type === 'dicom_echo') return props.canRunEcho;
     if (profile.test_type === 'worklist') return props.canRunWorklist;
     if (profile.test_type === 'pacs_query') return props.canRunPacsQuery;
+    if (profile.test_type === 'dicom_storage')
+        return (
+            props.canRunStorage &&
+            props.nodes.some((node) => node.public_id === profile.dicom_node.public_id && node.supports_store)
+        );
 
     return false;
 };
@@ -1018,7 +1049,8 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                             <div class="self-start rounded-xl bg-rose-50 p-2.5 text-rose-700"><Send :size="20" /></div>
                             <h3 class="mt-5 font-semibold text-slate-950">DICOM Storage</h3>
                             <p class="mt-2 flex-1 text-sm leading-6 text-slate-500">
-                                Synthetisches Secondary-Capture-Testobjekt kontrolliert per C-STORE senden.
+                                Auswählbares synthetisches Secondary-Capture-, CT- oder MR-Testobjekt kontrolliert per
+                                C-STORE senden.
                             </p>
                             <button
                                 type="button"
@@ -2101,6 +2133,7 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                                 <option value="dicom_echo">C-ECHO</option>
                                 <option value="worklist">Worklist</option>
                                 <option value="pacs_query">PACS Query</option>
+                                <option value="dicom_storage">DICOM Storage</option>
                             </select></label
                         ><label class="text-sm font-medium"
                             >DICOM-Knoten<select
@@ -2126,13 +2159,25 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                                 class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5"
                         /></label>
                     </div>
+                    <label v-if="profileForm.test_type === 'dicom_storage'" class="block text-sm font-medium"
+                        >Synthetische SOP Class<select
+                            v-model="profileForm.configuration.sop_class"
+                            required
+                            class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5"
+                        >
+                            <option value="secondary_capture">Secondary Capture Image Storage</option>
+                            <option value="ct_image">CT Image Storage</option>
+                            <option value="mr_image">MR Image Storage</option>
+                        </select></label
+                    >
                     <label class="flex items-center gap-2 text-sm"
                         ><input v-model="profileForm.enabled" type="checkbox" class="rounded border-slate-300" />Profil
                         aktiviert</label
                     >
                     <p class="text-xs leading-5 text-slate-500">
-                        Bei neuen Worklist- und PACS-Profilen werden die aktuell im jeweiligen Testformular gesetzten
-                        Filter übernommen.
+                        Bei neuen Worklist-, PACS- und Storage-Profilen werden die aktuell im jeweiligen Testformular
+                        gesetzten Parameter übernommen. Storage-Profile öffnen vor jedem Versand erneut den
+                        Bestätigungsdialog.
                     </p>
                     <div
                         v-if="Object.keys(profileForm.errors).length"
@@ -2321,6 +2366,19 @@ const exportRun = (run: HistoryRun, format: 'json' | 'csv'): void => {
                             maxlength="16"
                             required
                             class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono" /></label
+                    ><label class="block text-sm font-medium"
+                        >Synthetische SOP Class<select
+                            v-model="storageForm.sop_class"
+                            required
+                            class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5"
+                        >
+                            <option value="secondary_capture">Secondary Capture Image Storage</option>
+                            <option value="ct_image">CT Image Storage</option>
+                            <option value="mr_image">MR Image Storage</option>
+                        </select>
+                        <span class="mt-1 block text-xs font-normal text-slate-500"
+                            >Das Objekt enthält ausschließlich synthetische Testdaten.</span
+                        ></label
                     ><label class="flex items-start gap-3 rounded-xl border border-rose-200 p-4 text-sm"
                         ><input
                             v-model="storageForm.confirmed"
