@@ -19,7 +19,7 @@ final class DicomStorageTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_success_contains_storage_metadata(): void
+    public function test_tls_enabled_success_contains_storage_metadata(): void
     {
         $result = $this->execute(new StorageCommandResult(true, 0, 'Transfer Syntax: Little Endian Explicit; status 0x0000', '1.2.3'));
         self::assertSame(DiagnosticTestStatus::Success, $result->status);
@@ -38,7 +38,11 @@ final class DicomStorageTest extends TestCase
     public function test_confirmation_and_strict_permission_are_required(): void
     {
         $this->seed();
-        $node = DicomNode::factory()->create(['supports_store' => true]);
+        $node = DicomNode::factory()->create([
+            'supports_store' => true,
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
+        ]);
         $manager = User::factory()->create();
         $role = Role::query()->create(['name' => 'registry-manager', 'display_name' => 'Registry Manager']);
         $role->permissions()->attach(Permission::query()->where('name', 'registry.manage')->firstOrFail());

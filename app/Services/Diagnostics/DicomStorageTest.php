@@ -56,6 +56,7 @@ final class DicomStorageTest
         $normalized = strtolower($output);
 
         return match (true) {
+            $command->tlsConfigurationFailed => 'tls_configuration',
             $command->generationFailed => 'generation_failed',
             $command->timedOut, str_contains($normalized, 'timeout'), str_contains($normalized, 'timed out') => 'timeout',
             str_contains($normalized, 'association rejected') => 'association_rejected',
@@ -68,6 +69,7 @@ final class DicomStorageTest
     private function failureSummary(?string $type): string
     {
         return match ($type) {
+            'tls_configuration' => 'Die DICOM-TLS-Konfiguration ist unvollständig oder ungültig.',
             'generation_failed' => 'Synthetisches DICOM-Testobjekt konnte nicht erzeugt werden.',
             'timeout' => 'Zeitüberschreitung beim DICOM-Storage-Test.',
             'association_rejected' => 'DICOM Association wurde abgelehnt.',

@@ -2,6 +2,7 @@
 """Run an authorized synthetic MPPS N-CREATE/N-SET diagnostic."""
 
 import json
+import ssl
 import sys
 from datetime import datetime
 
@@ -16,6 +17,18 @@ UID_PREFIX = "1.2.826.0.1.3680043.10.987."
 
 def status_code(status):
     return None if status is None else int(status.Status)
+
+
+def tls_arguments(request):
+    tls = request.get("tls")
+    if not tls:
+        return None
+
+    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=tls["ca_certificate"])
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_REQUIRED
+    context.load_cert_chain(certfile=tls["certificate"], keyfile=tls["private_key"])
+    return context, request["host"]
 
 
 def main():
@@ -54,7 +67,12 @@ def main():
     ae.dimse_timeout = 20
     ae.network_timeout = 5
     ae.add_requested_context(ModalityPerformedProcedureStep)
-    association = ae.associate(request["host"], int(request["port"]), ae_title=request["called_ae_title"])
+    association = ae.associate(
+        request["host"],
+        int(request["port"]),
+        ae_title=request["called_ae_title"],
+        tls_args=tls_arguments(request),
+    )
     if not association.is_established:
         print(json.dumps({"successful": False, "failure_type": "association_rejected", "message": "DICOM association could not be established", "instance_uid": instance_uid}))
         return 2

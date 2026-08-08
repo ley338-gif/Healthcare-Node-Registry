@@ -24,9 +24,13 @@ final class DicomStorageCommitmentTest extends TestCase
         fake()->unique(true);
     }
 
-    public function test_success_requires_store_action_and_event_report(): void
+    public function test_tls_enabled_success_requires_store_action_and_event_report(): void
     {
-        $node = DicomNode::factory()->create(['supports_storage_commitment' => true]);
+        $node = DicomNode::factory()->create([
+            'supports_storage_commitment' => true,
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
+        ]);
         $result = $this->service()->run($node, 'NODE_REGISTRY', $node->ae_title);
 
         self::assertSame(DiagnosticTestStatus::Success, $result->status);

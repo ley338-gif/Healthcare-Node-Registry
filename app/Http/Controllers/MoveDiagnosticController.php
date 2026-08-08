@@ -33,7 +33,7 @@ final class MoveDiagnosticController extends Controller
         }
 
         $dicomConnection->loadMissing(['targetNode.system', 'destinationNode']);
-        $targetNode = $dicomConnection->targetNode;
+        $targetNode = $dicomConnection->diagnosticTargetNode();
         $destinationNode = $dicomConnection->destinationNode;
         if ($targetNode->archived_at !== null || $destinationNode === null || $destinationNode->archived_at !== null) {
             return back()->with('error', 'Ziel- oder Move-Destination-Knoten ist archiviert.');

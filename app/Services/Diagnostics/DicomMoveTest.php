@@ -68,6 +68,7 @@ final class DicomMoveTest
         $normalized = strtolower($output);
 
         return match (true) {
+            str_contains($normalized, 'dicom-tls'), str_contains($normalized, 'tls-profil') => 'tls_configuration',
             $command->timedOut, str_contains($normalized, 'timeout'), str_contains($normalized, 'timed out') => 'timeout',
             str_contains($normalized, 'association rejected') => 'association_rejected',
             str_contains($normalized, 'unknown move destination') => 'unknown_move_destination',
@@ -78,6 +79,7 @@ final class DicomMoveTest
     private function failureSummary(?string $type): string
     {
         return match ($type) {
+            'tls_configuration' => 'Die DICOM-TLS-Konfiguration ist unvollständig oder ungültig.',
             'timeout' => 'Zeitüberschreitung beim C-MOVE-Test.',
             'association_rejected' => 'DICOM Association wurde abgelehnt.',
             'unknown_move_destination' => 'Das Zielsystem kennt den konfigurierten Move-Destination-AE-Title nicht.',

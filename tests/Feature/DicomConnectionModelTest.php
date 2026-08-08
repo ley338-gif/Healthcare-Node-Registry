@@ -97,6 +97,31 @@ final class DicomConnectionModelTest extends TestCase
         );
     }
 
+    public function test_connection_transport_overrides_are_applied_to_a_diagnostic_target_clone(): void
+    {
+        $source = DicomNode::factory()->create();
+        $target = DicomNode::factory()->create([
+            'port' => 104,
+            'tls_enabled' => false,
+            'tls_profile' => null,
+        ]);
+        $connection = DicomConnection::factory()->create([
+            'source_dicom_node_id' => $source->id,
+            'target_dicom_node_id' => $target->id,
+            'port_override' => 2762,
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
+        ]);
+
+        $diagnosticTarget = $connection->diagnosticTargetNode();
+
+        self::assertNotSame($target, $diagnosticTarget);
+        self::assertSame(2762, $diagnosticTarget->port);
+        self::assertTrue($diagnosticTarget->tls_enabled);
+        self::assertSame('pacs-production', $diagnosticTarget->tls_profile);
+        self::assertFalse($target->tls_enabled);
+    }
+
     public function test_active_scope_excludes_archived_connections(): void
     {
         DicomConnection::factory()->create([

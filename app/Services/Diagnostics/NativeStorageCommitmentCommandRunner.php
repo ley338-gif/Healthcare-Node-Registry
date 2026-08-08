@@ -3,15 +3,24 @@
 namespace App\Services\Diagnostics;
 
 use App\Models\DicomNode;
+use App\Services\Dicom\DicomTlsProfileResolver;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 use Throwable;
 
 final class NativeStorageCommitmentCommandRunner implements StorageCommitmentCommandRunner
 {
+    public function __construct(private readonly DicomTlsProfileResolver $tlsProfiles = new DicomTlsProfileResolver) {}
+
     public function run(DicomNode $node, string $callingAeTitle, string $calledAeTitle, string $sopClassUid, string $sopInstanceUid): StorageCommitmentCommandResult
     {
         $eventTimeout = (int) config('diagnostics.storage_commitment_event_timeout_seconds');
+        try {
+            $tlsProfile = $this->tlsProfiles->resolve($node);
+        } catch (Throwable $exception) {
+            return new StorageCommitmentCommandResult(false, null, null, null, null, $exception->getMessage(), 'tls_configuration');
+        }
+
         $process = new Process(['/opt/registry-dicom/bin/python', base_path('scripts/dicom_storage_commitment.py')]);
         $process->setInput(json_encode([
             'host' => $node->host,
@@ -23,6 +32,7 @@ final class NativeStorageCommitmentCommandRunner implements StorageCommitmentCom
             'callback_bind' => '0.0.0.0',
             'callback_port' => (int) config('diagnostics.storage_commitment_callback_port'),
             'event_timeout_seconds' => $eventTimeout,
+            'tls' => $tlsProfile?->pythonPayload(),
         ], JSON_THROW_ON_ERROR));
         $process->setTimeout($eventTimeout + 15);
 

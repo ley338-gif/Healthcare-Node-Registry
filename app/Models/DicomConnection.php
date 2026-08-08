@@ -24,6 +24,7 @@ use Illuminate\Support\Str;
  * @property string|null $called_ae_title
  * @property int|null $port_override
  * @property bool $tls_enabled
+ * @property string|null $tls_profile
  * @property bool $test_enabled
  * @property string|null $description
  * @property string|null $notes
@@ -91,6 +92,7 @@ final class DicomConnection extends Model
         'called_ae_title',
         'port_override',
         'tls_enabled',
+        'tls_profile',
         'test_enabled',
         'description',
         'notes',
@@ -166,6 +168,20 @@ final class DicomConnection extends Model
     public function scopeActive(Builder $query): void
     {
         $query->whereNull('archived_at');
+    }
+
+    public function diagnosticTargetNode(): DicomNode
+    {
+        $this->loadMissing('targetNode.system');
+        $target = clone $this->targetNode;
+        $target->setAttribute('port', $this->port_override ?? $target->port);
+
+        if ($this->tls_enabled) {
+            $target->setAttribute('tls_enabled', true);
+            $target->setAttribute('tls_profile', $this->tls_profile);
+        }
+
+        return $target;
     }
 
     private function normalizeAeTitles(): void

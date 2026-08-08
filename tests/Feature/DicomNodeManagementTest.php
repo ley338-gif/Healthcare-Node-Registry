@@ -28,6 +28,8 @@ final class DicomNodeManagementTest extends TestCase
                     'host' => '10.91.19.11',
                     'port' => 11112,
                     'role' => 'scp',
+                    'tls_enabled' => true,
+                    'tls_profile' => 'pacs-production',
                     'supports_store' => true,
                 ]),
             );
@@ -43,6 +45,8 @@ final class DicomNodeManagementTest extends TestCase
             'host' => '10.91.19.11',
             'port' => 11112,
             'role' => 'scp',
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
             'supports_store' => true,
             'archived_at' => null,
         ]);
@@ -51,6 +55,18 @@ final class DicomNodeManagementTest extends TestCase
             'event_type' => 'registry.dicom_node.created',
             'subject_type' => DicomNode::class,
         ]);
+    }
+
+    public function test_tls_enabled_node_requires_a_profile_reference(): void
+    {
+        $user = $this->createRegistryManager();
+        $system = System::factory()->create();
+
+        $this->actingAs($user)
+            ->post("/systems/{$system->public_id}/dicom-nodes", $this->validPayload(['tls_enabled' => true]))
+            ->assertSessionHasErrors('tls_profile');
+
+        $this->assertDatabaseCount('dicom_nodes', 0);
     }
 
     public function test_modality_is_stored_and_normalized_to_uppercase(): void
@@ -300,6 +316,7 @@ final class DicomNodeManagementTest extends TestCase
             'role' => 'both',
             'status' => 'active',
             'tls_enabled' => false,
+            'tls_profile' => null,
             'supports_echo' => true,
             'supports_store' => false,
             'supports_query' => false,

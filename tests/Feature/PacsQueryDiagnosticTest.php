@@ -17,7 +17,7 @@ final class PacsQueryDiagnosticTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_success_with_results_is_normalized(): void
+    public function test_tls_enabled_success_with_results_is_normalized(): void
     {
         $result = $this->execute(new WorklistCommandResult(true, 0, '', '<responses><data-set><element tag="0010,0010">DOE^JANE</element><element tag="0020,000D">1.2.3</element><element tag="0020,1206">3</element><element tag="0020,1208">42</element></data-set></responses>'));
         self::assertSame(1, $result->details['resultCount']);
@@ -39,7 +39,11 @@ final class PacsQueryDiagnosticTest extends TestCase
 
     public function test_invalid_uid_is_rejected_and_unprivileged_user_is_forbidden(): void
     {
-        $node = DicomNode::factory()->create(['supports_query' => true]);
+        $node = DicomNode::factory()->create([
+            'supports_query' => true,
+            'tls_enabled' => true,
+            'tls_profile' => 'pacs-production',
+        ]);
         $input = $this->input($node);
         $input['study_instance_uid'] = 'invalid-uid';
         $this->actingAs($this->manager())->post("/tests/pacs-query/{$node->public_id}", $input)->assertSessionHasErrors('study_instance_uid');

@@ -52,7 +52,7 @@ final class RegistryCsvImportTest extends TestCase
             'supports_store' => true, 'supports_query' => true, 'supports_retrieve' => true,
             'supports_storage_commitment' => false, 'supports_mpps' => false, 'supports_worklist' => false,
         ]);
-        $csv = $this->nodeHeader()."\nKlinik Nord,PACS Nord,PACS,PACS_AE,10.10.0.10,104,both,active,false,true,true,true,true,false,false,false,,";
+        $csv = $this->nodeHeader()."\nKlinik Nord,PACS Nord,PACS,PACS_AE,10.10.0.10,104,both,active,false,,true,true,true,true,false,false,false,,";
         $response = $this->actingAs($this->administrator())->post('/systems/import/preview', ['kind' => 'dicom_nodes', 'csv_file' => UploadedFile::fake()->createWithContent('nodes.csv', $csv)]);
         parse_str((string) parse_url((string) $response->headers->get('Location'), PHP_URL_QUERY), $query);
 
@@ -77,6 +77,6 @@ final class RegistryCsvImportTest extends TestCase
 
     private function nodeHeader(): string
     {
-        return 'organization_name,system_name,name,ae_title,host,port,role,status,tls_enabled,supports_echo,supports_store,supports_query,supports_retrieve,supports_storage_commitment,supports_mpps,supports_worklist,description,notes';
+        return 'organization_name,system_name,name,ae_title,host,port,role,status,tls_enabled,tls_profile,supports_echo,supports_store,supports_query,supports_retrieve,supports_storage_commitment,supports_mpps,supports_worklist,description,notes';
     }
 }

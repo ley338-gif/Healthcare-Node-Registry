@@ -16,4 +16,10 @@ return [
     ),
     'storage_commitment_callback_port' => min(max((int) env('DIAGNOSTIC_STORAGE_COMMITMENT_CALLBACK_PORT', 11113), 1), 65535),
     'storage_commitment_event_timeout_seconds' => min(max((int) env('DIAGNOSTIC_STORAGE_COMMITMENT_EVENT_TIMEOUT', 30), 5), 120),
+    'tls' => [
+        'profile_directory' => env('DIAGNOSTIC_TLS_PROFILE_DIRECTORY', '/run/secrets/dicom-tls'),
+        'private_key_filename' => 'private-key.pem',
+        'certificate_filename' => 'certificate.pem',
+        'ca_certificate_filename' => 'ca.pem',
+    ],
 ];

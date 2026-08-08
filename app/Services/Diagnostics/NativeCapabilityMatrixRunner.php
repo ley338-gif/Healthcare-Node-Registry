@@ -3,14 +3,33 @@
 namespace App\Services\Diagnostics;
 
 use App\Models\DicomNode;
+use App\Services\Dicom\DicomTlsProfileResolver;
+use Throwable;
 
 final class NativeCapabilityMatrixRunner implements CapabilityMatrixRunner
 {
+    public function __construct(private readonly DicomTlsProfileResolver $tlsProfiles = new DicomTlsProfileResolver) {}
+
     public function run(DicomNode $node, string $callingAeTitle, string $calledAeTitle, array $contexts): CapabilityMatrixResult
     {
+        try {
+            $tlsProfile = $this->tlsProfiles->resolve($node);
+        } catch (Throwable $exception) {
+            return new CapabilityMatrixResult(false, [], $exception->getMessage());
+        }
+
         $errorNumber = 0;
         $errorMessage = '';
-        $socket = @stream_socket_client("tcp://{$node->host}:{$node->port}", $errorNumber, $errorMessage, 5);
+        $protocol = $tlsProfile === null ? 'tcp' : 'tls';
+        $context = $tlsProfile?->clientStreamContext() ?? stream_context_create();
+        $socket = @stream_socket_client(
+            "{$protocol}://{$node->host}:{$node->port}",
+            $errorNumber,
+            $errorMessage,
+            5,
+            STREAM_CLIENT_CONNECT,
+            $context,
+        );
         if ($socket === false) {
             return new CapabilityMatrixResult(false, [], $errorMessage ?: "Netzwerkfehler {$errorNumber}", str_contains(strtolower($errorMessage), 'timed out'));
         }
