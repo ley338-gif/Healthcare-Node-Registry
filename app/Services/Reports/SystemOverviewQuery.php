@@ -35,6 +35,11 @@ final class SystemOverviewQuery
                 ->orWhere('hostname', 'ilike', "%{$search}%")
                 ->orWhere('fqdn', 'ilike', "%{$search}%")
                 ->orWhere('ip_address', 'ilike', "%{$search}%")
+                ->orWhereHas('networkInterfaces', fn ($interfaces) => $interfaces
+                    ->where('interface_label', 'ilike', "%{$search}%")
+                    ->orWhere('hostname', 'ilike', "%{$search}%")
+                    ->orWhere('fqdn', 'ilike', "%{$search}%")
+                    ->orWhere('ip_address', 'ilike', "%{$search}%"))
                 ->orWhere('vendor', 'ilike', "%{$search}%")
                 ->orWhere('product', 'ilike', "%{$search}%")))
             ->when(filled($filters['type'] ?? null), fn ($query) => $query->where('system_type', $filters['type']))
@@ -53,7 +58,10 @@ final class SystemOverviewQuery
     {
         /** @var Collection<int, array<string, mixed>> $rows */
         $rows = $this->query($filters)
-            ->with(['dicomNodes' => fn ($query) => $query->active()->orderBy('name')])
+            ->with([
+                'dicomNodes' => fn ($query) => $query->active()->orderBy('name'),
+                'networkInterfaces',
+            ])
             ->get()
             ->toBase()
             ->flatMap(static function (System $system): array {
@@ -69,6 +77,12 @@ final class SystemOverviewQuery
                     'hostname' => $system->hostname,
                     'fqdn' => $system->fqdn,
                     'ip_address' => $system->ip_address,
+                    'network_interfaces' => $system->networkInterfaces->map(static fn ($interface): string => implode(' | ', array_filter([
+                        $interface->interface_label,
+                        $interface->hostname,
+                        $interface->fqdn,
+                        $interface->ip_address,
+                    ])))->implode('; '),
                     'vendor' => $system->vendor,
                     'product' => $system->product,
                     'model' => $system->model,

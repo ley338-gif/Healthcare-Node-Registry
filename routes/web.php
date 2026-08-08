@@ -38,6 +38,7 @@ use App\Http\Controllers\SiteController;
 use App\Http\Controllers\StorageCommitmentDiagnosticController;
 use App\Http\Controllers\StorageDiagnosticController;
 use App\Http\Controllers\SystemController;
+use App\Http\Controllers\SystemNetworkInterfaceController;
 use App\Http\Controllers\SystemOverviewExportController;
 use App\Http\Controllers\TestWorkspaceController;
 use App\Http\Controllers\WorklistDiagnosticController;
@@ -112,6 +113,12 @@ Route::middleware('auth')->group(function (): void {
 
     Route::post('/systems/{system}/archive', [SystemController::class, 'archive'])
         ->name('systems.archive');
+    Route::post('/systems/{system}/network-interfaces', [SystemNetworkInterfaceController::class, 'store'])
+        ->name('systems.network-interfaces.store');
+    Route::put('/system-network-interfaces/{systemNetworkInterface}', [SystemNetworkInterfaceController::class, 'update'])
+        ->name('system-network-interfaces.update');
+    Route::delete('/system-network-interfaces/{systemNetworkInterface}', [SystemNetworkInterfaceController::class, 'destroy'])
+        ->name('system-network-interfaces.destroy');
 
     Route::get('/systems', [SystemController::class, 'index'])
         ->name('systems.index');

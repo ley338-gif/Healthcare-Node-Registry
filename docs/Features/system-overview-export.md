@@ -7,7 +7,7 @@ Die Systemübersicht unter `/systems` kann über die Aktionen **Excel** und **PD
 Der Bericht enthält alle passenden, nicht archivierten Systeme. Für jeden aktiven DICOM-Knoten entsteht eine eigene Zeile; Systeme ohne DICOM-Knoten bleiben als Zeile mit leeren DICOM-Feldern enthalten.
 
 - Organisationskontext und Systemstammdaten
-- Hostname, FQDN und IP-Adresse
+- primärer Hostname, FQDN und IP-Adresse sowie eine Zusammenfassung aller Netzwerkinterfaces
 - Hersteller-, Produkt-, Versions- und Betriebssystemangaben
 - Inventar- und Seriennummer
 - DICOM-Knoten, AE Title, Modalität, Host, Port, Rolle, Status und TLS-Metadatum

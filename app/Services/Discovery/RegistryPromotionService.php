@@ -34,11 +34,11 @@ final class RegistryPromotionService
             $matches[] = ['type' => $type, 'system' => $system, 'dicom_node' => $node];
         };
 
-        System::query()->active()->where('ip_address', $host->ip_address)->get()
+        System::query()->active()->where(fn ($query) => $query->where('ip_address', $host->ip_address)->orWhereHas('networkInterfaces', fn ($interfaces) => $interfaces->where('ip_address', $host->ip_address)))->get()
             ->each(fn (System $system) => $addMatch('ip_address', $system));
 
         if (filled($host->hostname)) {
-            System::query()->active()->whereRaw('lower(hostname) = lower(?)', [$host->hostname])->get()
+            System::query()->active()->where(fn ($query) => $query->whereRaw('lower(hostname) = lower(?)', [$host->hostname])->orWhereHas('networkInterfaces', fn ($interfaces) => $interfaces->whereRaw('lower(hostname) = lower(?)', [$host->hostname])))->get()
                 ->each(fn (System $system) => $addMatch('hostname', $system));
         }
 

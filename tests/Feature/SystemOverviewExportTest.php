@@ -24,6 +24,12 @@ final class SystemOverviewExportTest extends TestCase
             'host' => '10.50.1.20',
             'port' => 11112,
         ]);
+        $included->networkInterfaces()->create([
+            'interface_label' => 'Management',
+            'hostname' => 'pacs-mgmt',
+            'ip_address' => '10.50.1.99',
+            'is_primary' => false,
+        ]);
         System::factory()->create(['name' => 'Nicht enthalten']);
 
         $response = $this->actingAs($this->administrator())->get('/systems/export/xlsx?organization='.$included->organization_id);
@@ -34,6 +40,7 @@ final class SystemOverviewExportTest extends TestCase
         self::assertStringContainsString('PACS ÄÖÜ', $sheet);
         self::assertStringContainsString($node->ae_title, $sheet);
         self::assertStringContainsString('10.50.1.20', $sheet);
+        self::assertStringContainsString('Management | pacs-mgmt | 10.50.1.99', $sheet);
         self::assertStringNotContainsString('Nicht enthalten', $sheet);
     }
 
