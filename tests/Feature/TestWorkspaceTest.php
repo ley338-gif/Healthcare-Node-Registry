@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\DicomNode;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\DiagnosticPermission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -59,5 +61,43 @@ final class TestWorkspaceTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Tests/Index')
                 ->where('defaultCallingAeTitle', 'HNR_TEST'));
+    }
+
+    public function test_workspace_exposes_each_granular_diagnostic_permission_independently(): void
+    {
+        $this->seed();
+        $user = User::factory()->create();
+        $role = Role::query()->create(['name' => 'echo-operator', 'display_name' => 'Echo Operator']);
+        $role->permissions()->attach(Permission::query()->whereIn('name', [
+            'registry.view',
+            DiagnosticPermission::Echo->value,
+            DiagnosticPermission::CapabilityMatrix->value,
+        ])->pluck('id'));
+        $user->roles()->attach($role);
+
+        $this->actingAs($user)->get('/tests')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('canRunEcho', true)
+            ->where('canRunNetwork', true)
+            ->where('canRunWorklist', false)
+            ->where('canRunMpps', false)
+            ->where('canRunPacsQuery', false)
+            ->where('canRunStorage', false)
+            ->where('canRunStorageCommitment', false)
+            ->where('canRunCapabilityMatrix', true));
+    }
+
+    public function test_default_diagnostic_roles_follow_least_privilege(): void
+    {
+        $this->seed();
+
+        $pacsAdministrator = Role::query()->where('name', 'pacs-administrator')->firstOrFail();
+        $readOnly = Role::query()->where('name', 'read-only')->firstOrFail();
+
+        self::assertEqualsCanonicalizing(
+            array_column(DiagnosticPermission::cases(), 'value'),
+            $pacsAdministrator->permissions()->where('name', 'like', 'diagnostics.%')->pluck('name')->all(),
+        );
+        self::assertFalse($readOnly->permissions()->where('name', 'like', 'diagnostics.%')->exists());
+        self::assertTrue($readOnly->permissions()->where('name', 'registry.view')->exists());
     }
 }

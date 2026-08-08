@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\DiagnosticTestProfile;
 use App\Models\User;
+use App\Support\DiagnosticPermission;
 
 final class DiagnosticTestProfilePolicy
 {
@@ -34,6 +35,8 @@ final class DiagnosticTestProfilePolicy
 
     public function execute(User $user, DiagnosticTestProfile $profile): bool
     {
-        return $user->hasPermission('registry.manage');
+        $permission = DiagnosticPermission::forProfileType($profile->test_type);
+
+        return $permission !== null && $this->view($user, $profile) && $permission->allows($user);
     }
 }

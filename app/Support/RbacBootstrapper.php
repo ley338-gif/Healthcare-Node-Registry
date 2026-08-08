@@ -28,12 +28,36 @@ final class RbacBootstrapper
     public function ensureSystemAdministratorRole(): Role
     {
         $ids = [];
-        foreach (self::PERMISSIONS as $name => $display) {
+        foreach ([...self::PERMISSIONS, ...DiagnosticPermission::labels()] as $name => $display) {
             $ids[] = Permission::query()->firstOrCreate(['name' => $name], ['display_name' => $display])->id;
         }
         $role = Role::query()->firstOrCreate(['name' => 'system-administrator'], ['display_name' => 'System Administrator']);
         $role->permissions()->syncWithoutDetaching($ids);
 
         return $role;
+    }
+
+    public function ensureDiagnosticRoles(): void
+    {
+        $pacsPermissionNames = [
+            'registry.view',
+            'tests.analyze_file',
+            'tests.export',
+            ...array_column(DiagnosticPermission::cases(), 'value'),
+        ];
+        $diagnosticPermissionIds = Permission::query()->whereIn('name', $pacsPermissionNames)->pluck('id');
+        $pacsAdministrator = Role::query()->firstOrCreate(
+            ['name' => 'pacs-administrator'],
+            ['display_name' => 'PACS-Administrator'],
+        );
+        $pacsAdministrator->permissions()->syncWithoutDetaching($diagnosticPermissionIds);
+
+        $readOnly = Role::query()->firstOrCreate(
+            ['name' => 'read-only'],
+            ['display_name' => 'Nur Lesen'],
+        );
+        $readOnly->permissions()->syncWithoutDetaching(
+            Permission::query()->whereIn('name', ['registry.view', 'documents.view', 'discovery.view'])->pluck('id'),
+        );
     }
 }

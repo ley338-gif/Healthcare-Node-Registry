@@ -432,7 +432,7 @@ Es gibt derzeit keine freigegebene öffentliche REST-API, keine OpenAPI-Spezifik
 - PostgreSQL und PHP-FPM nicht zusätzlich auf Host-Ports veröffentlichen.
 - Ausgehenden Netzwerkzugriff des App-Containers auf ausdrücklich freigegebene DICOM-Ziele begrenzen.
 - DICOM-Diagnosen verwenden aktuell kein TLS; `tls_enabled` ist für diese Runner nur Registry-Metadatum.
-- Das strengere Recht `tests.run.storage` und die ausdrückliche Bestätigung für C-STORE beachten; das synthetische Objekt kann im Zielsystem dauerhaft gespeichert werden.
+- Diagnoseberechtigungen (`diagnostics.echo`, `.worklist`, `.query`, `.store`, `.move`, `.get`, `.mpps`, `.storage_commitment`, `.capability_matrix`) nach dem Minimalprinzip vergeben. Datenverändernde Tests verlangen zusätzlich eine ausdrückliche Bestätigung.
 - ClamAV-Signaturupdates und den Zustand des `clamav`-Containers überwachen; ClamD-Port 3310 nicht außerhalb des internen Netzes veröffentlichen.
 - Datenbank und `app_storage` gemeinsam, regelmäßig und verschlüsselt sichern; Restore-Tests durchführen.
 - Benutzer, Rollen, Auditereignisse und Logs regelmäßig prüfen.

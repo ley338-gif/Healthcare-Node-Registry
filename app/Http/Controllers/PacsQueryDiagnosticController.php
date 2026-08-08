@@ -8,6 +8,7 @@ use App\Services\Diagnostics\DiagnosticTestRecorder;
 use App\Services\Diagnostics\DiagnosticTestStatus;
 use App\Services\Diagnostics\PacsQueryParameters;
 use App\Services\Diagnostics\PacsQueryTest;
+use App\Support\DiagnosticPermission;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,8 @@ final class PacsQueryDiagnosticController extends Controller
 {
     public function __invoke(RunPacsQueryTestRequest $request, DicomNode $dicomNode, PacsQueryTest $test, DiagnosticTestRecorder $recorder, RegistryAudit $audit): RedirectResponse
     {
-        Gate::authorize('verify', $dicomNode);
+        Gate::authorize('view', $dicomNode);
+        Gate::authorize(DiagnosticPermission::Query->value);
         if ($dicomNode->archived_at !== null) {
             return back()->with('error', 'Ein archivierter DICOM-Knoten kann nicht getestet werden.');
         }

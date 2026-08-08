@@ -28,6 +28,8 @@ Die vorhandenen Rollen und Berechtigungen werden im Bereich `Einstellungen > Ben
 
 Die Rolle `system-administrator` ist technisch geschuetzt. Das eigene Konto kann nicht deaktiviert werden; ausserdem verhindert die Anwendung, dass der letzte aktive Systemadministrator deaktiviert oder aus dieser Rolle entfernt wird. Alle Aenderungen verwenden die vorhandenen Policies und die zentrale Audit-Infrastruktur.
 
+Diagnosen werden einzeln mit `diagnostics.echo`, `diagnostics.worklist`, `diagnostics.query`, `diagnostics.store`, `diagnostics.move`, `diagnostics.get`, `diagnostics.mpps`, `diagnostics.storage_commitment` und `diagnostics.capability_matrix` freigegeben. Die Standardrolle `PACS-Administrator` enthaelt alle Diagnoserechte; `Nur Lesen` enthaelt keines davon.
+
 ## Scopes
 
 - installationsweit

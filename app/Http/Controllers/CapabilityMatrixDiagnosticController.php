@@ -7,6 +7,7 @@ use App\Models\DicomNode;
 use App\Services\Diagnostics\DiagnosticTestRecorder;
 use App\Services\Diagnostics\DiagnosticTestStatus;
 use App\Services\Diagnostics\DicomCapabilityMatrixTest;
+use App\Support\DiagnosticPermission;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -16,8 +17,8 @@ final class CapabilityMatrixDiagnosticController extends Controller
 {
     public function __invoke(RunCapabilityMatrixRequest $request, DicomNode $dicomNode, DicomCapabilityMatrixTest $test, DiagnosticTestRecorder $recorder, RegistryAudit $audit): RedirectResponse
     {
-        Gate::authorize('verify', $dicomNode);
-        abort_unless($request->user()?->hasPermission('tests.run.storage'), 403);
+        Gate::authorize('view', $dicomNode);
+        Gate::authorize(DiagnosticPermission::CapabilityMatrix->value);
         abort_if($dicomNode->archived_at !== null || ! $dicomNode->supports_store, 422);
         $result = $test->run($dicomNode, strtoupper($request->validated('calling_ae_title')), strtoupper($request->validated('called_ae_title')));
         DB::transaction(function () use ($request, $dicomNode, $result, $recorder, $audit): void {

@@ -16,6 +16,7 @@ final class DatabaseSeeder extends Seeder
     public function run(RbacBootstrapper $rbac): void
     {
         $role = $rbac->ensureSystemAdministratorRole();
+        $rbac->ensureDiagnosticRoles();
         $this->ensureViewerRole();
         $this->ensureDefaultAllowedNetworks();
 
