@@ -75,3 +75,18 @@
 - Organisationen, Standorte und Abteilungen unter einem Navigationsbereich gebündelt
 - Systeme als nächstes zentrales Registry-Objekt hervorgehoben
 - geplante Module klar von verfügbaren Funktionen getrennt
+
+## Historische Entwicklungsmeilensteine
+
+### 0.1.1 – Foundation Hardening
+
+- Initialen Administrator als transaktionalen, einmaligen Konsolenprozess mit Rollenvergabe und Security Event abgesichert.
+- Installationsprüfung über `registry:doctor` sowie Featuretests für Administratorkonto, Rollenvergabe und Zweitkonto-Sperre ergänzt.
+- Clean-Install-Validierung auf einer separaten Zielumgebung und vollständiger Restore-Test blieben als manuelle Nachweise offen.
+
+### 0.1.0 – Application Foundation (2026-07-25)
+
+- Reproduzierbare Laravel-/Inertia-Grundlage als modularer Monolith mit lokaler Sessionauthentisierung, RBAC, Dashboard, Health-Endpunkt, Docker Compose und CI geschaffen.
+- Datenbankbasis für Benutzer, Sessions, Rollen und Berechtigungen eingeführt; Default-Deny, generische Loginfehler und Rate Limits als Sicherheitsgrundlage umgesetzt.
+- Abhängigkeiten werden kontrolliert installiert und über Composer-/npm-Lockfiles versioniert; Offline-Installationen benötigen ein internes Artefakt- und Image-Mirroring.
+- Die Foundation enthält ausschließlich synthetische Entwicklungsdaten und keine realen Patientendaten.
