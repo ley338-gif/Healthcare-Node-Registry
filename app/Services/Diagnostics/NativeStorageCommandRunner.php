@@ -35,7 +35,7 @@ final class NativeStorageCommandRunner implements StorageCommandRunner
                 throw new \RuntimeException('Temporäres Verzeichnis konnte nicht erstellt werden.');
             }
             $generator = new Process([
-                '/opt/registry-dicom/bin/python', base_path('scripts/dicom_storage_test_object.py'),
+                (string) config('diagnostics.python_binary'), base_path('scripts/dicom_storage_test_object.py'),
             ]);
             $generator->setInput(json_encode([
                 'output_path' => $dicomPath,

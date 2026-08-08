@@ -174,7 +174,7 @@ MPPS benötigt eine ausdrückliche Autorisierungsbestätigung. Der Test erzeugt 
 
 ## DCMTK- und Python-Voraussetzungen
 
-Das PHP-Containerimage installiert DCMTK sowie die hashgebundenen Python-Pakete `pynetdicom==3.0.4` und `pydicom==3.0.1`. Benötigt werden `echoscu`, `findscu`, `movescu`, `getscu`, `storescu`, `dcmdump` sowie `dump2dcm` für Integrationstests. Die synthetischen Storage-Objekte werden mit `pydicom` erzeugt. Getestet ist DCMTK 3.6.7. Nach Upgrades sind Parser- und Integrationsfälle erneut auszuführen.
+Das PHP-Containerimage installiert DCMTK sowie die hashgebundenen Python-Pakete `pynetdicom==3.0.4` und `pydicom==3.0.1`. Benötigt werden `echoscu`, `findscu`, `movescu`, `getscu`, `storescu`, `dcmdump` sowie `dump2dcm` für Integrationstests. Die synthetischen Storage-Objekte werden mit `pydicom` erzeugt. Der Interpreter stammt aus `DIAGNOSTIC_PYTHON_BINARY` (Standard `/opt/registry-dicom/bin/python`); eine abweichende Laufzeit muss dieselben hashgeprüften Pakete aus `docker/php/requirements-dicom.txt` enthalten. Getestet ist DCMTK 3.6.7. Nach Upgrades sind Parser- und Integrationsfälle erneut auszuführen.
 
 ## Firewall und Netzwerk
 

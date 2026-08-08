@@ -302,6 +302,7 @@ DICOM-Zielports werden pro registriertem Knoten gespeichert und sind keine einge
 | `QUEUE_CONNECTION` | Laravel-Queue-Backend; verarbeitet vom `worker`-Dienst (`database`, keine Redis-Abhängigkeit) | `database` |
 | `FILESYSTEM_DISK` | Standard-Dateisystem | `local` |
 | `DIAGNOSTIC_CALLING_AE_TITLE` | Standardmäßiger Calling AE Title für DICOM-Diagnosen | `NODE_REGISTRY` |
+| `DIAGNOSTIC_PYTHON_BINARY` | Python-Interpreter der isolierten DICOM-Laufzeit | `/opt/registry-dicom/bin/python` |
 | `DIAGNOSTIC_MOVE_TEST_STUDY_UID` | Ausschließlich serverseitig konfigurierte Test-Study-UID für C-MOVE | synthetische UID aus `.env.example` |
 | `DIAGNOSTIC_GET_TEST_STUDY_UID` | Ausschließlich serverseitig konfigurierte Test-Study-UID für C-GET | synthetische UID aus `.env.example` |
 | `DIAGNOSTIC_STORAGE_COMMITMENT_CALLBACK_PORT` | Interner Callback-Port für N-EVENT-REPORT | `11113` |
