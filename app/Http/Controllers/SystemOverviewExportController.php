@@ -8,6 +8,7 @@ use App\Services\Reports\SystemOverviewQuery;
 use App\Services\Reports\TabularXlsxExporter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
 final class SystemOverviewExportController extends Controller
@@ -16,7 +17,7 @@ final class SystemOverviewExportController extends Controller
     private const HEADERS = [
         'Organisation', 'Standort', 'Abteilung', 'System', 'Systemtyp', 'Systemstatus',
         'Hostname (primär)', 'FQDN (primär)', 'IP-Adresse (primär)', 'Alle Netzwerkinterfaces', 'Hersteller', 'Produkt', 'Modell', 'Version',
-        'Betriebssystem', 'Betriebssystemversion', 'Inventarnummer', 'Seriennummer', 'Verantwortlichkeit',
+        'Betriebssystem', 'Betriebssystemversion', 'Inventarnummer', 'Seriennummer', 'Verantwortlichkeit', 'Kritikalität',
         'DICOM-Knoten', 'AE Title', 'Modalität', 'DICOM-Host', 'DICOM-Port', 'DICOM-Rolle',
         'DICOM-Status', 'DICOM-TLS',
     ];
@@ -33,6 +34,7 @@ final class SystemOverviewExportController extends Controller
             'search' => ['nullable', 'string', 'max:160'],
             'type' => ['nullable', 'string', 'max:80'],
             'status' => ['nullable', 'string', 'max:40'],
+            'criticality' => ['nullable', Rule::in(['low', 'medium', 'high', 'critical'])],
             'organization' => ['nullable', 'integer', 'exists:organizations,id'],
             'site' => ['nullable', 'integer', 'exists:sites,id'],
             'department' => ['nullable', 'integer', 'exists:departments,id'],
@@ -52,7 +54,7 @@ final class SystemOverviewExportController extends Controller
         $values = $rows->map(static fn (array $row): array => [
             $row['organization'], $row['site'], $row['department'], $row['system'], $row['system_type'], $row['system_status'],
             $row['hostname'], $row['fqdn'], $row['ip_address'], $row['network_interfaces'], $row['vendor'], $row['product'], $row['model'], $row['version'],
-            $row['operating_system'], $row['operating_system_version'], $row['inventory_number'], $row['serial_number'], $row['responsible'],
+            $row['operating_system'], $row['operating_system_version'], $row['inventory_number'], $row['serial_number'], $row['responsible'], $row['criticality'],
             $row['dicom_node'], $row['ae_title'], $row['modality'], $row['dicom_host'], $row['dicom_port'], $row['dicom_role'],
             $row['dicom_status'], $row['dicom_tls'],
         ]);

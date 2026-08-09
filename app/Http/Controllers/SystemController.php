@@ -34,6 +34,7 @@ final class SystemController extends Controller
         $search = trim((string) $request->query('search', ''));
         $type = trim((string) $request->query('type', ''));
         $status = trim((string) $request->query('status', ''));
+        $criticality = trim((string) $request->query('criticality', ''));
 
         $organizationId = $request->integer('organization');
         $siteId = $request->integer('site');
@@ -44,6 +45,7 @@ final class SystemController extends Controller
             'search' => $search,
             'type' => $type,
             'status' => $status,
+            'criticality' => $criticality,
             'organization' => $organizationId,
             'site' => $siteId,
             'department' => $departmentId,
@@ -274,6 +276,7 @@ final class SystemController extends Controller
                 'search' => $search,
                 'type' => $type,
                 'status' => $status,
+                'criticality' => $criticality,
                 'organization' => $organizationId > 0
                     ? $organizationId
                     : null,
@@ -309,6 +312,13 @@ final class SystemController extends Controller
                 ['value' => 'maintenance', 'label' => 'Wartung'],
                 ['value' => 'inactive', 'label' => 'Inaktiv'],
                 ['value' => 'retired', 'label' => 'Außer Betrieb'],
+            ],
+
+            'criticalities' => [
+                ['value' => 'low', 'label' => 'Niedrig'],
+                ['value' => 'medium', 'label' => 'Mittel'],
+                ['value' => 'high', 'label' => 'Hoch'],
+                ['value' => 'critical', 'label' => 'Kritisch'],
             ],
 
             'organizations' => Organization::query()
@@ -404,6 +414,13 @@ final class SystemController extends Controller
                 ['value' => 'maintenance', 'label' => 'Wartung'],
                 ['value' => 'inactive', 'label' => 'Inaktiv'],
                 ['value' => 'retired', 'label' => 'Außer Betrieb'],
+            ],
+
+            'criticalities' => [
+                ['value' => 'low', 'label' => 'Niedrig'],
+                ['value' => 'medium', 'label' => 'Mittel'],
+                ['value' => 'high', 'label' => 'Hoch'],
+                ['value' => 'critical', 'label' => 'Kritisch'],
             ],
 
             'organizations' => Organization::query()

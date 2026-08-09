@@ -21,6 +21,7 @@ defineProps<{
     system: SystemDetail;
     systemTypes: SelectOption[];
     statuses: SelectOption[];
+    criticalities: SelectOption[];
     organizations: OrganizationOption[];
     sites: SiteOption[];
     departments: DepartmentOption[];
@@ -72,6 +73,7 @@ const editPanelOpen = ref(false);
             :system="system"
             :system-types="systemTypes"
             :statuses="statuses"
+            :criticalities="criticalities"
             :dicom-nodes="dicomNodes"
             :dicom-connections="dicomConnections"
             :dicom-node-options="dicomNodeOptions"
@@ -106,6 +108,7 @@ const editPanelOpen = ref(false);
             :departments="departments"
             :system-types="systemTypes"
             :statuses="statuses"
+            :criticalities="criticalities"
             @close="editPanelOpen = false"
         />
     </AppLayout>

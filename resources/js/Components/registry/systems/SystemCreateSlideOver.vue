@@ -32,6 +32,7 @@ const props = defineProps<{
     departments: DepartmentOption[];
     systemTypes: SelectOption[];
     statuses: SelectOption[];
+    criticalities: SelectOption[];
 }>();
 
 const emit = defineEmits<{
@@ -46,6 +47,7 @@ const form = useForm({
     system_type: '',
     status: 'active',
     responsible: '',
+    criticality: '',
     hostname: '',
     fqdn: '',
     ip_address: '',
@@ -207,6 +209,26 @@ const submit = (): void => {
 
                                     <span v-if="form.errors.responsible" class="mt-1 block text-xs text-red-600">
                                         {{ form.errors.responsible }}
+                                    </span>
+                                </label>
+
+                                <label class="block">
+                                    <span class="text-sm font-medium text-slate-700">Kritikalität</span>
+                                    <select
+                                        v-model="form.criticality"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                    >
+                                        <option value="">Nicht angegeben</option>
+                                        <option
+                                            v-for="option in criticalities"
+                                            :key="option.value"
+                                            :value="option.value"
+                                        >
+                                            {{ option.label }}
+                                        </option>
+                                    </select>
+                                    <span v-if="form.errors.criticality" class="mt-1 block text-xs text-red-600">
+                                        {{ form.errors.criticality }}
                                     </span>
                                 </label>
                             </div>
