@@ -32,7 +32,7 @@ MFA wird anhand effektiver sensibler Berechtigungen erzwungen und kann deshalb n
 
 Diagnosen werden einzeln mit `diagnostics.echo`, `diagnostics.worklist`, `diagnostics.query`, `diagnostics.store`, `diagnostics.move`, `diagnostics.get`, `diagnostics.mpps`, `diagnostics.storage_commitment` und `diagnostics.capability_matrix` freigegeben. Die Standardrolle `PACS-Administrator` enthaelt alle Diagnoserechte; `Nur Lesen` enthaelt keines davon.
 
-Systemtypen und Systemstatus werden mit der Berechtigung settings.manage unter **Einstellungen > Referenzdaten** gepflegt. Deaktivierte Werte bleiben für bestehende Zuordnungen erhalten; technische Lebenszykluswerte können serverseitig nicht deaktiviert werden.
+Systemtypen, Systemstatus und Hersteller werden mit der Berechtigung `settings.manage` unter **Einstellungen > Referenzdaten** gepflegt. Deaktivierte Werte bleiben für bestehende Zuordnungen erhalten; technische Lebenszykluswerte können serverseitig nicht deaktiviert werden.
 
 ## Scopes
 

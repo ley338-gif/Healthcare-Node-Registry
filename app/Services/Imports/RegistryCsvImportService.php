@@ -6,6 +6,7 @@ use App\Http\Requests\StoreDicomNodeRequest;
 use App\Http\Requests\StoreSystemRequest;
 use App\Models\Department;
 use App\Models\DicomNode;
+use App\Models\Manufacturer;
 use App\Models\Organization;
 use App\Models\Site;
 use App\Models\System;
@@ -131,6 +132,15 @@ final class RegistryCsvImportService
         $values = ['organization_id' => $organization?->id, 'site_id' => $site?->id, 'department_id' => $department?->id];
         foreach (array_slice(self::SYSTEM_HEADERS, 3) as $field) {
             $values[$field] = $record[$field] === '' ? null : $record[$field];
+        }
+        if ($record['vendor'] !== '') {
+            $manufacturer = Manufacturer::query()
+                ->where('is_active', true)
+                ->where(fn ($query) => $query
+                    ->where('code', $record['vendor'])
+                    ->orWhereRaw('lower(label) = lower(?)', [$record['vendor']]))
+                ->first();
+            $values['vendor'] = $manufacturer instanceof Manufacturer ? $manufacturer->code : $record['vendor'];
         }
         $validator = Validator::make($values, (new StoreSystemRequest)->rules());
         $errors = $validator->errors()->all();

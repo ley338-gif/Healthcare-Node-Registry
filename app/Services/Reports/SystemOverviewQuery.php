@@ -23,6 +23,7 @@ final class SystemOverviewQuery
                 'department:id,public_id,name',
                 'typeReference:id,code,label',
                 'statusReference:id,code,label',
+                'manufacturerReference:id,code,label',
             ])
             ->withCount([
                 'dicomNodes as dicom_nodes_count' => fn ($query) => $query->active(),
@@ -43,10 +44,13 @@ final class SystemOverviewQuery
                     ->orWhere('fqdn', 'ilike', "%{$search}%")
                     ->orWhere('ip_address', 'ilike', "%{$search}%"))
                 ->orWhere('vendor', 'ilike', "%{$search}%")
+                ->orWhereHas('manufacturerReference', fn ($manufacturer) => $manufacturer
+                    ->where('label', 'ilike', "%{$search}%"))
                 ->orWhere('product', 'ilike', "%{$search}%")
                 ->orWhere('responsible', 'ilike', "%{$search}%")))
             ->when(filled($filters['type'] ?? null), fn ($query) => $query->where('system_type', $filters['type']))
             ->when(filled($filters['status'] ?? null), fn ($query) => $query->where('status', $filters['status']))
+            ->when(filled($filters['manufacturer'] ?? null), fn ($query) => $query->where('vendor', $filters['manufacturer']))
             ->when(filled($filters['criticality'] ?? null), fn ($query) => $query->where('criticality', $filters['criticality']))
             ->when((int) ($filters['organization'] ?? 0) > 0, fn ($query) => $query->where('organization_id', $filters['organization']))
             ->when((int) ($filters['site'] ?? 0) > 0, fn ($query) => $query->where('site_id', $filters['site']))
@@ -87,7 +91,7 @@ final class SystemOverviewQuery
                         $interface->fqdn,
                         $interface->ip_address,
                     ])))->implode('; '),
-                    'vendor' => $system->vendor,
+                    'vendor' => $system->vendor_label,
                     'product' => $system->product,
                     'model' => $system->model,
                     'version' => $system->version,

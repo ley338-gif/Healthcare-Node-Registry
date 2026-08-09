@@ -7,7 +7,7 @@
   ist noch nicht umgesetzt.
 - Dokumentfreigabe und kategoriebasierte Mindestaufbewahrung sind umgesetzt; ein automatisierter physischer Löschlauf nach Fristende ist bewusst nicht vorhanden.
 - Historische Entitätsnamen sind nicht als vollständige Snapshots verfügbar.
-- Systemtypen und Systemstatus sind zentral administrierbar; Hersteller, DICOM-Dienste, Dokumentkategorien und Portprofile besitzen noch keine gemeinsame Referenzdatenverwaltung.
+- Systemtypen, Systemstatus und Hersteller sind zentral administrierbar; DICOM-Dienste, Dokumentkategorien und Portprofile besitzen noch keine gemeinsame Referenzdatenverwaltung. Produkte bleiben bewusst Freitext.
 
 ## 0.1.1
 

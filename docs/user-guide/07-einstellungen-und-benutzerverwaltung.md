@@ -16,7 +16,9 @@ Die Benutzerverwaltung ist ein Unterbereich von **Einstellungen** und verwendet 
 
 ## Referenzdaten
 
-Benutzer mit settings.manage pflegen unter **Einstellungen > Referenzdaten** Systemtypen und Systemstatus. Der technische Code ist nach der Anlage unveränderlich; Anzeigename, Reihenfolge und Aktivstatus können angepasst werden. Deaktivierte Werte bleiben an bestehenden Systemen sichtbar, stehen für neue Zuordnungen jedoch nicht mehr zur Verfügung. Die für Anlage und Archivierung benötigten Statuswerte sind geschützt.
+Benutzer mit `settings.manage` pflegen unter **Einstellungen > Referenzdaten** Systemtypen, Systemstatus und Hersteller. Der technische Code ist nach der Anlage unveränderlich; Anzeigename, Reihenfolge und Aktivstatus können angepasst werden. Deaktivierte Werte bleiben an bestehenden Systemen sichtbar, stehen für neue Zuordnungen jedoch nicht mehr zur Verfügung. Die für Anlage und Archivierung benötigten Statuswerte sind geschützt.
+
+Eine frische Installation enthält keine vorgegebenen Hersteller. Legen Sie zuerst die tatsächlich verwendeten Hersteller an. Danach stehen aktive Werte in Systemanlage, Systembearbeitung und Discovery-Übernahme zur Auswahl. Bereits vorhandene Herstellertexte werden bei einem Update automatisch und ohne Umbenennung übernommen.
 
 ## Benutzer
 

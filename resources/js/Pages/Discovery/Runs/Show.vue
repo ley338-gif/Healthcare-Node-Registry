@@ -135,6 +135,7 @@ const promotionData = ref<{
     departments: { id: number; site_id: number; name: string }[];
     systemTypes: { value: string; label: string }[];
     systemStatuses: { value: string; label: string }[];
+    manufacturers: { value: string; label: string }[];
     duplicates: {
         type: string;
         system: { id: number; public_id: string; name: string };
@@ -740,10 +741,20 @@ const filteredDepartments = computed(
                                 >
                                 <label class="block"
                                     ><span class="text-sm font-medium text-slate-700">Hersteller</span
-                                    ><input
+                                    ><select
                                         v-model="promotionForm.vendor"
                                         class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
-                                /></label>
+                                    >
+                                        <option value="">Nicht hinterlegt</option>
+                                        <option
+                                            v-for="manufacturer in promotionData.manufacturers"
+                                            :key="manufacturer.value"
+                                            :value="manufacturer.value"
+                                        >
+                                            {{ manufacturer.label }}
+                                        </option>
+                                    </select></label
+                                >
                                 <label class="block"
                                     ><span class="text-sm font-medium text-slate-700">Modell</span
                                     ><input

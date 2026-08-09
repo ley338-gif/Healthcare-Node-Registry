@@ -33,7 +33,7 @@ final class StoreSystemRequest extends FormRequest
             'fqdn' => ['nullable', 'string', 'max:255'],
             'ip_address' => ['nullable', 'ip'],
 
-            'vendor' => ['nullable', 'string', 'max:160'],
+            'vendor' => ['nullable', 'string', 'max:160', Rule::exists('manufacturers', 'code')->where('is_active', true)],
             'product' => ['nullable', 'string', 'max:160'],
             'model' => ['nullable', 'string', 'max:160'],
             'version' => ['nullable', 'string', 'max:120'],

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Department;
+use App\Models\Manufacturer;
 use App\Models\Organization;
 use App\Models\Site;
 use App\Models\System;
@@ -30,6 +31,7 @@ final class SystemModelTest extends TestCase
             'site_id' => $site->id,
             'name' => 'Radiologie',
         ]);
+        Manufacturer::query()->create(['code' => 'visus', 'label' => 'VISUS', 'sort_order' => 10, 'is_active' => true]);
 
         $system = System::query()->create([
             'organization_id' => $organization->id,
@@ -41,7 +43,7 @@ final class SystemModelTest extends TestCase
             'hostname' => 'pacs01',
             'fqdn' => 'pacs01.example.local',
             'ip_address' => '10.10.10.20',
-            'vendor' => 'VISUS',
+            'vendor' => 'visus',
             'product' => 'JiveX',
         ]);
 

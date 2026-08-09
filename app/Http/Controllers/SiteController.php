@@ -105,7 +105,7 @@ final class SiteController extends Controller
             $systems = System::query()
                 ->where('site_id', $selectedSite->id)
                 ->whereNull('archived_at')
-                ->with('department:id,public_id,name')
+                ->with(['department:id,public_id,name', 'manufacturerReference:id,code,label'])
                 ->withCount([
                     'dicomNodes as dicom_nodes_count' => fn ($query) => $query->active(),
                     'dicomNodes as failed_dicom_nodes_count' => fn ($query) => $query

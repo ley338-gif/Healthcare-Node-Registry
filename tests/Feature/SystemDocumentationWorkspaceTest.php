@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Manufacturer;
 use App\Models\RegistryDocument;
 use App\Models\RegistryDocumentation;
 use App\Models\RegistryDocumentVersion;
@@ -21,8 +22,9 @@ final class SystemDocumentationWorkspaceTest extends TestCase
         $this->withoutVite();
         $this->seed();
         $user = $this->administrator();
+        Manufacturer::query()->create(['code' => 'acme_medical', 'label' => 'Acme Medical', 'sort_order' => 10, 'is_active' => true]);
         $system = System::factory()->create([
-            'vendor' => 'Acme Medical',
+            'vendor' => 'acme_medical',
             'product' => 'Clinical Archive',
             'version' => '4.2',
         ]);
@@ -58,7 +60,8 @@ final class SystemDocumentationWorkspaceTest extends TestCase
     {
         $this->seed();
         $user = $this->administrator();
-        $system = System::factory()->create(['vendor' => 'Vendor AG', 'hostname' => 'pacs.internal']);
+        Manufacturer::query()->create(['code' => 'vendor_ag', 'label' => 'Vendor AG', 'sort_order' => 10, 'is_active' => true]);
+        $system = System::factory()->create(['vendor' => 'vendor_ag', 'hostname' => 'pacs.internal']);
 
         $this->actingAs($user)->post("/registry-documentation/systems/{$system->public_id}", [
             'documentation_type' => 'operations',
@@ -72,7 +75,7 @@ final class SystemDocumentationWorkspaceTest extends TestCase
         $data = RegistryDocumentation::query()->firstOrFail()->structured_data;
         $this->assertArrayNotHasKey('vendor', $data);
         $this->assertArrayNotHasKey('hostname', $data);
-        $this->assertSame('Vendor AG', $system->fresh()?->vendor);
+        $this->assertSame('vendor_ag', $system->fresh()?->vendor);
     }
 
     public function test_system_documentation_change_appears_in_shared_history(): void

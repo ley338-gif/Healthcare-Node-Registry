@@ -57,6 +57,7 @@ const props = defineProps<{
     canManageDiscovery: boolean;
     systemTypes: SystemReference[];
     systemStatuses: SystemReference[];
+    manufacturers: SystemReference[];
     currentUserId: string;
 }>();
 const tab = ref<'users' | 'roles' | 'reference'>(
@@ -72,7 +73,8 @@ const passwordOpen = ref(false);
 const editingUser = ref<User | null>(null);
 const editingRole = ref<Role | null>(null);
 const editingReference = ref<SystemReference | null>(null);
-const referenceKind = ref<'system-types' | 'system-statuses'>('system-types');
+type ReferenceKind = 'system-types' | 'system-statuses' | 'manufacturers';
+const referenceKind = ref<ReferenceKind>('system-types');
 const selectedUser = ref<User | null>(null);
 const userForm = useForm({
     name: '',
@@ -164,7 +166,7 @@ const deleteRole = (role: Role) => {
     if (window.confirm(`Rolle „${role.display_name}“ wirklich löschen?`))
         router.delete(`/settings/roles/${role.id}`, { preserveScroll: true });
 };
-const openCreateReference = (kind: 'system-types' | 'system-statuses') => {
+const openCreateReference = (kind: ReferenceKind) => {
     referenceKind.value = kind;
     editingReference.value = null;
     referenceForm.reset();
@@ -173,7 +175,7 @@ const openCreateReference = (kind: 'system-types' | 'system-statuses') => {
     referenceForm.is_active = true;
     referenceOpen.value = true;
 };
-const openEditReference = (kind: 'system-types' | 'system-statuses', reference: SystemReference) => {
+const openEditReference = (kind: ReferenceKind, reference: SystemReference) => {
     referenceKind.value = kind;
     editingReference.value = reference;
     referenceForm.clearErrors();
@@ -565,6 +567,55 @@ const formatActivity = (value: number | null) =>
                         </div>
                     </div>
                 </article>
+
+                <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="flex items-center justify-between border-b border-slate-200 p-4">
+                        <div>
+                            <h2 class="font-semibold text-slate-900">Hersteller</h2>
+                            <p class="mt-1 text-xs text-slate-500">
+                                Kontrollierte Herstellerangaben registrierter Systeme.
+                            </p>
+                        </div>
+                        <button
+                            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white"
+                            @click="openCreateReference('manufacturers')"
+                        >
+                            <Plus :size="16" /> Anlegen
+                        </button>
+                    </div>
+                    <div class="divide-y divide-slate-100">
+                        <div v-for="item in manufacturers" :key="item.public_id" class="flex items-center gap-3 p-4">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <p class="font-medium text-slate-900">{{ item.label }}</p>
+                                    <span
+                                        class="rounded-full px-2 py-0.5 text-xs font-semibold"
+                                        :class="
+                                            item.is_active
+                                                ? 'bg-emerald-50 text-emerald-700'
+                                                : 'bg-slate-100 text-slate-500'
+                                        "
+                                        >{{ item.is_active ? 'Aktiv' : 'Deaktiviert' }}</span
+                                    >
+                                </div>
+                                <p class="mt-1 font-mono text-xs text-slate-400">
+                                    {{ item.code }} · {{ item.systems_count }} Systeme · Reihenfolge
+                                    {{ item.sort_order }}
+                                </p>
+                            </div>
+                            <button
+                                class="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                                title="Bearbeiten"
+                                @click="openEditReference('manufacturers', item)"
+                            >
+                                <Pencil :size="16" />
+                            </button>
+                        </div>
+                        <p v-if="manufacturers.length === 0" class="p-4 text-sm text-slate-500">
+                            Noch keine Hersteller angelegt.
+                        </p>
+                    </div>
+                </article>
             </section>
         </template>
 
@@ -584,7 +635,9 @@ const formatActivity = (value: number | null) =>
                                         ? 'Referenzwert bearbeiten'
                                         : referenceKind === 'system-types'
                                           ? 'Systemtyp anlegen'
-                                          : 'Systemstatus anlegen'
+                                          : referenceKind === 'system-statuses'
+                                            ? 'Systemstatus anlegen'
+                                            : 'Hersteller anlegen'
                                 }}
                             </h2>
                         </div>

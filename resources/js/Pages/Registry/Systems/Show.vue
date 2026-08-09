@@ -21,6 +21,7 @@ defineProps<{
     system: SystemDetail;
     systemTypes: SelectOption[];
     statuses: SelectOption[];
+    manufacturers: SelectOption[];
     criticalities: SelectOption[];
     organizations: OrganizationOption[];
     sites: SiteOption[];
@@ -108,6 +109,7 @@ const editPanelOpen = ref(false);
             :departments="departments"
             :system-types="systemTypes"
             :statuses="statuses"
+            :manufacturers="manufacturers"
             :criticalities="criticalities"
             @close="editPanelOpen = false"
         />

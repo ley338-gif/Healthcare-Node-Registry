@@ -20,6 +20,8 @@ organization_name,site_name,department_name,name,system_type,status,hostname,fqd
 
 Organisationen sowie optional Standorte und Abteilungen müssen bereits existieren. Ein System gilt als Duplikat, wenn derselbe Name innerhalb derselben Organisation bereits vorhanden ist.
 
+`system_type`, `status` und ein nichtleeres `vendor` müssen vorhandene aktive Referenzwerte bezeichnen. Für `vendor` wird sowohl der technische Code als auch der Anzeigename ohne Beachtung der Groß-/Kleinschreibung akzeptiert. Unbekannte Hersteller werden nicht automatisch angelegt.
+
 ## DICOM-Knoten
 
 ```csv

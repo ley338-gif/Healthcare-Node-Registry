@@ -88,6 +88,7 @@ const props = withDefaults(
             search: string;
             type: string;
             status: string;
+            manufacturer: string;
             criticality: string;
             organization: number | null;
             site: number | null;
@@ -96,6 +97,7 @@ const props = withDefaults(
         };
         systemTypes: SelectOption[];
         statuses: SelectOption[];
+        manufacturers: SelectOption[];
         criticalities: SelectOption[];
         organizations: OrganizationOption[];
         sites: SiteOption[];
@@ -132,6 +134,7 @@ const props = withDefaults(
 const search = ref(props.filters.search);
 const type = ref(props.filters.type);
 const status = ref(props.filters.status);
+const manufacturer = ref(props.filters.manufacturer);
 const criticality = ref(props.filters.criticality);
 const organization = ref<number | null>(props.filters.organization);
 const site = ref<number | null>(props.filters.site);
@@ -162,6 +165,7 @@ const hasActiveFilters = computed(
         search.value !== '' ||
         type.value !== '' ||
         status.value !== '' ||
+        manufacturer.value !== '' ||
         criticality.value !== '' ||
         organization.value !== null ||
         site.value !== null ||
@@ -200,6 +204,7 @@ const applyFilters = (): void => {
             search: search.value || undefined,
             type: type.value || undefined,
             status: status.value || undefined,
+            manufacturer: manufacturer.value || undefined,
             criticality: criticality.value || undefined,
             organization: organization.value ?? undefined,
             site: site.value ?? undefined,
@@ -217,6 +222,7 @@ const resetFilters = (): void => {
     search.value = '';
     type.value = '';
     status.value = '';
+    manufacturer.value = '';
     criticality.value = '';
     organization.value = null;
     site.value = null;
@@ -237,6 +243,7 @@ const exportUrl = (format: 'xlsx' | 'pdf'): string => {
     if (search.value) params.set('search', search.value);
     if (type.value) params.set('type', type.value);
     if (status.value) params.set('status', status.value);
+    if (manufacturer.value) params.set('manufacturer', manufacturer.value);
     if (criticality.value) params.set('criticality', criticality.value);
     if (organization.value !== null) params.set('organization', String(organization.value));
     if (site.value !== null) params.set('site', String(site.value));
@@ -274,6 +281,7 @@ const selectSystem = (system: SystemItem): void => {
             search: search.value || undefined,
             type: type.value || undefined,
             status: status.value || undefined,
+            manufacturer: manufacturer.value || undefined,
             criticality: criticality.value || undefined,
             organization: organization.value ?? undefined,
             site: site.value ?? undefined,
@@ -353,7 +361,7 @@ const closeEditPanel = (): void => {
 
         <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <form @submit.prevent="applyFilters">
-                <div class="grid gap-3 xl:grid-cols-[minmax(260px,1.4fr)_170px_170px_170px_auto_auto]">
+                <div class="grid gap-3 xl:grid-cols-[minmax(260px,1.4fr)_160px_160px_180px_160px_auto_auto]">
                     <div class="relative">
                         <Search :size="18" class="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
 
@@ -375,6 +383,13 @@ const closeEditPanel = (): void => {
                     <select v-model="status" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
                         <option value="">Alle Status</option>
                         <option v-for="option in statuses" :key="option.value" :value="option.value">
+                            {{ option.label }}
+                        </option>
+                    </select>
+
+                    <select v-model="manufacturer" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                        <option value="">Alle Hersteller</option>
+                        <option v-for="option in manufacturers" :key="option.value" :value="option.value">
                             {{ option.label }}
                         </option>
                     </select>
@@ -559,6 +574,7 @@ const closeEditPanel = (): void => {
             :departments="departments"
             :system-types="systemTypes"
             :statuses="statuses"
+            :manufacturers="manufacturers"
             :criticalities="criticalities"
             @close="createPanelOpen = false"
         />
@@ -571,6 +587,7 @@ const closeEditPanel = (): void => {
             :departments="departments"
             :system-types="systemTypes"
             :statuses="statuses"
+            :manufacturers="manufacturers"
             :criticalities="criticalities"
             @close="closeEditPanel"
         />

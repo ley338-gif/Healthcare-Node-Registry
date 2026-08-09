@@ -41,6 +41,7 @@ Abgeschlossen.
 - [x] Verantwortlichkeiten
 - [x] Kritikalität in Systempflege, Übersicht, Filter und Export
 - [x] administrierbare Referenzdaten für Systemtypen und Systemstatus
+- [x] administrierbare Hersteller-Referenzdaten mit Bestandsmigration und kontrollierter Auswahl
 - [x] webbasierte Benutzer- und Rollenverwaltung unter Einstellungen
 
 ## Nächster Sprint

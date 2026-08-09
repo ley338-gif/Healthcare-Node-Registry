@@ -26,7 +26,7 @@ final class PromoteDiscoveredHostRequest extends FormRequest
 
             'name' => ['required', 'string', 'max:160'],
             'system_type' => ['required', 'string', 'max:80', Rule::exists('system_types', 'code')->where('is_active', true)],
-            'vendor' => ['nullable', 'string', 'max:120'],
+            'vendor' => ['nullable', 'string', 'max:160', Rule::exists('manufacturers', 'code')->where('is_active', true)],
             'model' => ['nullable', 'string', 'max:120'],
             'organization_id' => ['required', 'integer', 'exists:organizations,id'],
             'site_id' => ['nullable', 'integer', 'exists:sites,id'],

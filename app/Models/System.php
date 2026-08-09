@@ -27,6 +27,7 @@ use Illuminate\Support\Str;
  * @property string|null $hostname Deprecated mirror of the primary network interface
  * @property string|null $fqdn Deprecated mirror of the primary network interface
  * @property string|null $ip_address Deprecated mirror of the primary network interface
+ * @property-read string|null $vendor_label
  */
 final class System extends Model
 {
@@ -131,6 +132,23 @@ final class System extends Model
     public function statusReference(): BelongsTo
     {
         return $this->belongsTo(SystemStatus::class, 'status', 'code');
+    }
+
+    /** @return BelongsTo<Manufacturer, $this> */
+    public function manufacturerReference(): BelongsTo
+    {
+        return $this->belongsTo(Manufacturer::class, 'vendor', 'code');
+    }
+
+    public function getVendorLabelAttribute(): ?string
+    {
+        if (! $this->relationLoaded('manufacturerReference')) {
+            return $this->vendor;
+        }
+
+        $manufacturer = $this->getRelation('manufacturerReference');
+
+        return $manufacturer instanceof Manufacturer ? $manufacturer->label : $this->vendor;
     }
 
     /**

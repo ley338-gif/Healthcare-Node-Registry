@@ -338,7 +338,7 @@ Bezeichnungen wie „online“, „gesund“ oder „erreichbar“ dürfen nicht
 Die folgenden Modellbereiche sind geplant oder langfristig vorgesehen und nicht als aktuell verfügbar zu behandeln:
 
 - strukturierte technische und fachliche Verantwortlichkeiten über das optionale Systemfeld hinaus;
-- weitere administrierbare Referenzdaten für Hersteller, Dienste, Kategorien oder Portprofile;
+- weitere administrierbare Referenzdaten für Dienste, Kategorien oder Portprofile; Hersteller sind bereits zentral administrierbar;
 - organisatorische Berechtigungsbereiche;
 - externe Identitäten und Verzeichniszuordnungen;
 - stabile Verträge für eine öffentlich dokumentierte Produkt-API;

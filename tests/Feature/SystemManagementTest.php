@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Manufacturer;
 use App\Models\Organization;
 use App\Models\Role;
 use App\Models\SecurityEvent;
@@ -17,6 +18,7 @@ final class SystemManagementTest extends TestCase
     public function test_registry_manager_can_create_a_system(): void
     {
         $user = $this->createRegistryManager();
+        Manufacturer::query()->create(['code' => 'visus', 'label' => 'VISUS', 'sort_order' => 10, 'is_active' => true]);
 
         $organization = Organization::query()->create([
             'name' => 'Musterklinik',
@@ -36,7 +38,7 @@ final class SystemManagementTest extends TestCase
                 'hostname' => 'pacs01',
                 'fqdn' => 'pacs01.example.local',
                 'ip_address' => '10.10.10.20',
-                'vendor' => 'VISUS',
+                'vendor' => 'visus',
                 'product' => 'JiveX',
             ]);
 

@@ -44,6 +44,7 @@ ADRs dokumentieren langfristig bindende oder schwer umkehrbare technische Entsch
 - [ADR-0018: DICOM-TLS für Diagnose-Runner](ADR-0018-dicom-tls-diagnostics.md)
 - [ADR-0019: Synthetische Storage-SOP-Classes](ADR-0019-synthetic-storage-sop-classes.md)
 - [ADR-0020: Administrierbare System-Referenzdaten](ADR-0020-system-reference-data.md)
+- [ADR-0021: Administrierbare Hersteller-Referenzdaten](ADR-0021-manufacturer-reference-data.md)
 
 ## Offener Konsolidierungsbedarf
 

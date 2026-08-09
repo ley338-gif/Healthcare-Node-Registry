@@ -39,6 +39,7 @@ final class SystemController extends Controller
         $search = trim((string) $request->query('search', ''));
         $type = trim((string) $request->query('type', ''));
         $status = trim((string) $request->query('status', ''));
+        $manufacturer = trim((string) $request->query('manufacturer', ''));
         $criticality = trim((string) $request->query('criticality', ''));
 
         $organizationId = $request->integer('organization');
@@ -50,6 +51,7 @@ final class SystemController extends Controller
             'search' => $search,
             'type' => $type,
             'status' => $status,
+            'manufacturer' => $manufacturer,
             'criticality' => $criticality,
             'organization' => $organizationId,
             'site' => $siteId,
@@ -177,6 +179,7 @@ final class SystemController extends Controller
                 'organization:id,public_id,name',
                 'site:id,public_id,name',
                 'department:id,public_id,name',
+                'manufacturerReference:id,code,label',
                 'networkInterfaces',
                 'documentation' => fn ($query) => $query
                     ->with('updatedByUser:id,public_id,name')
@@ -192,6 +195,7 @@ final class SystemController extends Controller
         $documentFilters = $request->only(RegistryDocumentQueryService::FILTER_KEYS);
 
         if ($selectedSystem !== null) {
+            $selectedSystem->append('vendor_label');
             Gate::authorize('view', $selectedSystem);
             $selectedDocumentation = $selectedSystem->documentation;
             $selectedDocuments = $documentQueryService->paginate($selectedSystem, $documentFilters);
@@ -281,6 +285,7 @@ final class SystemController extends Controller
                 'search' => $search,
                 'type' => $type,
                 'status' => $status,
+                'manufacturer' => $manufacturer,
                 'criticality' => $criticality,
                 'organization' => $organizationId > 0
                     ? $organizationId
@@ -297,6 +302,8 @@ final class SystemController extends Controller
             'systemTypes' => $referenceData->typeOptions(),
 
             'statuses' => $referenceData->statusOptions(),
+
+            'manufacturers' => $referenceData->manufacturerOptions(),
 
             'criticalities' => [
                 ['value' => 'low', 'label' => 'Niedrig'],
@@ -349,11 +356,13 @@ final class SystemController extends Controller
             'organization:id,public_id,name',
             'site:id,public_id,name',
             'department:id,public_id,name',
+            'manufacturerReference:id,code,label',
             'networkInterfaces',
             'documentation' => fn ($query) => $query
                 ->with('updatedByUser:id,public_id,name')
                 ->orderBy('section'),
         ]);
+        $system->append('vendor_label');
 
         $user = $request->user();
         abort_unless($user instanceof User, 403);
@@ -382,6 +391,8 @@ final class SystemController extends Controller
             'systemTypes' => $referenceData->typeOptions(),
 
             'statuses' => $referenceData->statusOptions(),
+
+            'manufacturers' => $referenceData->manufacturerOptions(),
 
             'criticalities' => [
                 ['value' => 'low', 'label' => 'Niedrig'],

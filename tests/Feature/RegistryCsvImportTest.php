@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Manufacturer;
 use App\Models\Organization;
 use App\Models\Role;
 use App\Models\System;
@@ -17,9 +18,10 @@ final class RegistryCsvImportTest extends TestCase
     public function test_valid_system_csv_requires_preview_before_import(): void
     {
         $organization = Organization::query()->create(['name' => 'Klinik Nord']);
+        Manufacturer::query()->create(['code' => 'example_medical', 'label' => 'Example Medical', 'sort_order' => 10, 'is_active' => true]);
         $response = $this->actingAs($this->administrator())->post('/systems/import/preview', [
             'kind' => 'systems',
-            'csv_file' => UploadedFile::fake()->createWithContent('systems.csv', $this->systemHeader()."\nKlinik Nord,,,PACS Nord,pacs,active,pacs01,,10.10.0.10,,,,,,,,,,"),
+            'csv_file' => UploadedFile::fake()->createWithContent('systems.csv', $this->systemHeader()."\nKlinik Nord,,,PACS Nord,pacs,active,pacs01,,10.10.0.10,Example Medical,,,,,,,,,"),
         ]);
 
         $response->assertRedirect();
@@ -28,7 +30,7 @@ final class RegistryCsvImportTest extends TestCase
         $token = (string) $query['token'];
 
         $this->actingAs($this->administrator())->post("/systems/import/{$token}")->assertRedirect('/systems');
-        $this->assertDatabaseHas('systems', ['organization_id' => $organization->id, 'name' => 'PACS Nord']);
+        $this->assertDatabaseHas('systems', ['organization_id' => $organization->id, 'name' => 'PACS Nord', 'vendor' => 'example_medical']);
         $this->assertDatabaseHas('security_events', ['event_type' => 'registry.csv_import.completed']);
     }
 

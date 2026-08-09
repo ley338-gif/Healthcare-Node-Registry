@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSystemReferenceRequest;
 use App\Http\Requests\UpdateSystemReferenceRequest;
+use App\Models\Manufacturer;
 use App\Models\SystemStatus;
 use App\Models\SystemType;
 use App\Models\User;
@@ -38,16 +39,29 @@ final class SettingsSystemReferenceController extends Controller
         return $this->update($request, $systemStatus, $audit, 'Systemstatus');
     }
 
+    public function storeManufacturer(StoreSystemReferenceRequest $request, RegistryAudit $audit): RedirectResponse
+    {
+        return $this->store($request, new Manufacturer, $audit, 'Hersteller');
+    }
+
+    public function updateManufacturer(
+        UpdateSystemReferenceRequest $request,
+        Manufacturer $manufacturer,
+        RegistryAudit $audit,
+    ): RedirectResponse {
+        return $this->update($request, $manufacturer, $audit, 'Hersteller');
+    }
+
     private function store(
         StoreSystemReferenceRequest $request,
-        SystemType|SystemStatus $reference,
+        Manufacturer|SystemType|SystemStatus $reference,
         RegistryAudit $audit,
         string $label,
     ): RedirectResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 403);
         $reference->fill($request->validated())->save();
-        $kind = $reference instanceof SystemType ? 'system_type' : 'system_status';
+        $kind = $this->kind($reference);
         $audit->record("settings.{$kind}.created", $reference, $actor, [
             'after' => $reference->only(['code', 'label', 'sort_order', 'is_active']),
         ]);
@@ -57,7 +71,7 @@ final class SettingsSystemReferenceController extends Controller
 
     private function update(
         UpdateSystemReferenceRequest $request,
-        SystemType|SystemStatus $reference,
+        Manufacturer|SystemType|SystemStatus $reference,
         RegistryAudit $audit,
         string $label,
     ): RedirectResponse {
@@ -66,7 +80,7 @@ final class SettingsSystemReferenceController extends Controller
         $before = $reference->only(['code', 'label', 'sort_order', 'is_active']);
         $reference->update($request->validated());
         $after = $reference->only(['code', 'label', 'sort_order', 'is_active']);
-        $kind = $reference instanceof SystemType ? 'system_type' : 'system_status';
+        $kind = $this->kind($reference);
         $audit->record("settings.{$kind}.updated", $reference, $actor, [
             'before' => $before,
             'after' => $after,
@@ -74,5 +88,14 @@ final class SettingsSystemReferenceController extends Controller
         ]);
 
         return back()->with('success', "{$label} wurde aktualisiert.");
+    }
+
+    private function kind(Manufacturer|SystemType|SystemStatus $reference): string
+    {
+        return match (true) {
+            $reference instanceof SystemType => 'system_type',
+            $reference instanceof SystemStatus => 'system_status',
+            default => 'manufacturer',
+        };
     }
 }
