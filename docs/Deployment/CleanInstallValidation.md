@@ -18,6 +18,7 @@ docker compose exec app php artisan registry:doctor
 
 - Container laufen stabil
 - Datenbank ist healthy
+- Queue-Worker ist healthy und `registry:worker-health` erfolgreich
 - Doctor-Command erfolgreich
 - `/up` liefert HTTP 200
 - Login und Logout funktionieren
@@ -41,7 +42,7 @@ Der Ablauf wurde aus einer separaten, frischen Arbeitskopie von `main` auf Basis
 | Anwendungsschlüssel und frische Migration | erfolgreich, 26 Migrationen |
 | Produktions-Frontend-Build | erfolgreich |
 | Erster synthetischer Systemadministrator | erfolgreich; kein Development-Seeder in `production` |
-| Vollständiger Stack | App, Worker, Scheduler, Web, PostgreSQL und ClamAV gestartet; PostgreSQL und ClamAV healthy |
+| Vollständiger Stack | App, Worker, Scheduler, Web, PostgreSQL und ClamAV gestartet; PostgreSQL, Worker und ClamAV healthy |
 | `registry:doctor` | alle Prüfungen erfolgreich |
 | HTTP und Authentisierung | `/up` und `/login` HTTP 200; Login und Logout mit Session/XSRF erfolgreich |
 | Persistenz nach Neustart | Datenbank- und Storage-Markierung blieben erhalten |

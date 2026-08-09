@@ -41,6 +41,12 @@ services:
       - backend
     security_opt:
       - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "php", "artisan", "registry:worker-health", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   scheduler:
     build:

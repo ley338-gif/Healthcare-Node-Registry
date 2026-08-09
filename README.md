@@ -197,10 +197,11 @@ Dieser Zugang ist synthetisch und darf nicht in produktiven oder gemeinsam errei
 
    ```bash
    docker compose ps worker
+   docker compose exec worker php artisan registry:worker-health
    docker compose logs -f worker
    ```
 
-   Der Worker verarbeitet die Queue `discovery` (`php artisan queue:work database --queue=discovery,default`).
+   Der Worker verarbeitet die Queue `discovery` (`php artisan queue:work database --queue=discovery,default`). Sein anwendungsspezifischer Docker-Healthcheck prüft einen bei jedem Queue-Loop aktualisierten Heartbeat sowie die Datenbankverbindung. Ein leerer Queue-Zustand ist gesund; ein veralteter oder ungültiger Heartbeat setzt den Container auf `unhealthy`.
 
 2. DCMTK im Container prüfen:
 
@@ -221,7 +222,7 @@ Dieser Zugang ist synthetisch und darf nicht in produktiven oder gemeinsam errei
 | --- | --- | --- | --- | --- |
 | `web` | Nginx, statische Assets und Weiterleitung an PHP-FPM | `8080` | Standard | `unless-stopped` |
 | `app` | Laravel auf PHP-FPM, Port 9000 nur im Compose-Netz | keiner | Standard | `unless-stopped` |
-| `worker` | Queue-Worker (`php artisan queue:work database --queue=discovery,default`) für asynchrone Discovery-Scan-Läufe | keiner | Standard | `unless-stopped` |
+| `worker` | Queue-Worker (`php artisan queue:work database --queue=discovery,default`) für asynchrone Discovery-Scan-Läufe; Heartbeat- und Datenbank-Healthcheck | keiner | Standard | `unless-stopped` |
 | `scheduler` | Laravel-Scheduler für den stündlichen Malware-Rescan und die tägliche Dokument-Ablaufprüfung | keiner | Standard | `unless-stopped` |
 | `clamav` | ClamAV 1.5.3 mit ClamD und FreshClam | keiner | Standard | `unless-stopped` |
 | `db` | PostgreSQL 18.4 | keiner | Standard | `unless-stopped` |
@@ -595,6 +596,16 @@ docker compose exec app php artisan registry:doctor
 ```
 
 `/up` bestätigt den Laravel-Health-Endpunkt; `registry:doctor` prüft zusätzlich Schlüssel, Datenbank, Migrationen, initialen Administrator, Verzeichnisrechte und Frontend-Manifest.
+
+### Worker ist `unhealthy` oder Discovery-Läufe bleiben geplant
+
+```bash
+docker compose ps worker db
+docker compose exec worker php artisan registry:worker-health
+docker compose logs --tail=200 worker db
+```
+
+Der Worker schreibt bei jedem Queue-Loop einen Heartbeat und prüft im Healthcheck zusätzlich seine Datenbankverbindung. Im Leerlauf darf der Heartbeat höchstens 15 Sekunden alt sein. Während eines Jobs bleibt der Worker bis zum individuellen Job-Timeout zuzüglich 15 Sekunden Abschlussfrist gesund; danach gilt auch ein beschäftigter Worker als festgefahren. Ist PostgreSQL nicht erreichbar, wird der Container ebenfalls `unhealthy`. Nach Behebung der Ursache den Worker mit `docker compose restart worker` neu starten. Das Storage-Volume oder die Datenbank dürfen dafür nicht entfernt werden.
 
 ### DICOM-Test schlägt fehl
 

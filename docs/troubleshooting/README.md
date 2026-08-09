@@ -42,7 +42,7 @@ Weitere Betriebsprüfungen bietet das Konsolenkommando `php artisan hnr:doctor`;
 
 ## Discovery-Lauf bleibt bei "geplant"/"läuft" hängen
 
-Prüfen Sie, ob der `worker`-Container läuft (`docker compose ps worker`) und Jobs aus der Queue `discovery` verarbeitet (`docker compose logs worker`). Ohne laufenden Worker werden Discovery-Läufe angelegt, aber nie verarbeitet.
+Prüfen Sie, ob der `worker`-Container healthy ist (`docker compose ps worker`) und führen Sie `docker compose exec worker php artisan registry:worker-health` aus. Das Kommando prüft Queue-Loop-Heartbeat und Datenbankverbindung. Mit `docker compose logs worker` lässt sich anschließend die konkrete Ursache eingrenzen. Ohne gesunden Worker werden Discovery-Läufe angelegt, aber nicht verarbeitet.
 
 ## Discovery-Wizard lässt keinen Start zu ("keine erlaubten Netzbereiche")
 

@@ -29,7 +29,6 @@ Diese gelten unabhängig von künftigen Versionen, solange die Anwendung kein Me
 - **ICMP-Ping erfordert `CAP_NET_RAW` im Container.** Fehlt diese Capability, gilt ein Host trotzdem als erreichbar, sobald ein konfigurierter Port antwortet - eine reine ICMP-Aussage ("Host antwortet nicht auf Ping, aber auf keinem Port") wird in diesem Fall nicht separat ausgewiesen.
 - **Keine Bulk-Auswahl in der Review-Queue.** Bestätigen/Ignorieren/Übernehmen erfolgt je Fund einzeln, keine Mehrfachauswahl mit Sammelaktion.
 - **Kein separates Rollen-Freigabe-Vier-Augen-Prinzip.** Die Übernahme in die Registry erfordert eine einzelne Person mit `discovery.manage` und `registry.manage`.
-- **Kein dediziertes Healthcheck für den `worker`-Container.** `docker compose ps` zeigt den Laufstatus, aber es gibt keinen anwendungsspezifischen Healthcheck-Endpunkt für den Queue-Worker.
 
 ## Nicht implementiert (siehe `docs/roadmap.md` für mögliche Version 2)
 
