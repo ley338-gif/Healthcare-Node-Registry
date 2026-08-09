@@ -32,6 +32,7 @@ const props = defineProps<{
         unverified_nodes: number;
     };
     services: ServiceOption[];
+    systemTypes: ServiceOption[];
     focusNodePublicId: string | null;
     focusConnectionPublicId: string | null;
 }>();
@@ -61,9 +62,11 @@ const siteOptions = computed(() =>
     ).sort(),
 );
 
-const systemTypeOptions = computed(() =>
-    Array.from(new Set(props.nodes.map((node) => node.system.system_type))).sort(),
-);
+const systemTypeOptions = computed(() => {
+    const visibleCodes = new Set(props.nodes.map((node) => node.system.system_type));
+
+    return props.systemTypes.filter((option) => visibleCodes.has(option.value));
+});
 
 const visibleNodes = computed(() =>
     props.nodes.filter((node) => {
@@ -182,8 +185,8 @@ const resetFilters = (): void => {
                     class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-50"
                 >
                     <option value="">Alle Systemtypen</option>
-                    <option v-for="item in systemTypeOptions" :key="item" :value="item">
-                        {{ item }}
+                    <option v-for="item in systemTypeOptions" :key="item.value" :value="item.value">
+                        {{ item.label }}
                     </option>
                 </select>
 

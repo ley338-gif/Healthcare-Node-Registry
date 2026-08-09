@@ -189,7 +189,7 @@ Die folgenden Themen sind dokumentiert, aber noch nicht als vollständig verfüg
 
 ### Referenzdaten und Verwaltungsoberflächen
 
-Zentrale Pflegeoberflächen für fachliche Referenzdaten können fest hinterlegte Werte schrittweise ersetzen. Kandidaten sind unter anderem Hersteller, Systemtypen, DICOM-Dienste, Dokumentkategorien und Portprofile. Umfang und Datenführerschaft müssen vor der Umsetzung festgelegt werden.
+Systemtypen und Systemstatus werden bereits unter **Einstellungen > Referenzdaten** zentral gepflegt. Weitere fest hinterlegte oder freie Werte können schrittweise folgen; Kandidaten sind Hersteller, DICOM-Dienste, Dokumentkategorien und Portprofile. Umfang und Datenführerschaft müssen vor jeder Erweiterung separat festgelegt werden.
 
 ### Weitergehende Verantwortlichkeitsmodellierung
 

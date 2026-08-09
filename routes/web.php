@@ -36,6 +36,7 @@ use App\Http\Controllers\RegistryDocumentIndexController;
 use App\Http\Controllers\RegistryImportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SettingsRoleController;
+use App\Http\Controllers\SettingsSystemReferenceController;
 use App\Http\Controllers\SettingsUserController;
 use App\Http\Controllers\SettingsUserMfaController;
 use App\Http\Controllers\SiteController;
@@ -75,6 +76,10 @@ Route::middleware(['auth', 'mfa'])->group(function (): void {
     Route::post('/settings/roles', [SettingsRoleController::class, 'store'])->name('settings.roles.store');
     Route::put('/settings/roles/{role}', [SettingsRoleController::class, 'update'])->name('settings.roles.update');
     Route::delete('/settings/roles/{role}', [SettingsRoleController::class, 'destroy'])->name('settings.roles.destroy');
+    Route::post('/settings/system-types', [SettingsSystemReferenceController::class, 'storeType'])->name('settings.system-types.store');
+    Route::put('/settings/system-types/{systemType}', [SettingsSystemReferenceController::class, 'updateType'])->name('settings.system-types.update');
+    Route::post('/settings/system-statuses', [SettingsSystemReferenceController::class, 'storeStatus'])->name('settings.system-statuses.store');
+    Route::put('/settings/system-statuses/{systemStatus}', [SettingsSystemReferenceController::class, 'updateStatus'])->name('settings.system-statuses.update');
 
     Route::get('/structure', OrganizationStructureController::class)->name('structure.index');
     Route::get('/documents', RegistryDocumentIndexController::class)->name('documents.index');

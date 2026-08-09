@@ -15,6 +15,7 @@ use App\Services\Discovery\DiscoveryAuditService;
 use App\Services\Discovery\DiscoveryEchoTarget as EchoTarget;
 use App\Services\Discovery\PortScanService;
 use App\Services\Discovery\RegistryPromotionService;
+use App\Services\Registry\SystemReferenceDataService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -127,8 +128,11 @@ final class DiscoveredHostController extends Controller
         return back()->with('success', 'Erneute Prüfung abgeschlossen.');
     }
 
-    public function promotionData(DiscoveredHost $discoveredHost, RegistryPromotionService $promotionService): JsonResponse
-    {
+    public function promotionData(
+        DiscoveredHost $discoveredHost,
+        RegistryPromotionService $promotionService,
+        SystemReferenceDataService $referenceData,
+    ): JsonResponse {
         Gate::authorize('promote', $discoveredHost);
 
         $proposedName = $discoveredHost->hostname ?: $discoveredHost->ip_address;
@@ -138,6 +142,14 @@ final class DiscoveredHostController extends Controller
             'organizations' => Organization::query()->orderBy('name')->get(['id', 'name']),
             'sites' => Site::query()->orderBy('name')->get(['id', 'organization_id', 'name']),
             'departments' => Department::query()->orderBy('name')->get(['id', 'site_id', 'name']),
+            'systemTypes' => array_values(array_filter(
+                $referenceData->typeOptions(),
+                static fn (array $option): bool => $option['is_active'],
+            )),
+            'systemStatuses' => array_values(array_filter(
+                $referenceData->statusOptions(),
+                static fn (array $option): bool => $option['is_active'],
+            )),
             'duplicates' => collect($promotionService->findDuplicates(
                 $discoveredHost,
                 $proposedName,

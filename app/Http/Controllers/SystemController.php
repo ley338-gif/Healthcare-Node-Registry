@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\Audit\RegistryHistoryService;
 use App\Services\Audit\RegistryHistoryViewService;
 use App\Services\Documents\RegistryDocumentQueryService;
+use App\Services\Registry\SystemReferenceDataService;
 use App\Services\Reports\SystemOverviewQuery;
 use App\Support\DiagnosticPermission;
 use App\Support\RegistryAudit;
@@ -27,8 +28,12 @@ use Inertia\Response;
 
 final class SystemController extends Controller
 {
-    public function index(Request $request, RegistryDocumentQueryService $documentQueryService, SystemOverviewQuery $systemOverviewQuery): Response
-    {
+    public function index(
+        Request $request,
+        RegistryDocumentQueryService $documentQueryService,
+        SystemOverviewQuery $systemOverviewQuery,
+        SystemReferenceDataService $referenceData,
+    ): Response {
         Gate::authorize('viewAny', System::class);
 
         $search = trim((string) $request->query('search', ''));
@@ -289,30 +294,9 @@ final class SystemController extends Controller
                 'selected' => $selectedSystem?->public_id,
             ],
 
-            'systemTypes' => [
-                ['value' => 'pacs', 'label' => 'PACS'],
-                ['value' => 'ris', 'label' => 'RIS'],
-                ['value' => 'kis', 'label' => 'KIS'],
-                ['value' => 'modality', 'label' => 'Modalität'],
-                ['value' => 'viewer', 'label' => 'Viewer'],
-                [
-                    'value' => 'integration_engine',
-                    'label' => 'Integrationsserver',
-                ],
-                ['value' => 'server', 'label' => 'Server'],
-                ['value' => 'database', 'label' => 'Datenbank'],
-                ['value' => 'storage', 'label' => 'Storage'],
-                ['value' => 'network', 'label' => 'Netzwerkgerät'],
-                ['value' => 'other', 'label' => 'Sonstiges'],
-            ],
+            'systemTypes' => $referenceData->typeOptions(),
 
-            'statuses' => [
-                ['value' => 'active', 'label' => 'Aktiv'],
-                ['value' => 'planned', 'label' => 'Geplant'],
-                ['value' => 'maintenance', 'label' => 'Wartung'],
-                ['value' => 'inactive', 'label' => 'Inaktiv'],
-                ['value' => 'retired', 'label' => 'Außer Betrieb'],
-            ],
+            'statuses' => $referenceData->statusOptions(),
 
             'criticalities' => [
                 ['value' => 'low', 'label' => 'Niedrig'],
@@ -357,6 +341,7 @@ final class SystemController extends Controller
         RegistryHistoryService $historyService,
         RegistryHistoryViewService $historyViewService,
         RegistryDocumentQueryService $documentQueryService,
+        SystemReferenceDataService $referenceData,
     ): Response {
         Gate::authorize('view', $system);
 
@@ -394,27 +379,9 @@ final class SystemController extends Controller
             'canArchiveDocuments' => $user->hasPermission('documents.archive'),
             ...$historyView,
 
-            'systemTypes' => [
-                ['value' => 'pacs', 'label' => 'PACS'],
-                ['value' => 'ris', 'label' => 'RIS'],
-                ['value' => 'kis', 'label' => 'KIS'],
-                ['value' => 'modality', 'label' => 'Modalität'],
-                ['value' => 'viewer', 'label' => 'Viewer'],
-                ['value' => 'integration_engine', 'label' => 'Integrationsserver'],
-                ['value' => 'server', 'label' => 'Server'],
-                ['value' => 'database', 'label' => 'Datenbank'],
-                ['value' => 'storage', 'label' => 'Storage'],
-                ['value' => 'network', 'label' => 'Netzwerkgerät'],
-                ['value' => 'other', 'label' => 'Sonstiges'],
-            ],
+            'systemTypes' => $referenceData->typeOptions(),
 
-            'statuses' => [
-                ['value' => 'active', 'label' => 'Aktiv'],
-                ['value' => 'planned', 'label' => 'Geplant'],
-                ['value' => 'maintenance', 'label' => 'Wartung'],
-                ['value' => 'inactive', 'label' => 'Inaktiv'],
-                ['value' => 'retired', 'label' => 'Außer Betrieb'],
-            ],
+            'statuses' => $referenceData->statusOptions(),
 
             'criticalities' => [
                 ['value' => 'low', 'label' => 'Niedrig'],

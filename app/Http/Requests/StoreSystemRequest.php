@@ -24,8 +24,8 @@ final class StoreSystemRequest extends FormRequest
             'department_id' => ['nullable', 'exists:departments,id'],
 
             'name' => ['required', 'string', 'max:160'],
-            'system_type' => ['required', 'string', 'max:80'],
-            'status' => ['required', 'string', 'max:40'],
+            'system_type' => ['required', 'string', 'max:80', Rule::exists('system_types', 'code')->where('is_active', true)],
+            'status' => ['required', 'string', 'max:40', Rule::exists('system_statuses', 'code')->where('is_active', true)],
             'responsible' => ['nullable', 'string', 'max:160'],
             'criticality' => ['nullable', Rule::in(['low', 'medium', 'high', 'critical'])],
 

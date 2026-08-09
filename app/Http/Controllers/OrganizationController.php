@@ -8,6 +8,7 @@ use App\Models\Department;
 use App\Models\Organization;
 use App\Models\Site;
 use App\Models\System;
+use App\Services\Registry\SystemReferenceDataService;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,7 +19,7 @@ use Inertia\Response;
 
 final class OrganizationController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, SystemReferenceDataService $referenceData): Response
     {
         Gate::authorize('viewAny', Organization::class);
 
@@ -174,6 +175,8 @@ final class OrganizationController extends Controller
                 'search' => $search,
                 'archived' => $archived,
             ],
+            'systemTypes' => $referenceData->typeOptions(),
+            'systemStatuses' => $referenceData->statusOptions(),
             'canManage' => $request
                 ->user()
                 ?->can('create', Organization::class) ?? false,

@@ -40,6 +40,7 @@ Abgeschlossen.
 - [x] Tests
 - [x] Verantwortlichkeiten
 - [x] Kritikalität in Systempflege, Übersicht, Filter und Export
+- [x] administrierbare Referenzdaten für Systemtypen und Systemstatus
 - [x] webbasierte Benutzer- und Rollenverwaltung unter Einstellungen
 
 ## Nächster Sprint

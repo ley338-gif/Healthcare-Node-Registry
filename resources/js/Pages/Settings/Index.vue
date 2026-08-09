@@ -1,6 +1,19 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { KeyRound, Pencil, Plus, Radar, RotateCcw, Search, ShieldCheck, ShieldX, Trash2, Users, X } from '@lucide/vue';
+import {
+    KeyRound,
+    ListTree,
+    Pencil,
+    Plus,
+    Radar,
+    RotateCcw,
+    Search,
+    ShieldCheck,
+    ShieldX,
+    Trash2,
+    Users,
+    X,
+} from '@lucide/vue';
 import { computed, ref } from 'vue';
 import Pagination from '../../Components/Pagination.vue';
 import PageHeader from '../../Components/ui/PageHeader.vue';
@@ -24,6 +37,15 @@ type PaginatedUsers = {
     links: Array<{ url: string | null; label: string; active: boolean }>;
     total: number;
 };
+type SystemReference = {
+    public_id: string;
+    code: string;
+    label: string;
+    sort_order: number;
+    is_active: boolean;
+    is_protected: boolean;
+    systems_count: number;
+};
 const props = defineProps<{
     users: PaginatedUsers | null;
     roles: Role[];
@@ -31,18 +53,26 @@ const props = defineProps<{
     filters: { search: string; status: string; role: number | null };
     canManageUsers: boolean;
     canManageRoles: boolean;
+    canManageReferenceData: boolean;
     canManageDiscovery: boolean;
+    systemTypes: SystemReference[];
+    systemStatuses: SystemReference[];
     currentUserId: string;
 }>();
-const tab = ref<'users' | 'roles'>(props.canManageUsers ? 'users' : 'roles');
+const tab = ref<'users' | 'roles' | 'reference'>(
+    props.canManageUsers ? 'users' : props.canManageRoles ? 'roles' : 'reference',
+);
 const search = ref(props.filters.search);
 const status = ref(props.filters.status);
 const roleFilter = ref(props.filters.role ? String(props.filters.role) : '');
 const userOpen = ref(false);
 const roleOpen = ref(false);
+const referenceOpen = ref(false);
 const passwordOpen = ref(false);
 const editingUser = ref<User | null>(null);
 const editingRole = ref<Role | null>(null);
+const editingReference = ref<SystemReference | null>(null);
+const referenceKind = ref<'system-types' | 'system-statuses'>('system-types');
 const selectedUser = ref<User | null>(null);
 const userForm = useForm({
     name: '',
@@ -53,6 +83,7 @@ const userForm = useForm({
     role_ids: [] as number[],
 });
 const roleForm = useForm({ name: '', display_name: '', permission_ids: [] as number[] });
+const referenceForm = useForm({ code: '', label: '', sort_order: 100, is_active: true });
 const passwordForm = useForm({ password: '', password_confirmation: '' });
 const activeUsers = computed(() => props.users?.data.filter((user) => user.is_active).length ?? 0);
 const applyFilters = () =>
@@ -133,6 +164,38 @@ const deleteRole = (role: Role) => {
     if (window.confirm(`Rolle „${role.display_name}“ wirklich löschen?`))
         router.delete(`/settings/roles/${role.id}`, { preserveScroll: true });
 };
+const openCreateReference = (kind: 'system-types' | 'system-statuses') => {
+    referenceKind.value = kind;
+    editingReference.value = null;
+    referenceForm.reset();
+    referenceForm.clearErrors();
+    referenceForm.sort_order = 100;
+    referenceForm.is_active = true;
+    referenceOpen.value = true;
+};
+const openEditReference = (kind: 'system-types' | 'system-statuses', reference: SystemReference) => {
+    referenceKind.value = kind;
+    editingReference.value = reference;
+    referenceForm.clearErrors();
+    referenceForm.code = reference.code;
+    referenceForm.label = reference.label;
+    referenceForm.sort_order = reference.sort_order;
+    referenceForm.is_active = reference.is_active;
+    referenceOpen.value = true;
+};
+const saveReference = () => {
+    const base = '/settings/' + referenceKind.value;
+    if (editingReference.value)
+        referenceForm.put(base + '/' + editingReference.value.public_id, {
+            preserveScroll: true,
+            onSuccess: () => (referenceOpen.value = false),
+        });
+    else
+        referenceForm.post(base, {
+            preserveScroll: true,
+            onSuccess: () => (referenceOpen.value = false),
+        });
+};
 const formatActivity = (value: number | null) =>
     value
         ? new Intl.DateTimeFormat('de-DE', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value * 1000))
@@ -164,6 +227,14 @@ const formatActivity = (value: number | null) =>
                 @click="tab = 'roles'"
             >
                 <ShieldCheck :size="17" /> Rollen & Berechtigungen
+            </button>
+            <button
+                v-if="canManageReferenceData"
+                class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold"
+                :class="tab === 'reference' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500'"
+                @click="tab = 'reference'"
+            >
+                <ListTree :size="17" /> Referenzdaten
             </button>
             <Link
                 v-if="canManageDiscovery"
@@ -395,6 +466,186 @@ const formatActivity = (value: number | null) =>
                 </article>
             </section>
         </template>
+
+        <template v-else-if="tab === 'reference' && canManageReferenceData">
+            <div class="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+                Technische Codes bleiben nach der Anlage unveränderlich. Deaktivierte Werte bleiben an bestehenden
+                Systemen sichtbar, können aber nicht mehr neu ausgewählt werden.
+            </div>
+            <section class="mt-4 grid gap-4 xl:grid-cols-2">
+                <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="flex items-center justify-between border-b border-slate-200 p-4">
+                        <div>
+                            <h2 class="font-semibold text-slate-900">Systemtypen</h2>
+                            <p class="mt-1 text-xs text-slate-500">Fachliche Einordnung registrierter Systeme.</p>
+                        </div>
+                        <button
+                            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white"
+                            @click="openCreateReference('system-types')"
+                        >
+                            <Plus :size="16" /> Anlegen
+                        </button>
+                    </div>
+                    <div class="divide-y divide-slate-100">
+                        <div v-for="item in systemTypes" :key="item.public_id" class="flex items-center gap-3 p-4">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <p class="font-medium text-slate-900">{{ item.label }}</p>
+                                    <span
+                                        class="rounded-full px-2 py-0.5 text-xs font-semibold"
+                                        :class="
+                                            item.is_active
+                                                ? 'bg-emerald-50 text-emerald-700'
+                                                : 'bg-slate-100 text-slate-500'
+                                        "
+                                        >{{ item.is_active ? 'Aktiv' : 'Deaktiviert' }}</span
+                                    >
+                                </div>
+                                <p class="mt-1 font-mono text-xs text-slate-400">
+                                    {{ item.code }} · {{ item.systems_count }} Systeme · Reihenfolge
+                                    {{ item.sort_order }}
+                                </p>
+                            </div>
+                            <button
+                                class="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                                title="Bearbeiten"
+                                @click="openEditReference('system-types', item)"
+                            >
+                                <Pencil :size="16" />
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="flex items-center justify-between border-b border-slate-200 p-4">
+                        <div>
+                            <h2 class="font-semibold text-slate-900">Systemstatus</h2>
+                            <p class="mt-1 text-xs text-slate-500">Betriebliche Zustände und Lebenszykluswerte.</p>
+                        </div>
+                        <button
+                            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white"
+                            @click="openCreateReference('system-statuses')"
+                        >
+                            <Plus :size="16" /> Anlegen
+                        </button>
+                    </div>
+                    <div class="divide-y divide-slate-100">
+                        <div v-for="item in systemStatuses" :key="item.public_id" class="flex items-center gap-3 p-4">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <p class="font-medium text-slate-900">{{ item.label }}</p>
+                                    <span
+                                        class="rounded-full px-2 py-0.5 text-xs font-semibold"
+                                        :class="
+                                            item.is_active
+                                                ? 'bg-emerald-50 text-emerald-700'
+                                                : 'bg-slate-100 text-slate-500'
+                                        "
+                                        >{{ item.is_active ? 'Aktiv' : 'Deaktiviert' }}</span
+                                    >
+                                    <span
+                                        v-if="item.is_protected"
+                                        class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700"
+                                        >Geschützt</span
+                                    >
+                                </div>
+                                <p class="mt-1 font-mono text-xs text-slate-400">
+                                    {{ item.code }} · {{ item.systems_count }} Systeme · Reihenfolge
+                                    {{ item.sort_order }}
+                                </p>
+                            </div>
+                            <button
+                                class="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                                title="Bearbeiten"
+                                @click="openEditReference('system-statuses', item)"
+                            >
+                                <Pencil :size="16" />
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            </section>
+        </template>
+
+        <Teleport to="body"
+            ><div
+                v-if="referenceOpen"
+                class="fixed inset-0 z-50 flex justify-end bg-slate-950/30"
+                @click.self="referenceOpen = false"
+            >
+                <aside class="h-full w-full max-w-lg overflow-y-auto bg-white p-6 shadow-2xl">
+                    <div class="flex justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-blue-700 uppercase">Referenzdaten</p>
+                            <h2 class="mt-1 text-xl font-semibold">
+                                {{
+                                    editingReference
+                                        ? 'Referenzwert bearbeiten'
+                                        : referenceKind === 'system-types'
+                                          ? 'Systemtyp anlegen'
+                                          : 'Systemstatus anlegen'
+                                }}
+                            </h2>
+                        </div>
+                        <button @click="referenceOpen = false"><X :size="20" /></button>
+                    </div>
+                    <form class="mt-6 space-y-4" @submit.prevent="saveReference">
+                        <label class="block text-sm font-medium"
+                            >Technischer Code<input
+                                v-model="referenceForm.code"
+                                :disabled="Boolean(editingReference)"
+                                placeholder="beispiel_code"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono disabled:bg-slate-100"
+                        /></label>
+                        <p v-if="referenceForm.errors.code" class="text-sm text-red-600">
+                            {{ referenceForm.errors.code }}
+                        </p>
+                        <label class="block text-sm font-medium"
+                            >Anzeigename<input
+                                v-model="referenceForm.label"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                        /></label>
+                        <p v-if="referenceForm.errors.label" class="text-sm text-red-600">
+                            {{ referenceForm.errors.label }}
+                        </p>
+                        <label class="block text-sm font-medium"
+                            >Reihenfolge<input
+                                v-model.number="referenceForm.sort_order"
+                                type="number"
+                                min="0"
+                                max="65535"
+                                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                        /></label>
+                        <label class="flex items-center gap-2 text-sm"
+                            ><input
+                                v-model="referenceForm.is_active"
+                                type="checkbox"
+                                :disabled="Boolean(editingReference?.is_protected)"
+                            />
+                            Für neue Zuordnungen aktiv</label
+                        >
+                        <p v-if="referenceForm.errors.is_active" class="text-sm text-red-600">
+                            {{ referenceForm.errors.is_active }}
+                        </p>
+                        <div class="flex justify-end gap-2 pt-4">
+                            <button
+                                type="button"
+                                class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold"
+                                @click="referenceOpen = false"
+                            >
+                                Abbrechen</button
+                            ><button
+                                :disabled="referenceForm.processing"
+                                class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white"
+                            >
+                                Speichern
+                            </button>
+                        </div>
+                    </form>
+                </aside>
+            </div></Teleport
+        >
 
         <Teleport to="body"
             ><div

@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateDepartmentRequest;
 use App\Models\Department;
 use App\Models\Site;
 use App\Models\System;
+use App\Services\Registry\SystemReferenceDataService;
 use App\Support\RegistryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ use Inertia\Response;
 
 final class DepartmentController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, SystemReferenceDataService $referenceData): Response
     {
         Gate::authorize('viewAny', Department::class);
 
@@ -140,6 +141,8 @@ final class DepartmentController extends Controller
                 'search' => $search,
                 'archived' => $archived,
             ],
+            'systemTypes' => $referenceData->typeOptions(),
+            'systemStatuses' => $referenceData->statusOptions(),
             'canManage' => $request->user()?->can('create', Department::class) ?? false,
             'canUpdateSelected' => $selectedDepartment !== null
                 ? ($request->user()?->can('update', $selectedDepartment) ?? false)

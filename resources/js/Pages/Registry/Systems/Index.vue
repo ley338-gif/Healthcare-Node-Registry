@@ -19,6 +19,7 @@ import type { RegistryDocumentPagination } from '../../../Components/documents/R
 type SelectOption = {
     value: string;
     label: string;
+    is_active?: boolean;
 };
 
 type OrganizationOption = {

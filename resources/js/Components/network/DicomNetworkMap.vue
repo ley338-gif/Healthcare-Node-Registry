@@ -32,7 +32,9 @@ export type NetworkNode = {
         public_id: string;
         name: string;
         system_type: string;
+        system_type_label: string;
         status: string;
+        status_label: string;
         organization: string | null;
         site: string | null;
         department: string | null;

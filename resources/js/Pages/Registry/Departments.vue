@@ -69,6 +69,8 @@ const props = defineProps<{
     canManage: boolean;
     canUpdateSelected: boolean;
     canArchiveSelected: boolean;
+    systemTypes: Array<{ value: string; label: string }>;
+    systemStatuses: Array<{ value: string; label: string }>;
 }>();
 
 const search = ref(props.filters.search);
@@ -101,23 +103,9 @@ const activeSystems = computed(
 const formatDate = (value: string): string =>
     new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 const systemTypeLabel = (value: string): string =>
-    ({
-        pacs: 'PACS',
-        ris: 'RIS',
-        kis: 'KIS',
-        modality: 'Modalität',
-        viewer: 'Viewer',
-        integration_engine: 'Integrationsserver',
-        server: 'Server',
-        database: 'Datenbank',
-        storage: 'Storage',
-        network: 'Netzwerkgerät',
-        other: 'Sonstiges',
-    })[value] ?? value;
+    props.systemTypes.find((option) => option.value === value)?.label ?? value;
 const systemStatusLabel = (value: string): string =>
-    ({ active: 'Aktiv', planned: 'Geplant', maintenance: 'Wartung', inactive: 'Inaktiv', retired: 'Außer Betrieb' })[
-        value
-    ] ?? value;
+    props.systemStatuses.find((option) => option.value === value)?.label ?? value;
 const systemStatusClass = (value: string): string =>
     ({
         active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',

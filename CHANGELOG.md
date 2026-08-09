@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Systemtypen und Systemstatus als fremdschlüsselgesicherte, auditierte Referenzdaten mit zentraler Verwaltungsoberfläche, Bestandsschutz für deaktivierte Werte sowie einheitlicher Validierung in Systempflege, CSV-Import und Discovery umgesetzt.
 - Systemkritikalität in Anlage, Bearbeitung, Detailansicht, Listenkennzeichnung, Filter und Export integriert; Änderungen werden über das bestehende Registry-Audit mit Vorher-/Nachher-Werten protokolliert.
 - Verpflichtende TOTP-MFA für lokale privilegierte Konten ergänzt: berechtigungsbasierte Erzwingung, lokale QR-Code-Einrichtung ohne externen Dienst, verschlüsselte Secrets, einmalige gehashte Recovery-Codes, Replay- und Rate-Limit-Schutz, Session-Widerruf bei Rollen-/Rechteänderungen, administrativer und konsolenbasierter Reset sowie vollständiges Audit.
 - Optionales HTTPS-Referenz-Deployment für Docker Compose mit betreiberverwalteten Zertifikaten, HTTP-zu-HTTPS-Weiterleitung, TLS-1.2/1.3-Härtung, HSTS und CI-validierter Nginx-Konfiguration ergänzt; der lokale HTTP-Entwicklungsstart bleibt verfügbar.

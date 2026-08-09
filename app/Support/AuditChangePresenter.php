@@ -10,6 +10,7 @@ final class AuditChangePresenter
         'host' => 'IP-Adresse / Host', 'hostname' => 'Hostname', 'ip_address' => 'IP-Adresse',
         'port' => 'Port', 'port_override' => 'Port', 'status' => 'Status', 'name' => 'Name',
         'title' => 'Titel', 'description' => 'Beschreibung', 'system_type' => 'Systemtyp',
+        'code' => 'Technischer Code', 'label' => 'Anzeigename', 'sort_order' => 'Reihenfolge', 'is_active' => 'Aktiv',
         'tls_enabled' => 'TLS', 'tls_profile' => 'TLS-Profil', 'test_enabled' => 'Tests', 'role' => 'Rolle', 'service' => 'Dienst',
         'vendor' => 'Hersteller', 'product' => 'Produkt', 'version' => 'Version',
         'valid_from' => 'Gültig ab', 'valid_until' => 'Gültig bis', 'visibility' => 'Sichtbarkeit',

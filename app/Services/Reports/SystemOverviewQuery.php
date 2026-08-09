@@ -21,6 +21,8 @@ final class SystemOverviewQuery
                 'organization:id,public_id,name',
                 'site:id,public_id,name',
                 'department:id,public_id,name',
+                'typeReference:id,code,label',
+                'statusReference:id,code,label',
             ])
             ->withCount([
                 'dicomNodes as dicom_nodes_count' => fn ($query) => $query->active(),
@@ -74,8 +76,8 @@ final class SystemOverviewQuery
                     'site' => $system->site?->name,
                     'department' => $system->department?->name,
                     'system' => $system->name,
-                    'system_type' => $system->system_type,
-                    'system_status' => $system->status,
+                    'system_type' => $system->typeReference->label,
+                    'system_status' => $system->statusReference->label,
                     'hostname' => $system->hostname,
                     'fqdn' => $system->fqdn,
                     'ip_address' => $system->ip_address,
