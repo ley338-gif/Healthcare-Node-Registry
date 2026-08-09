@@ -6,14 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreDiscoveryRunRequest;
 use App\Models\DiscoveredHost;
 use App\Models\DiscoveryRun;
+use App\Services\Discovery\DiscoveryHostQuery;
+use App\Services\Discovery\DiscoveryResultExporter;
 use App\Services\Discovery\DiscoveryRunService;
 use App\Services\Registry\SystemReferenceDataService;
+use App\Support\RegistryAudit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class DiscoveryRunController extends Controller
 {
@@ -28,30 +32,53 @@ final class DiscoveryRunController extends Controller
         Request $request,
         DiscoveryRun $discoveryRun,
         SystemReferenceDataService $referenceData,
+        DiscoveryHostQuery $hostQuery,
     ): Response {
         Gate::authorize('view', $discoveryRun);
 
-        $filters = $request->only(['reachable_only', 'dicom_candidates_only', 'successful_echo_only', 'status', 'confidence', 'system_type', 'port']);
-
-        $query = $discoveryRun->hosts()
-            ->with(['ports', 'dicomResults', 'classificationEvidence', 'system:id,public_id,name'])
-            ->when(($filters['reachable_only'] ?? null) === '1', fn ($q) => $q->where('is_reachable', true))
-            ->when(($filters['dicom_candidates_only'] ?? null) === '1', fn ($q) => $q->whereHas('ports', fn ($p) => $p->where('is_dicom_candidate', true)->where('is_open', true)))
-            ->when(($filters['successful_echo_only'] ?? null) === '1', fn ($q) => $q->whereHas('dicomResults', fn ($p) => $p->where('echo_successful', true)))
-            ->when(filled($filters['status'] ?? null), fn ($q) => $q->where('status', $filters['status']))
-            ->when(filled($filters['confidence'] ?? null), fn ($q) => $q->where('confidence_score', $filters['confidence']))
-            ->when(filled($filters['system_type'] ?? null), fn ($q) => $q->where('suggested_system_type', $filters['system_type']))
-            ->when(filled($filters['port'] ?? null), fn ($q) => $q->whereHas('ports', fn ($p) => $p->where('port', $filters['port'])))
-            ->orderByDesc('confidence_percentage')
-            ->orderBy('ip_address');
+        $filters = $this->filters($request);
 
         return Inertia::render('Discovery/Runs/Show', [
             'run' => $this->presentRun($discoveryRun),
-            'hosts' => $query->paginate(25)->withQueryString()->through(fn (DiscoveredHost $host) => $this->presentHost($host)),
+            'hosts' => $hostQuery->build($discoveryRun, $filters)->paginate(25)->withQueryString()->through(fn (DiscoveredHost $host) => $this->presentHost($host)),
             'filters' => $filters,
             'systemTypes' => $referenceData->typeOptions(),
             'canReview' => $request->user()?->hasPermission('discovery.manage') ?? false,
             'canCancel' => $request->user()?->can('cancel', $discoveryRun) ?? false,
+        ]);
+    }
+
+    public function export(
+        Request $request,
+        DiscoveryRun $discoveryRun,
+        string $format,
+        DiscoveryHostQuery $hostQuery,
+        DiscoveryResultExporter $exporter,
+        RegistryAudit $audit,
+    ): StreamedResponse {
+        Gate::authorize('view', $discoveryRun);
+        abort_unless(in_array($format, ['csv', 'json'], true), 404);
+
+        $filters = $this->filters($request);
+        $audit->record('discovery.results-exported', $discoveryRun, $request->user(), [
+            'format' => $format,
+            'filters' => array_filter($filters, filled(...)),
+        ]);
+
+        $filename = 'discovery-'.$discoveryRun->public_id.'-'.now()->format('Y-m-d-His').'.'.$format;
+
+        return response()->streamDownload(function () use ($discoveryRun, $filters, $format, $hostQuery, $exporter): void {
+            $stream = fopen('php://output', 'w');
+            abort_if($stream === false, 500);
+            $hosts = $hostQuery->build($discoveryRun, $filters)->lazy(250);
+
+            if ($format === 'csv') {
+                $exporter->writeCsv($stream, $hosts);
+            } else {
+                $exporter->writeJson($stream, $discoveryRun, $filters, $hosts);
+            }
+        }, $filename, [
+            'Content-Type' => $format === 'csv' ? 'text/csv; charset=UTF-8' : 'application/json; charset=UTF-8',
         ]);
     }
 
@@ -93,6 +120,12 @@ final class DiscoveryRunController extends Controller
             'error_message' => $run->error_message,
             'description' => $run->description,
         ];
+    }
+
+    /** @return array<string, mixed> */
+    private function filters(Request $request): array
+    {
+        return $request->only(['reachable_only', 'dicom_candidates_only', 'successful_echo_only', 'status', 'confidence', 'system_type', 'port']);
     }
 
     /**

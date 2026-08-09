@@ -16,7 +16,7 @@ Diese Funktionen sind bewusst **nicht** Bestandteil des DICOM Discovery & Topolo
 - Vergleich zweier Scanstände (Diff: neue/verschwundene/veränderte Hosts)
 - Benachrichtigungen bei neuen oder verschwundenen Systemen
 - CSV-/Excel-Import von AE-Titel-Kandidaten oder Zielbereichen für Discovery (die bestehende allgemeine Registry-CSV-Import-Funktion ist davon unabhängig bereits vorhanden, siehe `docs/Features/csv-registry-import.md`)
-- Export der Discovery-Ergebnisse und der Review-Queue als CSV, JSON oder PDF
+- PDF-Export der Discovery-Ergebnisse und der Review-Queue (gefilterte CSV- und JSON-Exporte sind implementiert)
 - Worklist-C-FIND-, Query/Retrieve-, Storage-Commitment- und MPPS-Tests im Discovery-Kontext (bestehen bereits für verifizierte Registry-Knoten im Test-Arbeitsbereich, nicht aber als Discovery-Scan-Phase)
 - DICOM-TLS als Discovery-Prüfoption
 - SNMP-Abfragen als zusätzliche Erkennungsquelle

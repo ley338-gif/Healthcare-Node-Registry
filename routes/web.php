@@ -196,6 +196,7 @@ Route::middleware(['auth', 'mfa'])->group(function (): void {
     Route::get('/discovery/runs/create', [DiscoveryRunWizardController::class, 'create'])->name('discovery.runs.create');
     Route::post('/discovery/runs', [DiscoveryRunController::class, 'store'])->name('discovery.runs.store');
     Route::get('/discovery/runs/{discoveryRun}', [DiscoveryRunController::class, 'show'])->name('discovery.runs.show');
+    Route::get('/discovery/runs/{discoveryRun}/export/{format}', [DiscoveryRunController::class, 'export'])->name('discovery.runs.export');
     Route::get('/discovery/runs/{discoveryRun}/status', [DiscoveryRunController::class, 'status'])->name('discovery.runs.status');
     Route::post('/discovery/runs/{discoveryRun}/cancel', [DiscoveryRunController::class, 'cancel'])->name('discovery.runs.cancel');
 

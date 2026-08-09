@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Gefilterten, berechtigungsgeprüften CSV- und JSON-Export der Discovery-Ergebnisse und Review-Queue mit Audit-Ereignis und Tabellenkalkulationsschutz ergänzt.
+
 - Anwendungsspezifischen Queue-Worker-Healthcheck ergänzt: Queue-Loops aktualisieren einen inhaltsarmen Heartbeat, Docker prüft dessen Aktualität und die Datenbankverbindung, und Betrieb sowie Fehlerdiagnose sind dokumentiert.
 
 - Discovery-Wiederholungsversuche vollständig aktiviert: fehlgeschlagene Ping-, TCP-Port- und DICOM-C-ECHO-Prüfungen werden gemäß Wizard-Konfiguration begrenzt wiederholt, erfolgreiche Ziele ausgespart und die maximale Prüfungsanzahl vor dem Start transparent berechnet.
