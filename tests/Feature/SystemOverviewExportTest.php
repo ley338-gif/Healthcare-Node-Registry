@@ -17,7 +17,7 @@ final class SystemOverviewExportTest extends TestCase
     public function test_excel_export_contains_system_and_dicom_node_and_respects_filters(): void
     {
         $included = System::factory()->create(['name' => 'PACS ÄÖÜ', 'vendor' => 'Example Medical']);
-        $included->update(['responsible' => 'Team Bildgebung']);
+        $included->update(['responsible' => 'Team Bildgebung', 'criticality' => 'critical']);
 
         $node = DicomNode::factory()->create([
             'system_id' => $included->id,
@@ -32,9 +32,9 @@ final class SystemOverviewExportTest extends TestCase
             'ip_address' => '10.50.1.99',
             'is_primary' => false,
         ]);
-        System::factory()->create(['name' => 'Nicht enthalten']);
+        System::factory()->create(['name' => 'Nicht enthalten', 'criticality' => 'low']);
 
-        $response = $this->actingAs($this->administrator())->get('/systems/export/xlsx?search=Team%20Bildgebung');
+        $response = $this->actingAs($this->administrator())->get('/systems/export/xlsx?search=Team%20Bildgebung&criticality=critical');
         $response->assertOk()->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         self::assertStringStartsWith('PK', $response->getContent());
 
@@ -44,6 +44,7 @@ final class SystemOverviewExportTest extends TestCase
         self::assertStringContainsString('10.50.1.20', $sheet);
         self::assertStringContainsString('Management | pacs-mgmt | 10.50.1.99', $sheet);
         self::assertStringContainsString('Team Bildgebung', $sheet);
+        self::assertStringContainsString('critical', $sheet);
         self::assertStringNotContainsString('Nicht enthalten', $sheet);
     }
 

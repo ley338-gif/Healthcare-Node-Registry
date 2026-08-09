@@ -30,7 +30,6 @@ Diese gelten unabhängig von künftigen Versionen, solange die Anwendung kein Me
 - **Wiederholungsversuche (Retries) werden im Wizard erfasst, aber im MVP nicht auf jede Phase angewendet** - Ping nutzt die konfigurierte Anzahl nicht als Mehrfachversuch, sondern als einzelner Versuch mit dem konfigurierten Timeout. Technisch vorbereitet über `scan_options.retries`, im MVP nicht vollständig ausgewertet.
 - **Keine Bulk-Auswahl in der Review-Queue.** Bestätigen/Ignorieren/Übernehmen erfolgt je Fund einzeln, keine Mehrfachauswahl mit Sammelaktion.
 - **Kein separates Rollen-Freigabe-Vier-Augen-Prinzip.** Die Übernahme in die Registry erfordert eine einzelne Person mit `discovery.manage` und `registry.manage`.
-- **Die "Kritikalität" eines Systems** wird bei der Übernahme aus Discovery erfasst (`systems.criticality`), ist aber noch nicht in der allgemeinen Systeme-Übersicht/-Bearbeitung (`/systems`) sicht- oder editierbar. Die optionale betriebliche Verantwortlichkeit (`systems.responsible`) ist dort dagegen sichtbar und für berechtigte Benutzer bearbeitbar.
 - **Kein dediziertes Healthcheck für den `worker`-Container.** `docker compose ps` zeigt den Laufstatus, aber es gibt keinen anwendungsspezifischen Healthcheck-Endpunkt für den Queue-Worker.
 
 ## Nicht implementiert (siehe `docs/roadmap.md` für mögliche Version 2)

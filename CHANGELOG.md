@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Systemkritikalität in Anlage, Bearbeitung, Detailansicht, Listenkennzeichnung, Filter und Export integriert; Änderungen werden über das bestehende Registry-Audit mit Vorher-/Nachher-Werten protokolliert.
 - Verpflichtende TOTP-MFA für lokale privilegierte Konten ergänzt: berechtigungsbasierte Erzwingung, verschlüsselte Secrets, einmalige gehashte Recovery-Codes, Replay- und Rate-Limit-Schutz, Session-Widerruf bei Rollen-/Rechteänderungen, administrativer und konsolenbasierter Reset sowie vollständiges Audit.
 - Optionales HTTPS-Referenz-Deployment für Docker Compose mit betreiberverwalteten Zertifikaten, HTTP-zu-HTTPS-Weiterleitung, TLS-1.2/1.3-Härtung, HSTS und CI-validierter Nginx-Konfiguration ergänzt; der lokale HTTP-Entwicklungsstart bleibt verfügbar.
 - PowerShell-Backup und -Restore um verbindliche Docker-Exitcode-, Dump- und Archivprüfung, sichere Wiederherstellung über ein Staging-Verzeichnis sowie fail-closed Webdienstverhalten bei Restore-Fehlern gehärtet; privates Storage-Verzeichnis wird bereits beim Containerstart angelegt.

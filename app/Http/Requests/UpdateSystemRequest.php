@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class UpdateSystemRequest extends FormRequest
 {
@@ -28,6 +29,7 @@ final class UpdateSystemRequest extends FormRequest
             'system_type' => ['required', 'string', 'max:80'],
             'status' => ['required', 'string', 'max:40'],
             'responsible' => ['nullable', 'string', 'max:160'],
+            'criticality' => ['nullable', Rule::in(['low', 'medium', 'high', 'critical'])],
 
             'hostname' => ['nullable', 'string', 'max:255'],
             'fqdn' => ['nullable', 'string', 'max:255'],

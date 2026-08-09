@@ -48,6 +48,7 @@ type SystemItem = {
     system_type: string;
     status: string;
     responsible: string | null;
+    criticality: string | null;
     hostname: string | null;
     fqdn: string | null;
     ip_address: string | null;
@@ -86,6 +87,7 @@ const props = withDefaults(
             search: string;
             type: string;
             status: string;
+            criticality: string;
             organization: number | null;
             site: number | null;
             department: number | null;
@@ -93,6 +95,7 @@ const props = withDefaults(
         };
         systemTypes: SelectOption[];
         statuses: SelectOption[];
+        criticalities: SelectOption[];
         organizations: OrganizationOption[];
         sites: SiteOption[];
         departments: DepartmentOption[];
@@ -128,6 +131,7 @@ const props = withDefaults(
 const search = ref(props.filters.search);
 const type = ref(props.filters.type);
 const status = ref(props.filters.status);
+const criticality = ref(props.filters.criticality);
 const organization = ref<number | null>(props.filters.organization);
 const site = ref<number | null>(props.filters.site);
 const department = ref<number | null>(props.filters.department);
@@ -157,6 +161,7 @@ const hasActiveFilters = computed(
         search.value !== '' ||
         type.value !== '' ||
         status.value !== '' ||
+        criticality.value !== '' ||
         organization.value !== null ||
         site.value !== null ||
         department.value !== null,
@@ -194,6 +199,7 @@ const applyFilters = (): void => {
             search: search.value || undefined,
             type: type.value || undefined,
             status: status.value || undefined,
+            criticality: criticality.value || undefined,
             organization: organization.value ?? undefined,
             site: site.value ?? undefined,
             department: department.value ?? undefined,
@@ -210,6 +216,7 @@ const resetFilters = (): void => {
     search.value = '';
     type.value = '';
     status.value = '';
+    criticality.value = '';
     organization.value = null;
     site.value = null;
     department.value = null;
@@ -229,6 +236,7 @@ const exportUrl = (format: 'xlsx' | 'pdf'): string => {
     if (search.value) params.set('search', search.value);
     if (type.value) params.set('type', type.value);
     if (status.value) params.set('status', status.value);
+    if (criticality.value) params.set('criticality', criticality.value);
     if (organization.value !== null) params.set('organization', String(organization.value));
     if (site.value !== null) params.set('site', String(site.value));
     if (department.value !== null) params.set('department', String(department.value));
@@ -248,6 +256,14 @@ const statusClass = (value: string): string =>
         retired: 'bg-slate-200 text-slate-700 ring-slate-300',
     })[value] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
 
+const criticalityClass = (value: string): string =>
+    ({
+        low: 'bg-slate-100 text-slate-600 ring-slate-200',
+        medium: 'bg-blue-50 text-blue-700 ring-blue-200',
+        high: 'bg-amber-50 text-amber-700 ring-amber-200',
+        critical: 'bg-red-50 text-red-700 ring-red-200',
+    })[value] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
+
 const selectSystem = (system: SystemItem): void => {
     focusedSystem.value = system;
 
@@ -257,6 +273,7 @@ const selectSystem = (system: SystemItem): void => {
             search: search.value || undefined,
             type: type.value || undefined,
             status: status.value || undefined,
+            criticality: criticality.value || undefined,
             organization: organization.value ?? undefined,
             site: site.value ?? undefined,
             department: department.value ?? undefined,
@@ -335,7 +352,7 @@ const closeEditPanel = (): void => {
 
         <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <form @submit.prevent="applyFilters">
-                <div class="grid gap-3 xl:grid-cols-[minmax(260px,1.4fr)_180px_180px_auto_auto]">
+                <div class="grid gap-3 xl:grid-cols-[minmax(260px,1.4fr)_170px_170px_170px_auto_auto]">
                     <div class="relative">
                         <Search :size="18" class="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
 
@@ -357,6 +374,13 @@ const closeEditPanel = (): void => {
                     <select v-model="status" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
                         <option value="">Alle Status</option>
                         <option v-for="option in statuses" :key="option.value" :value="option.value">
+                            {{ option.label }}
+                        </option>
+                    </select>
+
+                    <select v-model="criticality" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                        <option value="">Alle Kritikalitäten</option>
+                        <option v-for="option in criticalities" :key="option.value" :value="option.value">
                             {{ option.label }}
                         </option>
                     </select>
@@ -463,6 +487,13 @@ const closeEditPanel = (): void => {
                                     >
                                         {{ labelFor(statuses, system.status) }}
                                     </span>
+                                    <span
+                                        v-if="system.criticality"
+                                        class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset"
+                                        :class="criticalityClass(system.criticality)"
+                                    >
+                                        {{ labelFor(criticalities, system.criticality) }}
+                                    </span>
                                 </div>
 
                                 <p class="mt-1 text-xs font-medium text-blue-700">
@@ -495,6 +526,7 @@ const closeEditPanel = (): void => {
                 :system="selectedSystem"
                 :system-types="systemTypes"
                 :statuses="statuses"
+                :criticalities="criticalities"
                 :dicom-nodes="dicomNodes"
                 :dicom-connections="dicomConnections"
                 :dicom-node-options="dicomNodeOptions"
@@ -526,6 +558,7 @@ const closeEditPanel = (): void => {
             :departments="departments"
             :system-types="systemTypes"
             :statuses="statuses"
+            :criticalities="criticalities"
             @close="createPanelOpen = false"
         />
 
@@ -537,6 +570,7 @@ const closeEditPanel = (): void => {
             :departments="departments"
             :system-types="systemTypes"
             :statuses="statuses"
+            :criticalities="criticalities"
             @close="closeEditPanel"
         />
     </AppLayout>

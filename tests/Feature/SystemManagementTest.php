@@ -32,6 +32,7 @@ final class SystemManagementTest extends TestCase
                 'system_type' => 'pacs',
                 'status' => 'active',
                 'responsible' => 'Team Medizintechnik',
+                'criticality' => 'critical',
                 'hostname' => 'pacs01',
                 'fqdn' => 'pacs01.example.local',
                 'ip_address' => '10.10.10.20',
@@ -49,6 +50,7 @@ final class SystemManagementTest extends TestCase
             'system_type' => 'pacs',
             'status' => 'active',
             'responsible' => 'Team Medizintechnik',
+            'criticality' => 'critical',
             'hostname' => 'pacs01',
             'ip_address' => '10.10.10.20',
         ]);
@@ -71,6 +73,7 @@ final class SystemManagementTest extends TestCase
                 'status' => '',
                 'ip_address' => 'keine-ip-adresse',
                 'responsible' => str_repeat('x', 161),
+                'criticality' => 'catastrophic',
             ]);
 
         $response->assertSessionHasErrors([
@@ -80,6 +83,7 @@ final class SystemManagementTest extends TestCase
             'status',
             'ip_address',
             'responsible',
+            'criticality',
         ]);
 
         $this->assertDatabaseCount('systems', 0);
@@ -93,6 +97,7 @@ final class SystemManagementTest extends TestCase
             'name' => 'Altes PACS',
             'status' => 'active',
             'responsible' => 'Team Alt',
+            'criticality' => 'low',
         ]);
 
         $response = $this
@@ -105,6 +110,7 @@ final class SystemManagementTest extends TestCase
                 'system_type' => 'pacs',
                 'status' => 'maintenance',
                 'responsible' => 'Team Infrastruktur',
+                'criticality' => 'high',
                 'hostname' => 'pacs02',
                 'ip_address' => '10.20.30.40',
             ]);
@@ -118,6 +124,7 @@ final class SystemManagementTest extends TestCase
             'name' => 'Neues PACS',
             'status' => 'maintenance',
             'responsible' => 'Team Infrastruktur',
+            'criticality' => 'high',
             'hostname' => 'pacs02',
             'ip_address' => '10.20.30.40',
         ]);
@@ -133,6 +140,8 @@ final class SystemManagementTest extends TestCase
 
         $this->assertSame('Team Alt', $event->metadata['before']['responsible']);
         $this->assertSame('Team Infrastruktur', $event->metadata['after']['responsible']);
+        $this->assertSame('low', $event->metadata['before']['criticality']);
+        $this->assertSame('high', $event->metadata['after']['criticality']);
     }
 
     public function test_registry_manager_can_archive_a_system(): void

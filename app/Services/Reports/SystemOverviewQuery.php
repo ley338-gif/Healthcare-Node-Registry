@@ -45,6 +45,7 @@ final class SystemOverviewQuery
                 ->orWhere('responsible', 'ilike', "%{$search}%")))
             ->when(filled($filters['type'] ?? null), fn ($query) => $query->where('system_type', $filters['type']))
             ->when(filled($filters['status'] ?? null), fn ($query) => $query->where('status', $filters['status']))
+            ->when(filled($filters['criticality'] ?? null), fn ($query) => $query->where('criticality', $filters['criticality']))
             ->when((int) ($filters['organization'] ?? 0) > 0, fn ($query) => $query->where('organization_id', $filters['organization']))
             ->when((int) ($filters['site'] ?? 0) > 0, fn ($query) => $query->where('site_id', $filters['site']))
             ->when((int) ($filters['department'] ?? 0) > 0, fn ($query) => $query->where('department_id', $filters['department']))
@@ -93,6 +94,7 @@ final class SystemOverviewQuery
                     'inventory_number' => $system->inventory_number,
                     'serial_number' => $system->serial_number,
                     'responsible' => $system->responsible,
+                    'criticality' => $system->criticality,
                     'dicom_node' => $node?->name,
                     'ae_title' => $node?->ae_title,
                     'modality' => $node?->modality,

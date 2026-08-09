@@ -39,6 +39,7 @@ Abgeschlossen.
 - [x] Dashboard-Integration
 - [x] Tests
 - [x] Verantwortlichkeiten
+- [x] Kritikalität in Systempflege, Übersicht, Filter und Export
 - [x] webbasierte Benutzer- und Rollenverwaltung unter Einstellungen
 
 ## Nächster Sprint

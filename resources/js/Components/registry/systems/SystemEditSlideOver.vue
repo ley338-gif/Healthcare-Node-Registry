@@ -34,6 +34,7 @@ type EditableSystem = {
     system_type: string;
     status: string;
     responsible: string | null;
+    criticality: string | null;
     vendor: string | null;
     product: string | null;
     model: string | null;
@@ -54,6 +55,7 @@ const props = defineProps<{
     departments: DepartmentOption[];
     systemTypes: SelectOption[];
     statuses: SelectOption[];
+    criticalities: SelectOption[];
 }>();
 
 const emit = defineEmits<{
@@ -68,6 +70,7 @@ const form = useForm({
     system_type: '',
     status: 'active',
     responsible: '',
+    criticality: '',
     vendor: '',
     product: '',
     model: '',
@@ -100,6 +103,7 @@ watch(
         form.system_type = system.system_type;
         form.status = system.status;
         form.responsible = system.responsible ?? '';
+        form.criticality = system.criticality ?? '';
         form.vendor = system.vendor ?? '';
         form.product = system.product ?? '';
         form.model = system.model ?? '';
@@ -268,6 +272,26 @@ const submit = (): void => {
 
                                     <span v-if="form.errors.responsible" class="mt-1 block text-xs text-red-600">
                                         {{ form.errors.responsible }}
+                                    </span>
+                                </label>
+
+                                <label class="block">
+                                    <span class="text-sm font-medium text-slate-700">Kritikalität</span>
+                                    <select
+                                        v-model="form.criticality"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                    >
+                                        <option value="">Nicht angegeben</option>
+                                        <option
+                                            v-for="option in criticalities"
+                                            :key="option.value"
+                                            :value="option.value"
+                                        >
+                                            {{ option.label }}
+                                        </option>
+                                    </select>
+                                    <span v-if="form.errors.criticality" class="mt-1 block text-xs text-red-600">
+                                        {{ form.errors.criticality }}
                                     </span>
                                 </label>
                             </div>
