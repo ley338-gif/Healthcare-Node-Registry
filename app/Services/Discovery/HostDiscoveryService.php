@@ -23,15 +23,24 @@ final class HostDiscoveryService
      * @param  list<string>  $ips
      * @return array<string, array{reachable: bool, latency_ms: int|null, error: string|null}>
      */
-    public function pingBatch(array $ips, int $timeoutSeconds): array
+    public function pingBatch(array $ips, int $timeoutSeconds, int $retries = 0): array
     {
         $results = [];
-        foreach ($this->probe->pingBatch($ips, $timeoutSeconds) as $ip => $result) {
-            $results[$ip] = [
-                'reachable' => $result->reachable,
-                'latency_ms' => $result->latencyMs,
-                'error' => $result->error,
-            ];
+        $pending = $ips;
+
+        for ($attempt = 0; $attempt <= max(0, min(3, $retries)) && $pending !== []; $attempt++) {
+            $nextPending = [];
+            foreach ($this->probe->pingBatch($pending, $timeoutSeconds) as $ip => $result) {
+                $results[$ip] = [
+                    'reachable' => $result->reachable,
+                    'latency_ms' => $result->latencyMs,
+                    'error' => $result->error,
+                ];
+                if (! $result->reachable) {
+                    $nextPending[] = $ip;
+                }
+            }
+            $pending = $nextPending;
         }
 
         return $results;

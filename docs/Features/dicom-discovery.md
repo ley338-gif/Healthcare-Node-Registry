@@ -6,6 +6,8 @@ Automatisierte, aber ausschließlich unterstützende Erkennung von DICOM-Systeme
 
 1. **Wizard** (`/discovery/runs/create`, Berechtigung `discovery.run`): Zielbereich (CIDR oder Start-/End-IP), Scanoptionen (Profil Vorsichtig/Standard/Schnell/Benutzerdefiniert), Portliste, AE-Titel-Kandidaten, Zusammenfassung mit verpflichtender Sicherheitsbestätigung.
 2. **Scan-Job** (`App\Jobs\RunDiscoveryScanJob`, Queue `discovery`): Phase A Host-Erkennung (Ping + Reverse-DNS), Phase B TCP-Portprüfung gegen die konfigurierte Portliste, Phase C begrenzte DICOM-C-ECHO-Tests je offenem DICOM-Kandidatenport und AE-Titel-Kandidat.
+
+Die im Wizard konfigurierten Wiederholungsversuche (0–3) gelten für fehlgeschlagene Ping-, TCP-Port- und DICOM-C-ECHO-Prüfungen. Erfolgreiche Ziele werden nicht erneut geprüft. Damit entstehen pro technischer Prüfung höchstens vier Ausführungen; die Begrenzung der AE-Titel-Kandidaten je Host und Port bleibt davon unberührt.
 3. **Fortschritt & Review** (`/discovery/runs/{id}`): Live-Fortschritt per Polling, Review-Queue mit Filtern (erreichbar, DICOM-Kandidat, erfolgreicher C-ECHO, Review-Status, Confidence, Systemtyp), Detail-Drawer mit Ports, DICOM-Testergebnissen und Klassifizierungs-Hinweisen.
 4. **Übernahme** (`App\Services\Discovery\RegistryPromotionService`): Übernahme in ein neues oder bestehendes System inklusive DICOM-Endpunkt, mit Duplikaterkennung (IP, Hostname, AE-Titel, IP+Port, ähnlicher Name) und sichtbarer Herkunftsangabe (Discovery-Lauf, Zeitpunkt, ursprünglicher Confidence-Score).
 

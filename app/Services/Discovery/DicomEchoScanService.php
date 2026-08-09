@@ -18,7 +18,7 @@ final class DicomEchoScanService
      * @param  list<DiscoveryEchoTarget>  $targets
      * @return array<string, DiscoveryEchoCommandResult>
      */
-    public function testMany(array $targets, int $timeoutSeconds): array
+    public function testMany(array $targets, int $timeoutSeconds, int $retries = 0): array
     {
         $maxAttemptsPerPort = $this->maxAttemptsPerPort > 0
             ? $this->maxAttemptsPerPort
@@ -26,7 +26,22 @@ final class DicomEchoScanService
 
         $bounded = $this->boundPerPort($targets, $maxAttemptsPerPort);
 
-        return $this->runner->runMany($bounded, $timeoutSeconds);
+        $results = [];
+        $pending = $bounded;
+
+        for ($attempt = 0; $attempt <= max(0, min(3, $retries)) && $pending !== []; $attempt++) {
+            $attemptResults = $this->runner->runMany($pending, $timeoutSeconds);
+            $pending = [];
+
+            foreach ($attemptResults as $key => $result) {
+                $results[$key] = $result;
+                if (! $result->echoSuccessful) {
+                    $pending[] = $result->target;
+                }
+            }
+        }
+
+        return $results;
     }
 
     /**

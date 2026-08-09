@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Discovery-Wiederholungsversuche vollständig aktiviert: fehlgeschlagene Ping-, TCP-Port- und DICOM-C-ECHO-Prüfungen werden gemäß Wizard-Konfiguration begrenzt wiederholt, erfolgreiche Ziele ausgespart und die maximale Prüfungsanzahl vor dem Start transparent berechnet.
+
 - Administrierbare Discovery-Portprofile ergänzt: aktive Profile stehen im Scan-Assistenten als Vorlagen bereit, das bisherige Portset wird als Standardprofil migriert und jeder Lauf speichert weiterhin eine unabhängige Portkopie; Änderungen werden auditiert.
 
 - Hersteller als fremdschlüsselgesicherte, auditierte Referenzdaten ergänzt; vorhandene Herstellertexte werden verlustfrei übernommen, neue Zuordnungen verwenden aktive Auswahllisten und CSV-Importe lösen Code oder Anzeigename kontrolliert auf.
