@@ -19,6 +19,7 @@ use App\Http\Controllers\Discovery\DiscoveryAllowedNetworkController;
 use App\Http\Controllers\Discovery\DiscoveryDashboardController;
 use App\Http\Controllers\Discovery\DiscoveryPortProfileController;
 use App\Http\Controllers\Discovery\DiscoveryPromotionController;
+use App\Http\Controllers\Discovery\DiscoveryRunComparisonController;
 use App\Http\Controllers\Discovery\DiscoveryRunController;
 use App\Http\Controllers\Discovery\DiscoveryRunWizardController;
 use App\Http\Controllers\Discovery\DiscoveryScheduleController;
@@ -196,6 +197,7 @@ Route::middleware(['auth', 'mfa'])->group(function (): void {
     Route::get('/discovery', DiscoveryDashboardController::class)->name('discovery.index');
     Route::get('/discovery/runs/create', [DiscoveryRunWizardController::class, 'create'])->name('discovery.runs.create');
     Route::post('/discovery/runs', [DiscoveryRunController::class, 'store'])->name('discovery.runs.store');
+    Route::get('/discovery/runs/{discoveryRun}/compare/{baselineRun}', DiscoveryRunComparisonController::class)->name('discovery.runs.compare');
     Route::get('/discovery/runs/{discoveryRun}', [DiscoveryRunController::class, 'show'])->name('discovery.runs.show');
     Route::get('/discovery/runs/{discoveryRun}/export/{format}', [DiscoveryRunController::class, 'export'])->name('discovery.runs.export');
     Route::get('/discovery/runs/{discoveryRun}/status', [DiscoveryRunController::class, 'status'])->name('discovery.runs.status');

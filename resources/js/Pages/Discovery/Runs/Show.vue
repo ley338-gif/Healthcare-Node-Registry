@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { AlertTriangle, Ban, CheckCircle2, Download, Eye, RefreshCw, ShieldCheck, X, XCircle } from '@lucide/vue';
+import {
+    AlertTriangle,
+    Ban,
+    CheckCircle2,
+    Download,
+    Eye,
+    GitCompare,
+    RefreshCw,
+    ShieldCheck,
+    X,
+    XCircle,
+} from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import Pagination from '../../../Components/Pagination.vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
@@ -58,6 +69,12 @@ type Run = {
     error_message: string | null;
     description: string | null;
 };
+type ComparisonRun = {
+    public_id: string;
+    name: string;
+    finished_at: string | null;
+    found_hosts_count: number;
+};
 
 const props = defineProps<{
     run: Run;
@@ -66,6 +83,7 @@ const props = defineProps<{
     canReview: boolean;
     canCancel: boolean;
     systemTypes: { value: string; label: string }[];
+    comparisonRuns: ComparisonRun[];
 }>();
 const systemTypeLabel = (value: string | null): string =>
     props.systemTypes.find((type) => type.value === value)?.label ?? value ?? 'unbekannt';
@@ -118,6 +136,10 @@ const exportUrl = (format: 'csv' | 'json'): string => {
     const suffix = query.toString();
     return `/discovery/runs/${props.run.public_id}/export/${format}${suffix ? `?${suffix}` : ''}`;
 };
+const comparisonRunId = ref(props.comparisonRuns[0]?.public_id ?? '');
+const comparisonUrl = computed(() =>
+    comparisonRunId.value ? `/discovery/runs/${props.run.public_id}/compare/${comparisonRunId.value}` : '#',
+);
 
 const isActive = computed(() => ['pending', 'running', 'cancelling'].includes(props.run.status));
 let pollHandle: ReturnType<typeof setInterval> | null = null;
@@ -240,6 +262,32 @@ const filteredDepartments = computed(
         <div class="space-y-6">
             <PageHeader eyebrow="Erkennung" :title="run.name" :description="run.description ?? undefined">
                 <template #actions>
+                    <div v-if="comparisonRuns.length" class="flex items-center gap-2">
+                        <select
+                            v-model="comparisonRunId"
+                            aria-label="Ausgangslauf für Vergleich"
+                            class="max-w-64 rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-700"
+                        >
+                            <option
+                                v-for="candidate in comparisonRuns"
+                                :key="candidate.public_id"
+                                :value="candidate.public_id"
+                            >
+                                {{ candidate.name }} ·
+                                {{
+                                    candidate.finished_at
+                                        ? new Date(candidate.finished_at).toLocaleString('de-DE')
+                                        : 'ohne Abschlusszeit'
+                                }}
+                            </option>
+                        </select>
+                        <a
+                            :href="comparisonUrl"
+                            class="inline-flex items-center gap-2 rounded-xl border border-blue-300 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                        >
+                            <GitCompare :size="16" /> Vergleichen
+                        </a>
+                    </div>
                     <a
                         :href="exportUrl('csv')"
                         class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"

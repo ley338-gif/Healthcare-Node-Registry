@@ -56,6 +56,7 @@ final class DiscoveryRunController extends Controller
             'systemTypes' => $referenceData->typeOptions(),
             'canReview' => $request->user()?->hasPermission('discovery.manage') ?? false,
             'canCancel' => $request->user()?->can('cancel', $discoveryRun) ?? false,
+            'comparisonRuns' => $this->comparisonRuns($discoveryRun),
         ]);
     }
 
@@ -137,6 +138,35 @@ final class DiscoveryRunController extends Controller
     private function filters(Request $request): array
     {
         return $request->only(['reachable_only', 'dicom_candidates_only', 'successful_echo_only', 'status', 'confidence', 'system_type', 'port']);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function comparisonRuns(DiscoveryRun $run): array
+    {
+        if ($run->status !== DiscoveryRun::STATUS_COMPLETED) {
+            return [];
+        }
+
+        return DiscoveryRun::query()
+            ->whereKeyNot($run->id)
+            ->where('status', DiscoveryRun::STATUS_COMPLETED)
+            ->where('ip_range', $run->ip_range)
+            ->where(function ($query) use ($run): void {
+                $query->where('finished_at', '<', $run->finished_at)
+                    ->orWhere(function ($query) use ($run): void {
+                        $query->where('finished_at', $run->finished_at)->where('id', '<', $run->id);
+                    });
+            })
+            ->latest('finished_at')
+            ->limit(20)
+            ->get(['public_id', 'name', 'finished_at', 'found_hosts_count'])
+            ->map(fn (DiscoveryRun $comparisonRun): array => [
+                'public_id' => $comparisonRun->public_id,
+                'name' => $comparisonRun->name,
+                'finished_at' => $comparisonRun->finished_at?->toIso8601String(),
+                'found_hosts_count' => $comparisonRun->found_hosts_count,
+            ])
+            ->all();
     }
 
     /**
