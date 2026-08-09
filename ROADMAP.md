@@ -25,6 +25,7 @@
 Abgeschlossen.
 
 - [x] optionales HTTPS-Referenz-Deployment mit HTTP-Weiterleitung, TLS-Härtung und sicheren Session-Vorgaben
+- [x] verpflichtende TOTP-MFA für privilegierte Konten mit Recovery-Codes, Replay-Schutz, Audit und Break Glass
 
 ## 0.2.0 – Registry Core
 

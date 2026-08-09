@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { LockKeyhole, ShieldCheck } from '@lucide/vue';
+import type { PageProps } from '../../types';
+
+const page = usePage<PageProps>();
 
 const form = useForm({
     email: '',
@@ -29,6 +32,13 @@ const submit = () => {
                     <p class="text-sm text-slate-500">Sicherer Administrationszugang</p>
                 </div>
             </div>
+
+            <p
+                v-if="page.props.flash.error"
+                class="mb-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+            >
+                {{ page.props.flash.error }}
+            </p>
 
             <form class="space-y-5" @submit.prevent="submit">
                 <div>

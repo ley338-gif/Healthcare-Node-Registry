@@ -9,6 +9,8 @@ Die Benutzerverwaltung ist ein Unterbereich der bestehenden Einstellungen und ba
 - Konten aktivieren und deaktivieren
 - starke Initialpasswoerter und administrative Passwortwechsel
 - vorhandene Sitzungen bei Deaktivierung oder Passwortwechsel widerrufen
+- verpflichtenden TOTP-Zweitfaktor für privilegierte Berechtigungen anzeigen und administrativ zurücksetzen
+- Sitzungen bei Rollen-, Berechtigungs- und MFA-Änderungen widerrufen
 - Rollen anlegen, bearbeiten und unbenutzte Rollen loeschen
 - vorhandene Berechtigungen Rollen zuweisen
 - Benutzer- und Rollenaktionen auditiert in der Ereignisgruppe Benutzer erfassen
@@ -20,3 +22,5 @@ Die Benutzerverwaltung ist ein Unterbereich der bestehenden Einstellungen und ba
 - `settings.manage`: Zugriff auf den Einstellungsbereich ohne automatische Benutzer- oder Rollenrechte
 
 Die Systemadministrator-Rolle darf nicht geaendert oder geloescht werden. Der letzte aktive Systemadministrator bleibt durch serverseitige Regeln erhalten.
+
+MFA-Einrichtung, Recovery-Codes, Challenge und Break Glass sind unter [Mehrfaktor-Authentisierung](../Security/MultiFactorAuthentication.md) beschrieben.

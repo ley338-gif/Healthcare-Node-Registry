@@ -140,11 +140,62 @@ final class SettingsManagementTest extends TestCase
         $this->assertDatabaseHas('roles', ['id' => $systemRole->id]);
     }
 
+    public function test_role_assignment_change_revokes_existing_sessions(): void
+    {
+        $administrator = $this->administrator();
+        $user = User::factory()->create();
+        $firstRole = Role::query()->create(['name' => 'first-role', 'display_name' => 'First Role']);
+        $secondRole = Role::query()->create(['name' => 'second-role', 'display_name' => 'Second Role']);
+        $user->roles()->attach($firstRole);
+        $this->insertSession($user, 'role-assignment-session');
+
+        $this->actingAs($administrator)->put("/settings/users/{$user->public_id}", [
+            'name' => $user->name,
+            'email' => $user->email,
+            'is_active' => true,
+            'role_ids' => [$secondRole->id],
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('sessions', ['id' => 'role-assignment-session']);
+    }
+
+    public function test_role_permission_change_revokes_sessions_of_assigned_users(): void
+    {
+        $administrator = $this->administrator();
+        $user = User::factory()->create();
+        $role = Role::query()->create(['name' => 'mutable-role', 'display_name' => 'Mutable Role']);
+        $viewPermission = Permission::query()->where('name', 'registry.view')->firstOrFail();
+        $managePermission = Permission::query()->where('name', 'registry.manage')->firstOrFail();
+        $role->permissions()->attach($viewPermission);
+        $user->roles()->attach($role);
+        $this->insertSession($user, 'role-permission-session');
+
+        $this->actingAs($administrator)->put("/settings/roles/{$role->id}", [
+            'name' => $role->name,
+            'display_name' => $role->display_name,
+            'permission_ids' => [$viewPermission->id, $managePermission->id],
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('sessions', ['id' => 'role-permission-session']);
+    }
+
     private function administrator(): User
     {
         $user = User::factory()->create();
         $user->roles()->attach(Role::query()->where('name', 'system-administrator')->firstOrFail());
 
         return $user;
+    }
+
+    private function insertSession(User $user, string $id): void
+    {
+        DB::table('sessions')->insert([
+            'id' => $id,
+            'user_id' => $user->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'PHPUnit',
+            'payload' => 'test',
+            'last_activity' => now()->timestamp,
+        ]);
     }
 }

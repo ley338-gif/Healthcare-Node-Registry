@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Identity\MultiFactorAuthenticationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -12,7 +13,7 @@ use Inertia\Response;
 
 final class SettingsController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, MultiFactorAuthenticationService $mfa): Response
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 403);
@@ -32,6 +33,11 @@ final class SettingsController extends Controller
             ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
             ->when($roleId > 0, fn ($query) => $query->whereHas('roles', fn ($roleQuery) => $roleQuery->whereKey($roleId)))
             ->orderBy('name')->paginate(25)->withQueryString() : null;
+
+        $users?->getCollection()->each(function (User $user) use ($mfa): void {
+            $user->setAttribute('mfa_enabled', $mfa->isEnabled($user));
+            $user->setAttribute('mfa_required', $mfa->isRequired($user));
+        });
 
         return Inertia::render('Settings/Index', [
             'users' => $users,

@@ -34,6 +34,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - Tägliche In-App-Erinnerungen und Dashboard-Übersicht für ablaufende Zertifikate, Lizenzen und Wartungsdokumente
 - Datei-Allowlist und Signaturprüfung für PDF, PNG, JPEG, DOCX, XLSX, TXT und ZIP
 - Sessionbasierter Login sowie Benutzer-, Rollen- und Berechtigungsverwaltung
+- Verpflichtende TOTP-MFA für privilegierte lokale Konten mit einmaligen Wiederherstellungscodes, Replay-Schutz und administrativem beziehungsweise konsolenbasiertem Reset
 - RBAC mit einer initialen Rolle `system-administrator` und serverseitigen Policies/Gates
 - Audit-Arbeitsbereich mit Filtern, Detailansicht und CSV-Export
 - Diagnose-Workspace mit Verlauf, Profilen und JSON-/CSV-Ergebnisexport
@@ -53,7 +54,7 @@ Der Docker-Stack bindet ClamAV 1.5.3 über das interne ClamD-Netzwerk an. Upload
 
 ## Nicht enthalten
 
-Der aktuelle Stand enthält keine öffentliche REST-API, keine OpenAPI-/Swagger-Spezifikation, kein DICOM-TLS im Discovery-Scanner, keine DICOMweb- oder HL7/MLLP-Schnittstelle, keine MFA- oder LDAP-/Active-Directory-Anbindung und kein Redis. Registrierte Diagnoseziele unterstützen dagegen DICOM-TLS über betreiberseitig bereitgestellte Zertifikatsprofile. Die Anwendung ist außerdem kein PACS, kein Patientenakten-System und kein kontinuierliches Monitoring- oder Alarmierungssystem.
+Der aktuelle Stand enthält keine öffentliche REST-API, keine OpenAPI-/Swagger-Spezifikation, kein DICOM-TLS im Discovery-Scanner, keine DICOMweb- oder HL7/MLLP-Schnittstelle, keine OIDC- oder LDAP-/Active-Directory-Anbindung und kein Redis. Registrierte Diagnoseziele unterstützen dagegen DICOM-TLS über betreiberseitig bereitgestellte Zertifikatsprofile. Lokale privilegierte Konten verwenden TOTP-MFA; WebAuthn/Passkeys, SMS- und E-Mail-Codes sind nicht implementiert. Die Anwendung ist außerdem kein PACS, kein Patientenakten-System und kein kontinuierliches Monitoring- oder Alarmierungssystem.
 
 ## Verzeichnisstruktur
 
@@ -166,6 +167,8 @@ Die folgenden Befehle werden im Repository-Stamm ausgeführt.
 
    - Anwendung und Login: `http://localhost:8080`
    - Health-Endpunkt: `http://localhost:8080/up`
+
+   Beim ersten Login eines privilegierten Kontos führt die Anwendung verpflichtend durch die TOTP-Einrichtung. Den Einrichtungsschlüssel in einer kompatiblen Authenticator-App erfassen, den sechsstelligen Code bestätigen und die acht nur einmal angezeigten Wiederherstellungscodes getrennt vom Gerät sicher speichern.
 
 ### Development-Seeder und erster Login
 
@@ -491,13 +494,14 @@ Das Skript prüft die im Manifest gespeicherten SHA-256-Werte sowie Datenbank- u
 
 ## API
 
-Es gibt derzeit keine freigegebene öffentliche REST-API, keine OpenAPI-Spezifikation und keine Swagger-Oberfläche. Die vorhandenen HTTP-Routen bilden die Inertia-Webanwendung ab und benötigen – mit Ausnahme von `/login` und `/up` – eine authentifizierte Sitzung. Diagnoseexporte sind als berechtigungsgeprüfte JSON-/CSV-Downloads verfügbar; der Auditexport unterstützt CSV.
+Es gibt derzeit keine freigegebene öffentliche REST-API, keine OpenAPI-Spezifikation und keine Swagger-Oberfläche. Die vorhandenen HTTP-Routen bilden die Inertia-Webanwendung ab und benötigen – mit Ausnahme von `/login`, der nach gültigem Passwort kurzzeitig erreichbaren MFA-Challenge und `/up` – eine authentifizierte Sitzung. Privilegierte Sitzungen werden erst nach bestätigtem zweiten Faktor für die Anwendung freigeschaltet. Diagnoseexporte sind als berechtigungsgeprüfte JSON-/CSV-Downloads verfügbar; der Auditexport unterstützt CSV.
 
 ## Sicherheit
 
 - Produktive Passwörter und `APP_KEY` niemals aus `.env.example` übernehmen oder versionieren.
 - Den Development-Administrator nicht produktiv verwenden; initiale Administratoren mit `registry:create-admin` anlegen.
 - `APP_DEBUG=false` beibehalten.
+- Wiederherstellungscodes privilegierter Konten getrennt vom Authenticator-Gerät sichern; MFA-Reset nur nach dokumentierter Identitätsprüfung durchführen. Details: [`docs/Security/MultiFactorAuthentication.md`](docs/Security/MultiFactorAuthentication.md).
 - Für produktiven Betrieb die mitgelieferte HTTPS-Überlagerung oder einen gleichwertig gehärteten vorgeschalteten Reverse Proxy verwenden, `APP_URL` auf die HTTPS-URL setzen und `SESSION_SECURE_COOKIE=true` verwenden.
 - PostgreSQL und PHP-FPM nicht zusätzlich auf Host-Ports veröffentlichen.
 - Ausgehenden Netzwerkzugriff des App-Containers auf ausdrücklich freigegebene DICOM-Ziele begrenzen.
@@ -521,6 +525,7 @@ Der Einstieg in die Projektdokumentation befindet sich unter [`docs/README.md`](
 - [`docs/Database/DataDictionary.md`](docs/Database/DataDictionary.md) – Datenmodell
 - [`docs/Healthcare/DiagnosticTestWorkspace.md`](docs/Healthcare/DiagnosticTestWorkspace.md) – DICOM-Diagnosen und Einschränkungen
 - [`docs/Security/AccessControl.md`](docs/Security/AccessControl.md) – Rollen und Autorisierung
+- [`docs/Security/MultiFactorAuthentication.md`](docs/Security/MultiFactorAuthentication.md) – TOTP-MFA, Recovery und Break Glass
 - [`docs/Security/FileUploadSecurity.md`](docs/Security/FileUploadSecurity.md) – Dokumenten-Uploadschutz
 - [`docs/Deployment/BackupRestore.md`](docs/Deployment/BackupRestore.md) – Backup und Restore
 - [`docs/maintenance/repository-cleanup.md`](docs/maintenance/repository-cleanup.md) – letzter Repository-Cleanup

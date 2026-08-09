@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureMultiFactorAuthentication;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -14,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'mfa' => EnsureMultiFactorAuthentication::class,
+        ]);
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
         ]);
