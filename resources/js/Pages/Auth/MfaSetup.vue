@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
 import { Copy, ExternalLink, LogOut, ShieldCheck } from '@lucide/vue';
+import QrcodeVue from 'qrcode.vue';
 import { ref } from 'vue';
 
 const props = defineProps<{ secret: string; provisioningUri: string; required: boolean }>();
@@ -43,7 +44,23 @@ const copySecret = async () => {
 
             <ol class="mt-6 space-y-5 text-sm text-slate-700">
                 <li>
-                    <p class="font-semibold">1. Konto in einer TOTP-kompatiblen Authenticator-App hinzufügen</p>
+                    <p class="font-semibold">1. QR-Code mit einer TOTP-kompatiblen Authenticator-App scannen</p>
+                    <div class="mt-3 inline-flex flex-col items-center rounded-xl border border-slate-200 bg-white p-4">
+                        <QrcodeVue
+                            :value="provisioningUri"
+                            :size="224"
+                            level="M"
+                            render-as="svg"
+                            aria-label="QR-Code zur MFA-Einrichtung"
+                        />
+                        <p class="mt-3 max-w-56 text-center text-xs text-slate-500">
+                            Der QR-Code wird lokal im Browser erzeugt. Das MFA-Geheimnis wird nicht an einen externen
+                            Dienst gesendet.
+                        </p>
+                    </div>
+                </li>
+                <li>
+                    <p class="font-semibold">2. Alternativ direkt in der Authenticator-App öffnen</p>
                     <a
                         :href="provisioningUri"
                         class="mt-2 inline-flex items-center gap-2 text-blue-700 hover:underline"
@@ -52,7 +69,7 @@ const copySecret = async () => {
                     </a>
                 </li>
                 <li>
-                    <p class="font-semibold">2. Alternativ den Einrichtungsschlüssel manuell eingeben</p>
+                    <p class="font-semibold">3. Alternativ den Einrichtungsschlüssel manuell eingeben</p>
                     <div class="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <code class="min-w-0 flex-1 text-sm break-all">{{ secret }}</code>
                         <button type="button" class="rounded-lg p-2 hover:bg-slate-200" @click="copySecret">
@@ -63,7 +80,7 @@ const copySecret = async () => {
                     <p v-if="copied" class="mt-1 text-xs text-emerald-700">Schlüssel kopiert.</p>
                 </li>
                 <li>
-                    <p class="font-semibold">3. Angezeigten Code bestätigen</p>
+                    <p class="font-semibold">4. Angezeigten Code bestätigen</p>
                     <form class="mt-2 flex flex-col gap-2 sm:flex-row" @submit.prevent="form.post('/mfa/setup')">
                         <input
                             v-model="form.code"

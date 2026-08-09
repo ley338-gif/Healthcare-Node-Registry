@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Verpflichtende TOTP-MFA für lokale privilegierte Konten ergänzt: berechtigungsbasierte Erzwingung, verschlüsselte Secrets, einmalige gehashte Recovery-Codes, Replay- und Rate-Limit-Schutz, Session-Widerruf bei Rollen-/Rechteänderungen, administrativer und konsolenbasierter Reset sowie vollständiges Audit.
+- Verpflichtende TOTP-MFA für lokale privilegierte Konten ergänzt: berechtigungsbasierte Erzwingung, lokale QR-Code-Einrichtung ohne externen Dienst, verschlüsselte Secrets, einmalige gehashte Recovery-Codes, Replay- und Rate-Limit-Schutz, Session-Widerruf bei Rollen-/Rechteänderungen, administrativer und konsolenbasierter Reset sowie vollständiges Audit.
 - Optionales HTTPS-Referenz-Deployment für Docker Compose mit betreiberverwalteten Zertifikaten, HTTP-zu-HTTPS-Weiterleitung, TLS-1.2/1.3-Härtung, HSTS und CI-validierter Nginx-Konfiguration ergänzt; der lokale HTTP-Entwicklungsstart bleibt verfügbar.
 - PowerShell-Backup und -Restore um verbindliche Docker-Exitcode-, Dump- und Archivprüfung, sichere Wiederherstellung über ein Staging-Verzeichnis sowie fail-closed Webdienstverhalten bei Restore-Fehlern gehärtet; privates Storage-Verzeichnis wird bereits beim Containerstart angelegt.
 - Product Book mit dem implementierten Stand von DICOM-Diagnosen und -TLS, ClamAV, Dokumentfreigabe und -aufbewahrung, Audit-Integrität sowie Systemverantwortlichkeit synchronisiert und verbleibende Grenzen präzisiert.
