@@ -14,6 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia as Assert;
 use OTPHP\InternalClock;
 use OTPHP\TOTP;
 use Tests\TestCase;
@@ -45,7 +46,11 @@ final class MultiFactorAuthenticationTest extends TestCase
         $this->assertAuthenticatedAs($administrator);
 
         $this->get('/')->assertRedirect('/mfa/setup');
-        $this->get('/mfa/setup')->assertOk();
+        $this->get('/mfa/setup')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('Auth/MfaSetup')
+            ->where('required', true)
+            ->where('provisioningUri', fn (string $uri): bool => str_starts_with($uri, 'otpauth://totp/'))
+            ->where('secret', fn (string $secret): bool => $secret !== ''));
 
         $administrator->refresh();
         self::assertNotNull($administrator->two_factor_secret);

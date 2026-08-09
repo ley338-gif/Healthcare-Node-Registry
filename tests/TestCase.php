@@ -24,7 +24,17 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         $this->withoutVite();
+    }
 
+    protected function refreshApplication(): void
+    {
+        parent::refreshApplication();
+
+        $this->assertSafeTestEnvironment();
+    }
+
+    private function assertSafeTestEnvironment(): void
+    {
         $environment = app()->environment();
         $connection = (string) config('database.default');
         $database = config("database.connections.{$connection}.database");

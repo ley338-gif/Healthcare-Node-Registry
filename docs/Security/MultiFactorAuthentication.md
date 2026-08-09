@@ -8,7 +8,7 @@ Reine Lesekonten ohne diese Berechtigungen benötigen aktuell keinen zweiten Fak
 
 ## Erste Einrichtung
 
-Nach korrektem Passwort-Login wird ein privilegiertes Konto ohne bestätigte MFA ausschließlich zur Seite `/mfa/setup` zugelassen. Dort wird ein lokal erzeugter Einrichtungsschlüssel über einen `otpauth://`-Link oder zur manuellen Eingabe bereitgestellt. Der Benutzer bestätigt einen sechsstelligen Code seiner TOTP-kompatiblen Authenticator-App.
+Nach korrektem Passwort-Login wird ein privilegiertes Konto ohne bestätigte MFA ausschließlich zur Seite `/mfa/setup` zugelassen. Dort wird die `otpauth://`-Konfiguration als lokal im Browser erzeugter QR-Code, als direkter Link und zur manuellen Eingabe bereitgestellt. Die QR-Erzeugung verwendet keinen externen Dienst; der Benutzer bestätigt anschließend einen sechsstelligen Code seiner TOTP-kompatiblen Authenticator-App.
 
 Nach der Bestätigung zeigt die Anwendung einmalig acht Wiederherstellungscodes. Jeder Code ist nur einmal verwendbar und muss getrennt vom Authenticator-Gerät sicher aufbewahrt werden. In der Datenbank liegt der TOTP-Schlüssel mit `APP_KEY` verschlüsselt; Wiederherstellungscodes werden normalisiert, mit einem aus `APP_KEY` abgeleiteten HMAC gehasht und zusätzlich im verschlüsselten Feld gespeichert.
 
