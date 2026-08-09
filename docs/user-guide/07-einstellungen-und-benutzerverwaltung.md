@@ -14,6 +14,10 @@ last_updated: 2026-08-02
 
 Die Benutzerverwaltung ist ein Unterbereich von **Einstellungen** und verwendet das bestehende Rollen- und Berechtigungssystem.
 
+## Referenzdaten
+
+Benutzer mit settings.manage pflegen unter **Einstellungen > Referenzdaten** Systemtypen und Systemstatus. Der technische Code ist nach der Anlage unveränderlich; Anzeigename, Reihenfolge und Aktivstatus können angepasst werden. Deaktivierte Werte bleiben an bestehenden Systemen sichtbar, stehen für neue Zuordnungen jedoch nicht mehr zur Verfügung. Die für Anlage und Archivierung benötigten Statuswerte sind geschützt.
+
 ## Benutzer
 
 Berechtigte Administratoren können lokale Benutzer anlegen, Namen und E-Mail-Adresse ändern, Konten aktivieren oder sperren, Rollen zuweisen und Passwörter zurücksetzen. Verwenden Sie personenbezogene Angaben sparsam und weisen Sie nur erforderliche Rollen zu.

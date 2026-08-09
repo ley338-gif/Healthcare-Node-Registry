@@ -72,7 +72,7 @@ final class RegistryPromotionServiceTest extends TestCase
 
         $system = (new RegistryPromotionService)->promote(
             host: $host,
-            systemData: ['organization_id' => Organization::query()->create(['name' => 'Musterklinikum Nord'])->id, 'name' => 'CT-SOMATOM-01', 'system_type' => 'ct', 'status' => 'active', 'ip_address' => $host->ip_address],
+            systemData: ['organization_id' => Organization::query()->create(['name' => 'Musterklinikum Nord'])->id, 'name' => 'CT-SOMATOM-01', 'system_type' => 'modality', 'status' => 'active', 'ip_address' => $host->ip_address],
             dicomNodeData: ['ae_title' => 'CT_RAD_01', 'host' => $host->ip_address, 'port' => 104, 'role' => 'scp'],
             existingSystem: null,
             discoveryRunId: $host->discovery_run_id,

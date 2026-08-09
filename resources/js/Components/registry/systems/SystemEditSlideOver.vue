@@ -6,6 +6,7 @@ import { computed, watch } from 'vue';
 type SelectOption = {
     value: string;
     label: string;
+    is_active?: boolean;
 };
 
 type OrganizationOption = {
@@ -87,6 +88,12 @@ const availableSites = computed(() => props.sites.filter((site) => site.organiza
 
 const availableDepartments = computed(() =>
     props.departments.filter((department) => department.site_id === form.site_id),
+);
+const availableSystemTypes = computed(() =>
+    props.systemTypes.filter((option) => option.is_active !== false || option.value === form.system_type),
+);
+const availableStatuses = computed(() =>
+    props.statuses.filter((option) => option.is_active !== false || option.value === form.status),
 );
 
 watch(
@@ -326,7 +333,7 @@ const submit = (): void => {
                                             <option value="">Bitte auswählen</option>
 
                                             <option
-                                                v-for="option in systemTypes"
+                                                v-for="option in availableSystemTypes"
                                                 :key="option.value"
                                                 :value="option.value"
                                             >
@@ -343,7 +350,7 @@ const submit = (): void => {
                                             class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                                         >
                                             <option
-                                                v-for="option in statuses"
+                                                v-for="option in availableStatuses"
                                                 :key="option.value"
                                                 :value="option.value"
                                             >

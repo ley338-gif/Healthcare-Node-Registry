@@ -7,6 +7,7 @@ use App\Http\Requests\StoreDiscoveryRunRequest;
 use App\Models\DiscoveredHost;
 use App\Models\DiscoveryRun;
 use App\Services\Discovery\DiscoveryRunService;
+use App\Services\Registry\SystemReferenceDataService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,8 +24,11 @@ final class DiscoveryRunController extends Controller
         return redirect()->route('discovery.runs.show', $run)->with('success', "Discovery-Lauf \"{$run->name}\" wurde gestartet.");
     }
 
-    public function show(Request $request, DiscoveryRun $discoveryRun): Response
-    {
+    public function show(
+        Request $request,
+        DiscoveryRun $discoveryRun,
+        SystemReferenceDataService $referenceData,
+    ): Response {
         Gate::authorize('view', $discoveryRun);
 
         $filters = $request->only(['reachable_only', 'dicom_candidates_only', 'successful_echo_only', 'status', 'confidence', 'system_type', 'port']);
@@ -45,6 +49,7 @@ final class DiscoveryRunController extends Controller
             'run' => $this->presentRun($discoveryRun),
             'hosts' => $query->paginate(25)->withQueryString()->through(fn (DiscoveredHost $host) => $this->presentHost($host)),
             'filters' => $filters,
+            'systemTypes' => $referenceData->typeOptions(),
             'canReview' => $request->user()?->hasPermission('discovery.manage') ?? false,
             'canCancel' => $request->user()?->can('cancel', $discoveryRun) ?? false,
         ]);

@@ -11,6 +11,8 @@ use App\Models\RegistryDocument;
 use App\Models\SecurityEvent;
 use App\Models\Site;
 use App\Models\System;
+use App\Models\SystemStatus;
+use App\Models\SystemType;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -40,6 +42,8 @@ final class RegistryAuditEntityResolver
             Site::class => $this->registryEntity(Site::class, 'Site', 'Standort', 'site', $publicId),
             Department::class => $this->registryEntity(Department::class, 'Department', 'Abteilung', 'department', $publicId),
             System::class => $this->system($publicId),
+            SystemType::class => $this->reference(SystemType::class, 'SystemType', 'Systemtyp', $publicId),
+            SystemStatus::class => $this->reference(SystemStatus::class, 'SystemStatus', 'Systemstatus', $publicId),
             DicomNode::class => $this->node($publicId),
             DicomConnection::class => $this->connection($publicId),
             RegistryDocument::class => $publicId !== null ? $this->document($publicId) : $this->missing('RegistryDocument', 'Dokument', null),
@@ -68,6 +72,22 @@ final class RegistryAuditEntityResolver
         $active = $system instanceof System && $system->archived_at === null;
 
         return $this->context('System', 'System', $publicId, $active ? "/systems/{$publicId}" : null);
+    }
+
+    /**
+     * @param  class-string<SystemType|SystemStatus>  $model
+     * @return array{type: string, label: string, public_id: string|null, url: string|null, navigable: bool}
+     */
+    private function reference(string $model, string $type, string $fallback, ?string $publicId): array
+    {
+        $reference = $publicId !== null ? $model::query()->where('public_id', $publicId)->first() : null;
+
+        return $this->context(
+            $type,
+            $reference instanceof SystemType || $reference instanceof SystemStatus ? $reference->label : $fallback,
+            $publicId,
+            $reference !== null ? '/settings' : null,
+        );
     }
 
     /** @return array{type: string, label: string, public_id: string|null, url: string|null, navigable: bool} */

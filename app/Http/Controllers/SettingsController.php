@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\SystemStatus;
+use App\Models\SystemType;
 use App\Models\User;
 use App\Services\Identity\MultiFactorAuthenticationService;
 use Illuminate\Http\Request;
@@ -19,7 +21,9 @@ final class SettingsController extends Controller
         abort_unless($actor instanceof User, 403);
         $canManageUsers = $actor->can('viewAny', User::class);
         $canManageRoles = $actor->can('viewAny', Role::class);
-        abort_unless($canManageUsers || $canManageRoles || $actor->hasPermission('settings.manage'), 403);
+        $canManageReferenceData = $actor->can('viewAny', SystemType::class)
+            && $actor->can('viewAny', SystemStatus::class);
+        abort_unless($canManageUsers || $canManageRoles || $canManageReferenceData, 403);
         $search = trim((string) $request->query('search', ''));
         $status = trim((string) $request->query('status', ''));
         $roleId = $request->integer('role');
@@ -49,7 +53,14 @@ final class SettingsController extends Controller
             'filters' => ['search' => $search, 'status' => $status, 'role' => $roleId ?: null],
             'canManageUsers' => $canManageUsers,
             'canManageRoles' => $canManageRoles,
+            'canManageReferenceData' => $canManageReferenceData,
             'canManageDiscovery' => $actor->hasPermission('discovery.manage'),
+            'systemTypes' => $canManageReferenceData
+                ? SystemType::query()->withCount('systems')->ordered()->get()
+                : [],
+            'systemStatuses' => $canManageReferenceData
+                ? SystemStatus::query()->withCount('systems')->ordered()->get()
+                : [],
             'currentUserId' => $actor->public_id,
         ]);
     }

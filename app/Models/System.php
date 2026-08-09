@@ -121,6 +121,18 @@ final class System extends Model
         return $this->belongsTo(Department::class);
     }
 
+    /** @return BelongsTo<SystemType, $this> */
+    public function typeReference(): BelongsTo
+    {
+        return $this->belongsTo(SystemType::class, 'system_type', 'code');
+    }
+
+    /** @return BelongsTo<SystemStatus, $this> */
+    public function statusReference(): BelongsTo
+    {
+        return $this->belongsTo(SystemStatus::class, 'status', 'code');
+    }
+
     /**
      * @return HasMany<DicomNode, $this>
      */

@@ -127,6 +127,8 @@ const props = defineProps<{
     canArchiveDocuments: boolean;
     canManageDocumentation: boolean;
     canManageStructure: boolean;
+    systemTypes: Array<{ value: string; label: string }>;
+    systemStatuses: Array<{ value: string; label: string }>;
 }>();
 
 const search = ref('');
@@ -387,11 +389,11 @@ const scopedWarningCount = computed(
     () => scopedSystems.value.filter((system) => !['active', 'planned'].includes(system.status)).length,
 );
 
-const systemTypeOptions = computed(() =>
-    [...new Set(scopedSystems.value.map((system) => system.system_type))].sort((left, right) =>
-        left.localeCompare(right, 'de'),
-    ),
-);
+const systemTypeOptions = computed(() => {
+    const available = new Set(scopedSystems.value.map((system) => system.system_type));
+
+    return props.systemTypes.filter((option) => available.has(option.value));
+});
 
 const filteredScopedSystems = computed(() => {
     const term = systemSearch.value.trim().toLowerCase();
@@ -430,17 +432,11 @@ const resetSystemFilters = (): void => {
     systemSort.value = 'name';
 };
 
-const systemStatusLabel = (status: string): string => {
-    const labels: Record<string, string> = {
-        active: 'Aktiv',
-        inactive: 'Inaktiv',
-        maintenance: 'Wartung',
-        degraded: 'Beeinträchtigt',
-        planned: 'Geplant',
-    };
+const systemTypeLabel = (type: string): string =>
+    props.systemTypes.find((option) => option.value === type)?.label ?? type;
 
-    return labels[status] ?? status;
-};
+const systemStatusLabel = (status: string): string =>
+    props.systemStatuses.find((option) => option.value === status)?.label ?? status;
 
 const systemStatusClass = (status: string): string => {
     const classes: Record<string, string> = {
@@ -1114,11 +1110,13 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                     class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                                 >
                                     <option value="">Alle Status</option>
-                                    <option value="active">Aktiv</option>
-                                    <option value="planned">Geplant</option>
-                                    <option value="maintenance">Wartung</option>
-                                    <option value="inactive">Inaktiv</option>
-                                    <option value="degraded">Beeinträchtigt</option>
+                                    <option
+                                        v-for="systemStatus in systemStatuses"
+                                        :key="systemStatus.value"
+                                        :value="systemStatus.value"
+                                    >
+                                        {{ systemStatus.label }}
+                                    </option>
                                 </select>
 
                                 <select
@@ -1128,10 +1126,10 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                     <option value="">Alle Typen</option>
                                     <option
                                         v-for="systemType in systemTypeOptions"
-                                        :key="systemType"
-                                        :value="systemType"
+                                        :key="systemType.value"
+                                        :value="systemType.value"
                                     >
-                                        {{ systemType }}
+                                        {{ systemType.label }}
                                     </option>
                                 </select>
 
@@ -1204,7 +1202,7 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                             <p class="mt-1 truncate text-sm text-slate-500">
                                                 {{
                                                     [system.vendor, system.product].filter(Boolean).join(' · ') ||
-                                                    system.system_type
+                                                    systemTypeLabel(system.system_type)
                                                 }}
                                             </p>
                                         </div>
@@ -1223,7 +1221,7 @@ const toggle = (set: Set<string>, publicId: string): Set<string> => {
                                     <div class="rounded-lg bg-slate-50 px-3 py-2.5">
                                         <p class="text-xs font-medium text-slate-500">Systemtyp</p>
                                         <p class="mt-1 text-sm font-semibold text-slate-800">
-                                            {{ system.system_type }}
+                                            {{ systemTypeLabel(system.system_type) }}
                                         </p>
                                     </div>
                                     <div class="rounded-lg bg-slate-50 px-3 py-2.5">

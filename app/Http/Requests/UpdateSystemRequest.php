@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\System;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -20,14 +21,34 @@ final class UpdateSystemRequest extends FormRequest
      */
     public function rules(): array
     {
+        $system = $this->route('system');
+        $currentType = $system instanceof System ? $system->system_type : null;
+        $currentStatus = $system instanceof System ? $system->status : null;
+
         return [
             'organization_id' => ['required', 'exists:organizations,id'],
             'site_id' => ['nullable', 'exists:sites,id'],
             'department_id' => ['nullable', 'exists:departments,id'],
 
             'name' => ['required', 'string', 'max:160'],
-            'system_type' => ['required', 'string', 'max:80'],
-            'status' => ['required', 'string', 'max:40'],
+            'system_type' => [
+                'required', 'string', 'max:80',
+                Rule::exists('system_types', 'code')->where(
+                    fn ($query) => $query->where('is_active', true)->when(
+                        $currentType !== null,
+                        fn ($nested) => $nested->orWhere('code', $currentType),
+                    ),
+                ),
+            ],
+            'status' => [
+                'required', 'string', 'max:40',
+                Rule::exists('system_statuses', 'code')->where(
+                    fn ($query) => $query->where('is_active', true)->when(
+                        $currentStatus !== null,
+                        fn ($nested) => $nested->orWhere('code', $currentStatus),
+                    ),
+                ),
+            ],
             'responsible' => ['nullable', 'string', 'max:160'],
             'criticality' => ['nullable', Rule::in(['low', 'medium', 'high', 'critical'])],
 

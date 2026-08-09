@@ -135,7 +135,7 @@ Das aktuelle Systemmodell umfasst insbesondere:
 - optionale betriebliche Verantwortlichkeit als Freitext;
 - Archivierungszeitpunkt.
 
-Systemtyp und Status stammen aktuell aus zentral in der Anwendung bereitgestellten Auswahlwerten. Eine administrierbare Referenzdatenoberfläche ist geplant und nicht Teil des gegenwärtigen Datenmodells.
+Systemtyp und Status referenzieren zentrale, administrierbare Werte mit stabilem technischem Code, veränderbarem Anzeigenamen, Sortierreihenfolge und Aktivstatus. Deaktivierte Werte bleiben für Bestandsdaten erhalten, können aber nicht neu zugeordnet werden. Lebenszykluskritische Statuswerte für Anlage und Archivierung sind vor Deaktivierung geschützt.
 
 Die früher direkt am System gepflegten Felder für Hostname, FQDN und IP-Adresse bleiben während der Übergangsphase als Spiegel des primären Netzwerkinterfaces erhalten. Neue Pflege erfolgt über die Interface-Liste im Netzwerk-Reiter.
 
@@ -338,7 +338,7 @@ Bezeichnungen wie „online“, „gesund“ oder „erreichbar“ dürfen nicht
 Die folgenden Modellbereiche sind geplant oder langfristig vorgesehen und nicht als aktuell verfügbar zu behandeln:
 
 - strukturierte technische und fachliche Verantwortlichkeiten über das optionale Systemfeld hinaus;
-- administrierbare Referenzdaten für Hersteller, Systemtypen, Dienste, Kategorien oder Portprofile;
+- weitere administrierbare Referenzdaten für Hersteller, Dienste, Kategorien oder Portprofile;
 - organisatorische Berechtigungsbereiche;
 - externe Identitäten und Verzeichniszuordnungen;
 - stabile Verträge für eine öffentlich dokumentierte Produkt-API;

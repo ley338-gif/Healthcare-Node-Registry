@@ -97,7 +97,7 @@ const verificationLabel = (status: string | null): string => {
                                     {{ node.system.name }}
                                 </p>
                                 <p class="mt-1 text-xs text-slate-500">
-                                    {{ node.system.system_type }}
+                                    {{ node.system.system_type_label }}
                                 </p>
                             </div>
                         </div>

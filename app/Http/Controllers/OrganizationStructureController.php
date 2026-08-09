@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Audit\RegistryHistoryService;
 use App\Services\Audit\RegistryHistoryViewService;
 use App\Services\Documents\RegistryDocumentQueryService;
+use App\Services\Registry\SystemReferenceDataService;
 use App\Support\RegistryDocumentCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ final class OrganizationStructureController extends Controller
         RegistryHistoryService $historyService,
         RegistryHistoryViewService $historyViewService,
         RegistryDocumentQueryService $documentQueryService,
+        SystemReferenceDataService $referenceData,
     ): Response {
         $organizations = Organization::query()
             ->active()
@@ -152,6 +154,8 @@ final class OrganizationStructureController extends Controller
         }
 
         return Inertia::render('OrganizationStructure/Index', [
+            'systemTypes' => $referenceData->typeOptions(),
+            'systemStatuses' => $referenceData->statusOptions(),
             'summary' => [
                 'organizations' => Organization::query()->active()->count(),
                 'sites' => Site::query()->active()->count(),

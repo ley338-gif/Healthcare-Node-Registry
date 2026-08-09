@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DicomConnection;
 use App\Models\DicomNode;
 use App\Models\System;
+use App\Services\Registry\SystemReferenceDataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -12,7 +13,7 @@ use Inertia\Response;
 
 final class DicomNetworkMapController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, SystemReferenceDataService $referenceData): Response
     {
         Gate::authorize('viewAny', System::class);
 
@@ -20,6 +21,11 @@ final class DicomNetworkMapController extends Controller
         $siteId = $request->integer('site');
         $departmentId = $request->integer('department');
         $service = trim((string) $request->query('service', ''));
+
+        $typeOptions = $referenceData->typeOptions();
+        $statusOptions = $referenceData->statusOptions();
+        $typeLabels = collect($typeOptions)->pluck('label', 'value');
+        $statusLabels = collect($statusOptions)->pluck('label', 'value');
 
         $nodes = DicomNode::query()
             ->active()
@@ -75,7 +81,7 @@ final class DicomNetworkMapController extends Controller
             )
             ->orderBy('name')
             ->get()
-            ->map(static function (DicomNode $node): array {
+            ->map(static function (DicomNode $node) use ($typeLabels, $statusLabels): array {
                 return [
                     'id' => $node->id,
                     'public_id' => $node->public_id,
@@ -94,7 +100,9 @@ final class DicomNetworkMapController extends Controller
                         'public_id' => $node->system->public_id,
                         'name' => $node->system->name,
                         'system_type' => $node->system->system_type,
+                        'system_type_label' => $typeLabels[$node->system->system_type] ?? $node->system->system_type,
                         'status' => $node->system->status,
+                        'status_label' => $statusLabels[$node->system->status] ?? $node->system->status,
                         'organization' => $node->system->organization?->name,
                         'site' => $node->system->site?->name,
                         'department' => $node->system->department?->name,
@@ -154,6 +162,7 @@ final class DicomNetworkMapController extends Controller
         return Inertia::render('Network/Index', [
             'nodes' => $nodes,
             'connections' => $connections,
+            'systemTypes' => $typeOptions,
 
             'filters' => [
                 'organization' => $organizationId > 0

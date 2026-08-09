@@ -65,7 +65,10 @@ const props = defineProps<{
     filters: Record<string, string | undefined>;
     canReview: boolean;
     canCancel: boolean;
+    systemTypes: { value: string; label: string }[];
 }>();
+const systemTypeLabel = (value: string | null): string =>
+    props.systemTypes.find((type) => type.value === value)?.label ?? value ?? 'unbekannt';
 
 const statusLabels: Record<string, string> = {
     draft: 'Entwurf',
@@ -130,6 +133,8 @@ const promotionData = ref<{
     organizations: { id: number; name: string }[];
     sites: { id: number; organization_id: number; name: string }[];
     departments: { id: number; site_id: number; name: string }[];
+    systemTypes: { value: string; label: string }[];
+    systemStatuses: { value: string; label: string }[];
     duplicates: {
         type: string;
         system: { id: number; public_id: string; name: string };
@@ -185,7 +190,15 @@ const openPromotion = async (host: Host): Promise<void> => {
     promotionForm.reset();
     promotionForm.action = 'create';
     promotionForm.name = promotionData.value?.suggested.name ?? host.hostname ?? host.ip_address;
-    promotionForm.system_type = promotionData.value?.suggested.system_type ?? 'unbekannt';
+    const suggestedType = promotionData.value?.suggested.system_type;
+    promotionForm.system_type =
+        promotionData.value?.systemTypes.some((type) => type.value === suggestedType) && suggestedType
+            ? suggestedType
+            : (promotionData.value?.systemTypes[0]?.value ?? '');
+    promotionForm.operational_status =
+        promotionData.value?.systemStatuses.find((status) => status.value === 'active')?.value ??
+        promotionData.value?.systemStatuses[0]?.value ??
+        '';
     promotionForm.ae_title = promotionData.value?.suggested.ae_title ?? '';
     promotionForm.port =
         promotionData.value?.suggested.port ?? host.ports.find((p) => p.is_dicom_candidate)?.port ?? 104;
@@ -372,7 +385,7 @@ const filteredDepartments = computed(
                                     <span v-else class="text-slate-400">Kein Hinweis</span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    {{ host.suggested_system_type ?? 'unbekannt' }}
+                                    {{ systemTypeLabel(host.suggested_system_type) }}
                                     <span class="text-xs text-slate-400">(Vorschlag)</span>
                                 </td>
                                 <td class="px-4 py-3">
@@ -549,7 +562,7 @@ const filteredDepartments = computed(
                             Heuristische Bewertung ohne Anspruch auf wissenschaftliche Genauigkeit.
                         </p>
                         <p class="mt-2 text-sm font-medium">
-                            {{ selectedHost.suggested_system_type ?? 'unbekannt' }} ·
+                            {{ systemTypeLabel(selectedHost.suggested_system_type) }} ·
                             {{ confidenceLabels[selectedHost.confidence_score] }} ({{
                                 selectedHost.confidence_percentage
                             }}%)
@@ -697,10 +710,34 @@ const filteredDepartments = computed(
                                 /></label>
                                 <label class="block"
                                     ><span class="text-sm font-medium text-slate-700">Systemtyp *</span
-                                    ><input
+                                    ><select
                                         v-model="promotionForm.system_type"
                                         class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
-                                /></label>
+                                    >
+                                        <option
+                                            v-for="type in promotionData.systemTypes"
+                                            :key="type.value"
+                                            :value="type.value"
+                                        >
+                                            {{ type.label }}
+                                        </option>
+                                    </select></label
+                                >
+                                <label class="block"
+                                    ><span class="text-sm font-medium text-slate-700">Systemstatus *</span
+                                    ><select
+                                        v-model="promotionForm.operational_status"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                    >
+                                        <option
+                                            v-for="status in promotionData.systemStatuses"
+                                            :key="status.value"
+                                            :value="status.value"
+                                        >
+                                            {{ status.label }}
+                                        </option>
+                                    </select></label
+                                >
                                 <label class="block"
                                     ><span class="text-sm font-medium text-slate-700">Hersteller</span
                                     ><input

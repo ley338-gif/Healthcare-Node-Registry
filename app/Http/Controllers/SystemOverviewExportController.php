@@ -32,8 +32,8 @@ final class SystemOverviewExportController extends Controller
         Gate::authorize('viewAny', System::class);
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:160'],
-            'type' => ['nullable', 'string', 'max:80'],
-            'status' => ['nullable', 'string', 'max:40'],
+            'type' => ['nullable', 'string', 'max:80', Rule::exists('system_types', 'code')],
+            'status' => ['nullable', 'string', 'max:40', Rule::exists('system_statuses', 'code')],
             'criticality' => ['nullable', Rule::in(['low', 'medium', 'high', 'critical'])],
             'organization' => ['nullable', 'integer', 'exists:organizations,id'],
             'site' => ['nullable', 'integer', 'exists:sites,id'],
