@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\Identity\RoleAdministrationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 final class SettingsRoleController extends Controller
@@ -28,7 +29,18 @@ final class SettingsRoleController extends Controller
         $actor = $request->user();
         abort_unless($actor instanceof User, 403);
         $data = $request->validated();
-        $roles->update($role, $data, array_map('intval', $data['permission_ids']), $actor);
+        $permissionIds = array_map('intval', $data['permission_ids']);
+        $beforePermissionIds = $role->permissions()->pluck('permissions.id')->map(static fn (mixed $id): int => (int) $id)->sort()->values()->all();
+        $actorAffected = $role->users()->whereKey($actor->id)->exists();
+        $roles->update($role, $data, $permissionIds, $actor);
+
+        if ($actorAffected && $beforePermissionIds !== collect($permissionIds)->sort()->values()->all()) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('success', 'Die Berechtigungen Ihrer Rolle wurden geändert. Bitte melden Sie sich erneut an.');
+        }
 
         return back()->with('success', 'Rolle wurde aktualisiert.');
     }

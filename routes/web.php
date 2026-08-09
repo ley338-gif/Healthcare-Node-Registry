@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\MfaChallengeController;
+use App\Http\Controllers\Auth\MfaSetupController;
 use App\Http\Controllers\CapabilityMatrixDiagnosticController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
@@ -35,6 +37,7 @@ use App\Http\Controllers\RegistryImportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SettingsRoleController;
 use App\Http\Controllers\SettingsUserController;
+use App\Http\Controllers\SettingsUserMfaController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\StorageCommitmentDiagnosticController;
 use App\Http\Controllers\StorageDiagnosticController;
@@ -48,11 +51,19 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
+    Route::get('/mfa/challenge', [MfaChallengeController::class, 'create'])->name('mfa.challenge');
+    Route::post('/mfa/challenge', [MfaChallengeController::class, 'store'])->name('mfa.challenge.store');
 });
 
 Route::middleware('auth')->group(function (): void {
-    Route::get('/', DashboardController::class)->name('dashboard');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    Route::get('/mfa/setup', [MfaSetupController::class, 'create'])->name('mfa.setup');
+    Route::post('/mfa/setup', [MfaSetupController::class, 'store'])->middleware('throttle:5,1')->name('mfa.setup.store');
+    Route::get('/mfa/recovery-codes', [MfaSetupController::class, 'recoveryCodes'])->name('mfa.recovery-codes');
+});
+
+Route::middleware(['auth', 'mfa'])->group(function (): void {
+    Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('/search', GlobalSearchController::class)->middleware('throttle:60,1')->name('search');
     Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
     Route::get('/audit/export/{format}', [AuditController::class, 'export'])->whereIn('format', ['csv'])->name('audit.export');
@@ -60,6 +71,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/settings/users', [SettingsUserController::class, 'store'])->name('settings.users.store');
     Route::put('/settings/users/{user}', [SettingsUserController::class, 'update'])->name('settings.users.update');
     Route::put('/settings/users/{user}/password', [SettingsUserController::class, 'resetPassword'])->name('settings.users.password');
+    Route::delete('/settings/users/{user}/mfa', [SettingsUserMfaController::class, 'destroy'])->name('settings.users.mfa.destroy');
     Route::post('/settings/roles', [SettingsRoleController::class, 'store'])->name('settings.roles.store');
     Route::put('/settings/roles/{role}', [SettingsRoleController::class, 'update'])->name('settings.roles.update');
     Route::delete('/settings/roles/{role}', [SettingsRoleController::class, 'destroy'])->name('settings.roles.destroy');

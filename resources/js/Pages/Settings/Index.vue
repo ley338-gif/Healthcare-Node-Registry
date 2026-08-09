@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { KeyRound, Pencil, Plus, Radar, RotateCcw, Search, ShieldCheck, Trash2, Users, X } from '@lucide/vue';
+import { KeyRound, Pencil, Plus, Radar, RotateCcw, Search, ShieldCheck, ShieldX, Trash2, Users, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import Pagination from '../../Components/Pagination.vue';
 import PageHeader from '../../Components/ui/PageHeader.vue';
@@ -16,6 +16,8 @@ type User = {
     roles: Role[];
     last_activity: number | null;
     diagnostic_test_runs_count: number;
+    mfa_enabled: boolean;
+    mfa_required: boolean;
 };
 type PaginatedUsers = {
     data: User[];
@@ -93,6 +95,10 @@ const openPassword = (user: User) => {
     passwordForm.reset();
     passwordForm.clearErrors();
     passwordOpen.value = true;
+};
+const resetMfa = (user: User) => {
+    if (window.confirm(`MFA für „${user.name}“ zurücksetzen und alle Sitzungen beenden?`))
+        router.delete(`/settings/users/${user.public_id}/mfa`, { preserveScroll: true });
 };
 const savePassword = () => {
     if (selectedUser.value)
@@ -259,6 +265,23 @@ const formatActivity = (value: number | null) =>
                                         "
                                         >{{ user.is_active ? 'Aktiv' : 'Deaktiviert' }}</span
                                     >
+                                    <span
+                                        class="mt-1 block w-fit rounded-full px-2.5 py-1 text-xs font-semibold"
+                                        :class="
+                                            user.mfa_enabled
+                                                ? 'bg-blue-50 text-blue-700'
+                                                : user.mfa_required
+                                                  ? 'bg-amber-50 text-amber-700'
+                                                  : 'bg-slate-100 text-slate-500'
+                                        "
+                                        >{{
+                                            user.mfa_enabled
+                                                ? 'MFA aktiv'
+                                                : user.mfa_required
+                                                  ? 'MFA ausstehend'
+                                                  : 'MFA nicht erforderlich'
+                                        }}</span
+                                    >
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex flex-wrap gap-1">
@@ -289,6 +312,14 @@ const formatActivity = (value: number | null) =>
                                             @click="openPassword(user)"
                                         >
                                             <KeyRound :size="16" />
+                                        </button>
+                                        <button
+                                            v-if="user.mfa_enabled"
+                                            class="rounded-lg p-2 text-amber-600 hover:bg-amber-50"
+                                            title="MFA zurücksetzen"
+                                            @click="resetMfa(user)"
+                                        >
+                                            <ShieldX :size="16" />
                                         </button>
                                     </div>
                                 </td>

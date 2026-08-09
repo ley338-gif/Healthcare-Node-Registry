@@ -61,7 +61,10 @@ final class UserAdministrationService
             if ($roleIds !== null) {
                 $user->roles()->sync($roleIds);
             }
-            if (! $nextActive) {
+            $beforeRoleIds = collect($before['role_ids'])->map(static fn (mixed $id): int => (int) $id)->sort()->values()->all();
+            $afterRoleIds = $user->roles()->pluck('roles.id')->map(static fn (mixed $id): int => (int) $id)->sort()->values()->all();
+            $rolesChanged = $roleIds !== null && $beforeRoleIds !== $afterRoleIds;
+            if (! $nextActive || $rolesChanged) {
                 $this->revokeSessions($user);
             }
             $after = ['name' => $user->name, 'email' => $user->email, 'is_active' => $user->is_active, 'role_ids' => $user->roles()->pluck('roles.id')->all()];

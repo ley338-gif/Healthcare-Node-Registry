@@ -2,11 +2,23 @@
 
 namespace Tests;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
 {
+    public function actingAs(Authenticatable $user, $guard = null): static
+    {
+        parent::actingAs($user, $guard);
+
+        return $this->withSession([
+            'auth.mfa_verified_user_id' => $user->getAuthIdentifier(),
+            'auth.mfa_verified_at' => now()->timestamp,
+            'auth.mfa_test_bypass' => true,
+        ]);
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

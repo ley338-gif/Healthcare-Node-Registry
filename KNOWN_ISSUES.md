@@ -10,5 +10,5 @@
 
 ## 0.1.1
 
-- MFA, OIDC und LDAP fehlen noch.
+- OIDC und LDAP fehlen noch; MFA ist aktuell auf lokale TOTP-Codes beschränkt und unterstützt noch keine phishing-resistenten Passkeys/WebAuthn-Faktoren.
 - Backup-Verschlüsselung und Schlüsselverwaltung sind installationsspezifisch.

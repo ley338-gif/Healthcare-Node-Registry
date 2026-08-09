@@ -30,7 +30,7 @@ Auch ohne Patientendaten sind diese Informationen sicherheitskritisch.
 
 | Bedrohung | Beispiel | Primäre Maßnahmen | Status |
 |---|---|---|---|
-| unbefugter Zugriff | gestohlenes Konto | MFA-fähig, sichere Sessions, RBAC | offen bis Implementierung |
+| unbefugter Zugriff | gestohlenes Passwort | verpflichtende TOTP-MFA für privilegierte Konten, sichere Sessions, Recovery-Codes und RBAC | für lokale privilegierte Konten implementiert; Phishing-resistente Faktoren offen |
 | Rechteausweitung | Editor ändert Rollen | serverseitige Policies, Default Deny, Audit | Konzept vorhanden |
 | Datenmanipulation | Verbindung unbemerkt geändert | Constraints, Audit, Reviews, Backups | Konzept vorhanden |
 | Informationsabfluss | Export/Download | gesonderte Rechte, Audit, Scope-Prüfung | Konzept vorhanden |

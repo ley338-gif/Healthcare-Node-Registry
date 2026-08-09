@@ -38,8 +38,20 @@ final class RoleAdministrationService
             $before = ['name' => $role->name, 'display_name' => $role->display_name, 'permission_ids' => $role->permissions()->pluck('permissions.id')->all()];
             $role->update(['name' => $data['name'], 'display_name' => $data['display_name']]);
             $role->permissions()->sync($permissionIds);
+            $beforePermissionIds = collect($before['permission_ids'])->map(static fn (mixed $id): int => (int) $id)->sort()->values()->all();
+            $afterPermissionIds = collect($permissionIds)->sort()->values()->all();
+            $permissionsChanged = $beforePermissionIds !== $afterPermissionIds;
+            $affectedUserIds = $role->users()->pluck('users.id');
+            $revokedSessions = ! $permissionsChanged || $affectedUserIds->isEmpty()
+                ? 0
+                : DB::table('sessions')->whereIn('user_id', $affectedUserIds)->delete();
             $after = ['name' => $role->name, 'display_name' => $role->display_name, 'permission_ids' => $permissionIds];
-            $this->audit->record('identity.role.updated', $role, $actor, ['changed_fields' => array_keys($after), 'before' => $before, 'after' => $after]);
+            $this->audit->record('identity.role.updated', $role, $actor, [
+                'changed_fields' => array_keys($after),
+                'before' => $before,
+                'after' => $after,
+                'revoked_sessions' => $revokedSessions,
+            ]);
         });
     }
 

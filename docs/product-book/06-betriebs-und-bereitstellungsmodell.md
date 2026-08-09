@@ -422,7 +422,7 @@ Secrets, Patientendaten und vollständige vertrauliche Dokumente dürfen nicht B
 | Datenbank | Schema, Migrationen und Anwendungszugriff | Persistenz, Monitoring, Sicherung und Restore |
 | Dokumentenspeicher | private Ablagestruktur und Integritätsmetadaten | Kapazität, Schutz, Sicherung und Scannerintegration |
 | DICOM-Diagnose | registrierte Ziele, Validierung und begrenzte Runner | Egress, Zielsystemfreigabe und Bereinigung von Testobjekten |
-| Identitäten | lokale Konten, Rollen und Berechtigungen | Kontenprozess, Access Review und organisatorische Freigabe |
+| Identitäten | lokale Konten, Rollen, Berechtigungen und TOTP-MFA für privilegierte Konten | Kontenprozess, Recovery-Code-Aufbewahrung, Access Review und organisatorische Freigabe |
 | Logs und Audit | strukturierte Erzeugung | Sammlung, Rotation, Review und Aufbewahrung |
 | Updates | Migrations- und Qualitätsnachweise | Wartungsfenster, Backup, Rollback und Betriebsabnahme |
 
@@ -435,7 +435,7 @@ Secrets, Patientendaten und vollständige vertrauliche Dokumente dürfen nicht B
 | Diagnose | ausgehende Tests gegen registrierte Knoten | CIDR-Allowlist, DICOM-TLS, Queue und Parallelitätssteuerung |
 | Dokumentprüfung | Scanner-Schnittstelle | produktiver Scanner und Rescan-Betrieb |
 | Backup | dokumentierter Umfang und Sicherungshilfen | kundenspezifische Verschlüsselung und Aufbewahrung |
-| Identität | lokale Sitzung und RBAC | externe Identitätsanbieter und MFA |
+| Identität | lokale Sitzung, RBAC und TOTP-MFA | externe Identitätsanbieter und phishing-resistente Faktoren |
 | Monitoring | Health-Endpunkt und technische Logs | installationsspezifische Alarmierung und Dashboards |
 | Support | manuell bereinigte Nachweise | kontrolliertes Support-Bundle nach Sicherheitsdesign |
 

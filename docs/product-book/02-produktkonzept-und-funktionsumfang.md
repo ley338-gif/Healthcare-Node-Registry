@@ -155,6 +155,8 @@ Die lokale Benutzerverwaltung ist ein Unterbereich der Einstellungen. Der aktuel
 - Widerruf bestehender Sitzungen bei Deaktivierung oder Passwortänderung;
 - Rollen und Berechtigungen;
 - Schutz der Systemadministrator-Rolle und des letzten aktiven Systemadministrators;
+- verpflichtende TOTP-MFA für Rollen mit sensiblen Berechtigungen, einmalige Wiederherstellungscodes und kontrollierter Reset;
+- Widerruf vorhandener Sitzungen bei Rollen-, Berechtigungs- und MFA-Änderungen;
 - Audit administrativer Änderungen sowie erfolgreicher An- und Abmeldungen.
 
 Autorisierung wird serverseitig durchgesetzt. Die Oberfläche allein ist keine Sicherheitsgrenze. Details enthält die [Dokumentation der Benutzerverwaltung](../Features/UserManagement.md).
@@ -202,7 +204,7 @@ Discovery-TLS, eine externe signierte Verankerung der internen Audit-Hash-Chain 
 Langfristig können folgende Themen bewertet werden:
 
 - OIDC, LDAP/Active Directory und bei nachgewiesenem Bedarf SAML;
-- Mehrfaktor-Authentisierung;
+- phishing-resistente Faktoren wie WebAuthn/Passkeys als mögliche Erweiterung der vorhandenen TOTP-MFA;
 - eine öffentlich dokumentierte, versionierte Produkt-API;
 - Auswertungen und Dashboards auf Basis vorhandener Ereignisgruppen;
 - kontrollierte Integrationen mit führenden Infrastruktur- oder Identitätssystemen.

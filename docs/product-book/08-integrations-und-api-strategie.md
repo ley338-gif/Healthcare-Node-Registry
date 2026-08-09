@@ -500,7 +500,7 @@ Maschinenlesbare Verträge können die Referenz ergänzen, ersetzen aber nicht f
 | Exporte | Audit-CSV, Test-JSON/-CSV und System-/Knotenübersicht als XLSX/PDF | weitere versionierte Registry-Exporte |
 | Import | nicht allgemein verfügbar | versioniertes CSV mit Dry Run und Bericht |
 | DICOM | kontrollierte Diagnose gegen registrierte Ziele | TLS und weitere Dienste nach Sicherheitsdesign |
-| Identität | lokale Benutzer und RBAC | OIDC, LDAP/AD, gegebenenfalls SAML und MFA |
+| Identität | lokale Benutzer, RBAC und TOTP-MFA für privilegierte Konten | OIDC, LDAP/AD, gegebenenfalls SAML und phishing-resistente Faktoren |
 | HL7 v2 | nicht verfügbar | mögliche spätere Dokumentation, keine Interface Engine |
 | FHIR | nicht verfügbar | mögliche spätere Endpunktdokumentation oder Integration |
 | Infrastrukturplattformen | keine allgemeine Synchronisation | kontrollierte Adapter nach Datenführerschaft |

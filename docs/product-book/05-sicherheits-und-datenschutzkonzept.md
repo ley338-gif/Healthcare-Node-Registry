@@ -135,13 +135,15 @@ Die Webanwendung verwendet lokale, sessionbasierte Authentisierung. Der aktuelle
 - Sitzungswechsel nach erfolgreicher Anmeldung;
 - Sitzungsinvalidierung bei Abmeldung;
 - Widerruf vorhandener Sitzungen bei administrativer Passwortänderung oder Kontodeaktivierung;
+- verpflichtende TOTP-MFA für lokale Konten mit privilegierten Berechtigungen;
+- einmalige gehashte Wiederherstellungscodes, TOTP-Replay-Schutz und Session-Widerruf bei Rollen-, Rechte- oder MFA-Änderungen;
 - Audit erfolgreicher An- und Abmeldungen.
 
 Produktive Installationen müssen HTTPS und sichere Cookie-Einstellungen passend zur Betriebsumgebung erzwingen.
 
 ### Geplant
 
-OIDC, LDAP/Active Directory, SAML bei nachgewiesenem Bedarf und Mehrfaktor-Authentisierung sind spätere Erweiterungen. Sie sind nicht als aktuell verfügbar zu behandeln.
+OIDC, LDAP/Active Directory, SAML bei nachgewiesenem Bedarf und phishing-resistente Faktoren wie WebAuthn/Passkeys sind spätere Erweiterungen. TOTP-MFA für lokale privilegierte Konten ist bereits umgesetzt; SMS- und E-Mail-Codes sind nicht Bestandteil des aktuellen Schutzes.
 
 ## Autorisierung
 
@@ -321,7 +323,7 @@ Weitere Anforderungen beschreibt [Backup und Wiederherstellung](../Deployment/Ba
 
 | Themenbereich | Aktuell | Geplant oder betreiberabhängig |
 |---|---|---|
-| Anmeldung | lokale serverseitige Sitzung | MFA und externe Identitätsanbieter |
+| Anmeldung | lokale serverseitige Sitzung und verpflichtende TOTP-MFA für privilegierte Konten | phishing-resistente Faktoren und externe Identitätsanbieter |
 | Berechtigungen | RBAC, Policies und gesonderte sensible Rechte | organisatorische Scopes und zeitliche Begrenzung |
 | DICOM-Ziele | aktive registrierte Knoten; CIDR-Allowlist für Discovery | Discovery-TLS und weitere installationsbezogene Egress-Härtung |
 | Diagnose-Transport | begrenzte TCP-/DICOM-Aufrufe und optionales DICOM-TLS ohne Klartext-Fallback | zentrale Parallelitätsgrenzen für direkte Diagnoseläufe |
