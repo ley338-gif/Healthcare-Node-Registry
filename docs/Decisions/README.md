@@ -5,7 +5,7 @@ document_type: ADR-Index
 chapter: Übersicht
 status: draft
 version: 0.1
-last_updated: 2026-08-08
+last_updated: 2026-08-10
 ---
 
 # Architecture Decision Records
@@ -45,6 +45,7 @@ ADRs dokumentieren langfristig bindende oder schwer umkehrbare technische Entsch
 - [ADR-0019: Synthetische Storage-SOP-Classes](ADR-0019-synthetic-storage-sop-classes.md)
 - [ADR-0020: Administrierbare System-Referenzdaten](ADR-0020-system-reference-data.md)
 - [ADR-0021: Administrierbare Hersteller-Referenzdaten](ADR-0021-manufacturer-reference-data.md)
+- [ADR-0022: Vergleich von Discovery-Scanständen](ADR-0022-discovery-run-comparison.md)
 
 ## Offener Konsolidierungsbedarf
 

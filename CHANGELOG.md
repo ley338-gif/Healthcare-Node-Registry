@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Manuellen Vergleich vollständig abgeschlossener Discovery-Läufe desselben Zielbereichs ergänzt; neue, verschwundene, technisch veränderte und unveränderte Hosts werden anhand stabiler Scanmerkmale nachvollziehbar gegenübergestellt.
+
 - Tägliche und wöchentliche Discovery-Zeitpläne mit expliziter Zeitzone, pausierbarer Dashboard-Verwaltung, minütlicher Scheduler-Auswertung, Überlappungsschutz, erneuter Netzfreigabeprüfung vor jedem Lauf und vollständigem Audit ergänzt.
 
 - Gefilterten, berechtigungsgeprüften CSV- und JSON-Export der Discovery-Ergebnisse und Review-Queue mit Audit-Ereignis und Tabellenkalkulationsschutz ergänzt.

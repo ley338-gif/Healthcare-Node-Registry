@@ -9,6 +9,7 @@ Automatisierte, aber ausschließlich unterstützende Erkennung von DICOM-Systeme
 
 Die im Wizard konfigurierten Wiederholungsversuche (0–3) gelten für fehlgeschlagene Ping-, TCP-Port- und DICOM-C-ECHO-Prüfungen. Erfolgreiche Ziele werden nicht erneut geprüft. Damit entstehen pro technischer Prüfung höchstens vier Ausführungen; die Begrenzung der AE-Titel-Kandidaten je Host und Port bleibt davon unberührt.
 3. **Fortschritt & Review** (`/discovery/runs/{id}`): Live-Fortschritt per Polling, Review-Queue mit Filtern (erreichbar, DICOM-Kandidat, erfolgreicher C-ECHO, Review-Status, Confidence, Systemtyp), Detail-Drawer mit Ports, DICOM-Testergebnissen und Klassifizierungs-Hinweisen. Die aktuelle, gefilterte Ergebnismenge kann als UTF-8-CSV oder JSON exportiert werden; der Export erfordert dieselbe `discovery.view`-Berechtigung wie die Laufansicht und wird auditiert.
+   Abgeschlossene Läufe desselben Zielbereichs können zusätzlich miteinander verglichen werden. Die Ansicht unterscheidet neue, verschwundene, veränderte und unveränderte Hosts. Latenzwerte und manuelle Review-Aktionen werden dabei bewusst nicht als technische Änderung gewertet.
 4. **Übernahme** (`App\Services\Discovery\RegistryPromotionService`): Übernahme in ein neues oder bestehendes System inklusive DICOM-Endpunkt, mit Duplikaterkennung (IP, Hostname, AE-Titel, IP+Port, ähnlicher Name) und sichtbarer Herkunftsangabe (Discovery-Lauf, Zeitpunkt, ursprünglicher Confidence-Score).
 
 ## Sicherheitsgrenzen
