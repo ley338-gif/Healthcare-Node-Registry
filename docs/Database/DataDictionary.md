@@ -30,6 +30,10 @@ Kontaktdaten werden minimiert. Teams, Funktionspostfächer und Herstellerkontakt
 | discovery_classification_evidence.weight | Gewicht eines einzelnen Klassifizierungshinweises | positiver Ganzzahlwert, Summe ergibt confidence_percentage |
 | discovered_hosts.status | Review-Status eines Fundes | `discovered, reviewing, confirmed, ignored` |
 | discovery_runs.status | Lebenszyklus eines Laufs | `draft, pending, running, cancelling, completed, partially_failed, cancelled, failed` |
+| discovery_runs.discovery_schedule_id | Optionaler Ursprung eines automatisch erzeugten Laufs | `null` bei manuellem Sofortlauf; Soft-Delete des Zeitplans erhält die technische Herkunft, ein endgültiges Löschen setzt den Wert auf `null` |
+| discovery_schedules.frequency / scheduled_time / day_of_week / timezone | Kontrollierter wiederkehrender Ausführungszeitpunkt | täglich oder wöchentlich; keine frei eingebbaren Cron-Ausdrücke; IANA-Zeitzone |
+| discovery_schedules.configuration | Unabhängige Konfigurationskopie für künftige Läufe | Zielnetz wird trotzdem vor jeder Ausführung gegen die aktuelle Freigabeliste validiert |
+| discovery_schedules.next_run_at / last_dispatched_at / last_error | Scheduler-Zustand | UTC-Zeitpunkte; Fehler enthalten keine technischen Rohausgaben oder Zugangsdaten |
 | dicom_discovery_results.association_successful / echo_successful | Ergebnis eines einzelnen C-ECHO-Versuchs | Association-Erfolg impliziert nicht zwingend C-ECHO-Erfolg |
 | discovery_allowed_networks.cidr | Von einem Administrator freigegebener Scanbereich | Voraussetzung für jeden Discovery-Lauf, Standard: RFC1918 |
 | discovery_port_profiles.ports | Administrierbare JSON-Portliste als Vorlage für neue Discovery-Läufe | 1–40 eindeutige TCP-Ports; nur aktive Profile werden im Wizard angeboten, Änderungen wirken nicht rückwirkend |

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\DiscoveryAeCandidate;
 use App\Models\DiscoveryRun;
+use App\Models\DiscoverySchedule;
 use App\Services\Discovery\NetworkRangeException;
 use App\Services\Discovery\NetworkRangeService;
 use Illuminate\Foundation\Http\FormRequest;
@@ -30,6 +31,12 @@ final class StoreDiscoveryRunRequest extends FormRequest
             'exclude_ips' => ['array', 'max:100'],
             'exclude_ips.*' => ['ip'],
             'description' => ['nullable', 'string', 'max:2000'],
+            'execution_mode' => ['sometimes', Rule::in(['now', 'scheduled'])],
+            'schedule' => [Rule::requiredIf(fn (): bool => $this->input('execution_mode') === 'scheduled'), 'array'],
+            'schedule.frequency' => [Rule::requiredIf(fn (): bool => $this->input('execution_mode') === 'scheduled'), Rule::in(DiscoverySchedule::FREQUENCIES)],
+            'schedule.scheduled_time' => [Rule::requiredIf(fn (): bool => $this->input('execution_mode') === 'scheduled'), 'date_format:H:i'],
+            'schedule.day_of_week' => [Rule::requiredIf(fn (): bool => $this->input('execution_mode') === 'scheduled' && $this->input('schedule.frequency') === DiscoverySchedule::FREQUENCY_WEEKLY), 'nullable', 'integer', 'between:1,7'],
+            'schedule.timezone' => [Rule::requiredIf(fn (): bool => $this->input('execution_mode') === 'scheduled'), 'timezone'],
 
             'scan_options' => ['required', 'array'],
             'scan_options.ping_enabled' => ['required', 'boolean'],

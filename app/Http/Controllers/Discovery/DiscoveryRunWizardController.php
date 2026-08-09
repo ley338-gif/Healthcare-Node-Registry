@@ -41,6 +41,7 @@ final class DiscoveryRunWizardController extends Controller
             'largeRangeWarningThreshold' => (int) config('discovery.large_range_warning_threshold', 256),
             'maxParallelHostsLimit' => (int) config('discovery.max_parallel_hosts', 16),
             'maxAeAttemptsPerPort' => (int) config('discovery.max_ae_attempts_per_port', 5),
+            'defaultScheduleTimezone' => (string) config('app.timezone', 'UTC'),
             'allowedNetworks' => DiscoveryAllowedNetwork::query()->active()->orderBy('cidr')->get(['cidr', 'description']),
         ]);
     }

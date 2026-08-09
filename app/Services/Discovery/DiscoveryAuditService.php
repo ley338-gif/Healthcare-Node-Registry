@@ -6,6 +6,7 @@ use App\Models\DiscoveredHost;
 use App\Models\DiscoveryAllowedNetwork;
 use App\Models\DiscoveryPortProfile;
 use App\Models\DiscoveryRun;
+use App\Models\DiscoverySchedule;
 use App\Models\System;
 use App\Models\User;
 use App\Support\RegistryAudit;
@@ -85,6 +86,18 @@ final class DiscoveryAuditService
             'active' => $profile->active,
             'is_default' => $profile->is_default,
             'ports' => collect($profile->ports)->pluck('port')->all(),
+        ]);
+    }
+
+    public function scheduleChanged(string $action, DiscoverySchedule $schedule, ?User $actor): void
+    {
+        $this->audit->record("discovery.schedule.{$action}", $schedule, $actor, [
+            'frequency' => $schedule->frequency,
+            'scheduled_time' => $schedule->scheduled_time,
+            'day_of_week' => $schedule->day_of_week,
+            'timezone' => $schedule->timezone,
+            'active' => $schedule->active,
+            'next_run_at' => $schedule->next_run_at->toIso8601String(),
         ]);
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Queue\Events\Looping;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class WorkerHealthCommandTest extends TestCase
@@ -20,7 +21,7 @@ final class WorkerHealthCommandTest extends TestCase
     {
         parent::setUp();
 
-        $this->heartbeatPath = storage_path('framework/testing-worker-heartbeat');
+        $this->heartbeatPath = storage_path('framework/testing-worker-heartbeat-'.Str::uuid());
         config()->set('worker.heartbeat_path', $this->heartbeatPath);
         config()->set('worker.heartbeat_max_age_seconds', 15);
         @unlink($this->heartbeatPath);
@@ -57,9 +58,10 @@ final class WorkerHealthCommandTest extends TestCase
             'busy_until' => null,
         ], JSON_THROW_ON_ERROR));
 
-        $this->artisan('registry:worker-health')
-            ->expectsOutputToContain('60 Sekunden alt')
-            ->assertFailed();
+        $heartbeat = app(WorkerHeartbeat::class);
+        self::assertGreaterThanOrEqual(60, $heartbeat->ageSeconds());
+        self::assertFalse($heartbeat->isFresh());
+        $this->artisan('registry:worker-health')->assertFailed();
     }
 
     public function test_processing_job_remains_healthy_until_its_timeout(): void
@@ -82,9 +84,10 @@ final class WorkerHealthCommandTest extends TestCase
             'busy_until' => time() - 1,
         ], JSON_THROW_ON_ERROR));
 
-        $this->artisan('registry:worker-health')
-            ->expectsOutputToContain('60 Sekunden alt')
-            ->assertFailed();
+        $heartbeat = app(WorkerHeartbeat::class);
+        self::assertGreaterThanOrEqual(60, $heartbeat->ageSeconds());
+        self::assertFalse($heartbeat->isFresh());
+        $this->artisan('registry:worker-health')->assertFailed();
     }
 
     public function test_service_rejects_invalid_heartbeat_content(): void

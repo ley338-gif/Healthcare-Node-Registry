@@ -21,6 +21,7 @@ use App\Http\Controllers\Discovery\DiscoveryPortProfileController;
 use App\Http\Controllers\Discovery\DiscoveryPromotionController;
 use App\Http\Controllers\Discovery\DiscoveryRunController;
 use App\Http\Controllers\Discovery\DiscoveryRunWizardController;
+use App\Http\Controllers\Discovery\DiscoveryScheduleController;
 use App\Http\Controllers\FirewallMatrixReportController;
 use App\Http\Controllers\GetDiagnosticController;
 use App\Http\Controllers\GlobalSearchController;
@@ -199,6 +200,8 @@ Route::middleware(['auth', 'mfa'])->group(function (): void {
     Route::get('/discovery/runs/{discoveryRun}/export/{format}', [DiscoveryRunController::class, 'export'])->name('discovery.runs.export');
     Route::get('/discovery/runs/{discoveryRun}/status', [DiscoveryRunController::class, 'status'])->name('discovery.runs.status');
     Route::post('/discovery/runs/{discoveryRun}/cancel', [DiscoveryRunController::class, 'cancel'])->name('discovery.runs.cancel');
+    Route::patch('/discovery/schedules/{discoverySchedule}', [DiscoveryScheduleController::class, 'update'])->name('discovery.schedules.update');
+    Route::delete('/discovery/schedules/{discoverySchedule}', [DiscoveryScheduleController::class, 'destroy'])->name('discovery.schedules.destroy');
 
     Route::get('/discovery/hosts/{discoveredHost}/promotion-data', [DiscoveredHostController::class, 'promotionData'])->name('discovery.hosts.promotion-data');
     Route::post('/discovery/hosts/{discoveredHost}/confirm', [DiscoveredHostController::class, 'confirm'])->name('discovery.hosts.confirm');

@@ -37,6 +37,7 @@ final class DiscoveryRunService
                 'total_ips' => $totalIps,
                 'scan_options' => $data['scan_options'],
                 'created_by' => $data['created_by'] ?? null,
+                'discovery_schedule_id' => $data['discovery_schedule_id'] ?? null,
                 'description' => $data['description'] ?? null,
             ]);
 
@@ -56,7 +57,7 @@ final class DiscoveryRunService
         });
 
         $this->auditService->runStarted($run, $actor);
-        RunDiscoveryScanJob::dispatch($run->id)->onQueue('discovery');
+        RunDiscoveryScanJob::dispatch($run->id)->onQueue('discovery')->afterCommit();
 
         return $run;
     }

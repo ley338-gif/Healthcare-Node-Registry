@@ -59,6 +59,16 @@ docker compose exec app php artisan registry-documents:notify-expiry
 
 Bei deaktiviertem oder nicht erreichbarem Scanner bleiben neue und offene Dateien mit einem nicht freigegebenen Scanstatus gesperrt. Der Scheduler wiederholt offene Scans stündlich.
 
+## Discovery-Zeitpläne
+
+Der `scheduler`-Container wertet jede Minute `php artisan discovery:run-schedules` aus. Fällige tägliche und wöchentliche Zeitpläne legen einen normalen Queue-Lauf an, den der `worker` verarbeitet. Die konfigurierte IANA-Zeitzone berücksichtigt Sommer-/Winterzeit; intern werden nächste und letzte Ausführung als UTC gespeichert. Vor jedem Lauf wird die aktuelle Netzfreigabe erneut geprüft. Bei einer Überschneidung mit einem aktiven Lauf wird fünf Minuten gewartet, bei entzogener Freigabe wird der Zeitplan deaktiviert.
+
+```bash
+docker compose ps scheduler worker
+docker compose logs --tail=200 scheduler
+docker compose exec app php artisan discovery:run-schedules
+```
+
 ## Queue-Worker
 
 Der `worker`-Container aktualisiert bei jedem Laravel-Queue-Loop die Datei `storage/framework/worker-heartbeat`. Der Docker-Healthcheck führt alle zehn Sekunden `php artisan registry:worker-health --quiet` aus und prüft die Queue-Datenbank sowie den Worker-Zustand. Im Leerlauf darf der Heartbeat höchstens 15 Sekunden alt sein. Während eines Jobs gilt die im Queue-Payload hinterlegte Job-Timeoutfrist zuzüglich 15 Sekunden Abschlussfrist; dadurch werden lange Discovery-Läufe nicht fälschlich als Ausfall gewertet, festgefahrene Jobs aber nach ihrer eigenen Obergrenze erkannt. Nach einer Startfrist von 30 Sekunden führen drei aufeinanderfolgende Fehler zum Status `unhealthy`.

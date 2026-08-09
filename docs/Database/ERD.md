@@ -186,6 +186,8 @@ Die obige, konzeptionelle ERD-Skizze wurde für die Kernregistry (`ASSETS`/`ENDP
 
 ```mermaid
 erDiagram
+    DISCOVERY_SCHEDULES ||--o{ DISCOVERY_RUNS : creates
+    DISCOVERY_SCHEDULES }o--o| DISCOVERY_RUNS : remembers_last
     DISCOVERY_RUNS ||--o{ DISCOVERY_EXCLUSIONS : excludes
     DISCOVERY_RUNS ||--o{ DISCOVERY_PORTS : configures
     DISCOVERY_RUNS ||--o{ DISCOVERY_AE_CANDIDATES : configures
@@ -195,6 +197,24 @@ erDiagram
     DISCOVERED_HOSTS ||--o{ DISCOVERY_CLASSIFICATION_EVIDENCE : classifies
     DISCOVERED_HOSTS }o--o| SYSTEMS : promotes_to
     USERS ||--o{ DISCOVERY_ALLOWED_NETWORKS : approves
+    USERS ||--o{ DISCOVERY_SCHEDULES : creates
+
+    DISCOVERY_SCHEDULES {
+      bigint id PK
+      uuid public_id UK
+      string name
+      string frequency
+      time scheduled_time
+      tinyint day_of_week
+      string timezone
+      jsonb configuration
+      boolean active
+      timestamp next_run_at
+      timestamp last_dispatched_at
+      bigint last_run_id FK
+      bigint created_by FK
+      soft_deletes
+    }
 
     DISCOVERY_RUNS {
       bigint id PK
@@ -207,6 +227,7 @@ erDiagram
       int processed_ips
       jsonb scan_options
       bigint created_by FK
+      bigint discovery_schedule_id FK
       timestamp started_at
       timestamp finished_at
       timestamps
