@@ -1,6 +1,6 @@
-# Referenzdaten für Systemtypen und Systemstatus
+# Referenzdaten für Systemtypen, Systemstatus und Hersteller
 
-Unter **Einstellungen > Referenzdaten** können Benutzer mit der Berechtigung settings.manage die Auswahllisten für Systemtypen und Systemstatus pflegen.
+Unter **Einstellungen > Referenzdaten** können Benutzer mit der Berechtigung `settings.manage` die Auswahllisten für Systemtypen, Systemstatus und Hersteller pflegen.
 
 ## Verhalten
 
@@ -14,8 +14,12 @@ Unter **Einstellungen > Referenzdaten** können Benutzer mit der Berechtigung se
 
 ## Standardwerte
 
-Die Migration legt die bisher vorhandenen Systemtypen und Statuswerte an. Bei einem Update werden zusätzlich alle abweichenden Codes aus vorhandenen Systemdatensätzen übernommen, bevor die Datenbank-Fremdschlüssel aktiviert werden.
+Die Systemreferenz-Migration legt die bisher vorhandenen Systemtypen und Statuswerte an. Bei einem Update werden zusätzlich alle abweichenden Codes aus vorhandenen Systemdatensätzen übernommen, bevor die Datenbank-Fremdschlüssel aktiviert werden.
+
+Für Hersteller werden keine erfundenen Standardwerte angelegt. Bei einem Update wird jeder vorhandene nichtleere Herstellertext unverändert als technischer Code und Anzeigename übernommen. Eine frische Installation beginnt daher mit einer leeren Herstellerliste; Administratoren legen die benötigten Werte vor der ersten Zuordnung an.
+
+Der Systemexport und die Oberflächen zeigen den Anzeigenamen. Im CSV-Import kann beim Feld `vendor` entweder der aktive Code oder der Anzeigename verwendet werden.
 
 ## Abgrenzung
 
-Hersteller, Produkte, DICOM-Dienste, Dokumentkategorien und Discovery-Portprofile sind nicht Bestandteil dieser Verwaltung. Freitextfelder wie Hersteller und Produkt bleiben unverändert.
+Produkte, DICOM-Dienste, Dokumentkategorien und Discovery-Portprofile sind nicht Bestandteil dieser Verwaltung. Produkt und Modell bleiben Freitextfelder.

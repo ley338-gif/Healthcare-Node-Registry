@@ -54,6 +54,7 @@ final class OrganizationStructureController extends Controller
         $systems = System::query()
             ->active()
             ->with([
+                'manufacturerReference:id,code,label',
                 'dicomNodes' => fn ($query) => $query
                     ->active()
                     ->withCount([
@@ -90,7 +91,7 @@ final class OrganizationStructureController extends Controller
                     'status' => $system->status,
                     'hostname' => $system->hostname,
                     'ip_address' => $system->ip_address,
-                    'vendor' => $system->vendor,
+                    'vendor' => $system->vendor_label,
                     'product' => $system->product,
                     'dicom_nodes_count' => $nodes->count(),
                     'connection_count' => $nodes->sum(

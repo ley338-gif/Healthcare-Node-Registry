@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\DicomNode;
+use App\Models\Manufacturer;
 use App\Models\Role;
 use App\Models\System;
 use App\Models\User;
@@ -16,7 +17,8 @@ final class SystemOverviewExportTest extends TestCase
 
     public function test_excel_export_contains_system_and_dicom_node_and_respects_filters(): void
     {
-        $included = System::factory()->create(['name' => 'PACS ÄÖÜ', 'vendor' => 'Example Medical']);
+        Manufacturer::query()->create(['code' => 'example_medical', 'label' => 'Example Medical', 'sort_order' => 10, 'is_active' => true]);
+        $included = System::factory()->create(['name' => 'PACS ÄÖÜ', 'vendor' => 'example_medical']);
         $included->update(['responsible' => 'Team Bildgebung', 'criticality' => 'critical']);
 
         $node = DicomNode::factory()->create([
@@ -45,6 +47,7 @@ final class SystemOverviewExportTest extends TestCase
         self::assertStringContainsString('Management | pacs-mgmt | 10.50.1.99', $sheet);
         self::assertStringContainsString('Team Bildgebung', $sheet);
         self::assertStringContainsString('critical', $sheet);
+        self::assertStringContainsString('Example Medical', $sheet);
         self::assertStringNotContainsString('Nicht enthalten', $sheet);
     }
 

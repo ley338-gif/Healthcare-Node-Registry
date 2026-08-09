@@ -150,6 +150,10 @@ final class DiscoveredHostController extends Controller
                 $referenceData->statusOptions(),
                 static fn (array $option): bool => $option['is_active'],
             )),
+            'manufacturers' => array_values(array_filter(
+                $referenceData->manufacturerOptions(),
+                static fn (array $option): bool => $option['is_active'],
+            )),
             'duplicates' => collect($promotionService->findDuplicates(
                 $discoveredHost,
                 $proposedName,

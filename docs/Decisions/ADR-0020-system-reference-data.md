@@ -36,7 +36,7 @@ Die bestehenden Spalten systems.system_type und systems.status bleiben als stabi
 
 Die Verwaltung benötigt settings.manage; Änderungen werden in der Audit-Hash-Chain unter der Ereignisgruppe Administration protokolliert. Technische Codes können nach der Anlage weder über Oberfläche noch Request geändert werden.
 
-Dieser erste Referenzdatenumfang enthält ausschließlich Systemtypen und Systemstatus. Hersteller, DICOM-Dienste, Dokumentkategorien und Portprofile bleiben getrennte spätere Entscheidungen.
+Dieser erste Referenzdatenumfang enthält ausschließlich Systemtypen und Systemstatus. Hersteller wurden anschließend separat in [ADR-0021](ADR-0021-manufacturer-reference-data.md) entschieden; DICOM-Dienste, Dokumentkategorien und Portprofile bleiben spätere Entscheidungen.
 
 ## Alternativen
 

@@ -65,6 +65,7 @@ export type SystemDetail = {
     ip_address: string | null;
     network_interfaces: SystemNetworkInterface[];
     vendor: string | null;
+    vendor_label: string | null;
     product: string | null;
     model: string | null;
     version: string | null;
@@ -175,12 +176,12 @@ watch(
 
 const productDescription = computed(
     () =>
-        [props.system.vendor, props.system.product, props.system.version].filter(Boolean).join(' · ') ||
+        [props.system.vendor_label, props.system.product, props.system.version].filter(Boolean).join(' · ') ||
         'Technisches oder fachliches System',
 );
 
 const documentationMasterData = computed(() => [
-    { label: 'Hersteller', value: props.system.vendor },
+    { label: 'Hersteller', value: props.system.vendor_label },
     { label: 'Produkt', value: props.system.product },
     { label: 'Version', value: props.system.version },
     { label: 'DNS-Name', value: props.system.fqdn ?? props.system.hostname },
@@ -434,7 +435,7 @@ const statusClass = (value: string): string => {
                         <div class="grid gap-5 sm:grid-cols-2">
                             <div>
                                 <p class="text-xs font-semibold text-slate-500 uppercase">Hersteller</p>
-                                <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.vendor) }}</p>
+                                <p class="mt-1 text-sm text-slate-900">{{ displayValue(system.vendor_label) }}</p>
                             </div>
                             <div>
                                 <p class="text-xs font-semibold text-slate-500 uppercase">Produkt</p>

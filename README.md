@@ -22,7 +22,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - Dashboard mit Registry-Übersicht, letzten Änderungen, Diagnosekennzahlen und Aufgabenhinweisen
 - Organisationsstruktur aus Organisationen, Standorten und Abteilungen
 - Registry für Healthcare-IT-Systeme mit Zuordnung zur Organisationsstruktur und Archivierung
-- Zentral administrierbare Systemtypen und Systemstatus mit stabilen Codes, Aktivstatus und Bestandsschutz
+- Zentral administrierbare Systemtypen, Systemstatus und Hersteller mit stabilen Codes, Aktivstatus und Bestandsschutz
 - Mehrere Netzwerkinterfaces je System mit primärer Schnittstelle und kompatiblen Alt-Feldern
 - Gefilterter Excel-/PDF-Export der System- und DICOM-Knotenübersicht
 - CSV-Import für Systeme und DICOM-Knoten mit Vorschau, Validierung und Duplikaterkennung

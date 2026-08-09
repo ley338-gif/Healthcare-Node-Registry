@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Manufacturer;
 use App\Models\Organization;
 use App\Models\Permission;
 use App\Models\Role;
@@ -25,7 +26,8 @@ final class SystemReferenceDataManagementTest extends TestCase
                 ->component('Settings/Index')
                 ->where('canManageReferenceData', true)
                 ->has('systemTypes', 11)
-                ->has('systemStatuses', 5));
+                ->has('systemStatuses', 5)
+                ->has('manufacturers', 0));
     }
 
     public function test_settings_manager_can_create_and_update_a_system_type_with_audit(): void
@@ -73,6 +75,74 @@ final class SystemReferenceDataManagementTest extends TestCase
             'event_type' => 'settings.system_status.created',
             'subject_public_id' => $status->public_id,
         ]);
+    }
+
+    public function test_settings_manager_can_create_and_update_a_manufacturer_with_audit(): void
+    {
+        $manager = $this->settingsManager();
+
+        $this->actingAs($manager)->post('/settings/manufacturers', [
+            'code' => 'example_medical',
+            'label' => 'Example Medical GmbH',
+            'sort_order' => 20,
+            'is_active' => true,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $manufacturer = Manufacturer::query()->where('code', 'example_medical')->firstOrFail();
+        $this->actingAs($manager)->put("/settings/manufacturers/{$manufacturer->public_id}", [
+            'code' => 'immutable_code',
+            'label' => 'Example Medical AG',
+            'sort_order' => 15,
+            'is_active' => true,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        self::assertSame('example_medical', $manufacturer->fresh()->code);
+        self::assertSame('Example Medical AG', $manufacturer->fresh()->label);
+        $this->assertDatabaseHas('security_events', [
+            'event_type' => 'settings.manufacturer.created',
+            'subject_public_id' => $manufacturer->public_id,
+        ]);
+        $this->assertDatabaseHas('security_events', [
+            'event_type' => 'settings.manufacturer.updated',
+            'subject_public_id' => $manufacturer->public_id,
+        ]);
+    }
+
+    public function test_inactive_manufacturer_cannot_be_assigned_but_existing_assignment_can_be_retained(): void
+    {
+        $manager = $this->settingsManager();
+        $manufacturer = Manufacturer::query()->create([
+            'code' => 'legacy_vendor',
+            'label' => 'Legacy Vendor',
+            'sort_order' => 200,
+            'is_active' => true,
+        ]);
+        $system = System::factory()->create(['vendor' => $manufacturer->code]);
+
+        $this->actingAs($manager)->put("/settings/manufacturers/{$manufacturer->public_id}", [
+            'label' => $manufacturer->label,
+            'sort_order' => $manufacturer->sort_order,
+            'is_active' => false,
+        ])->assertSessionHasNoErrors();
+
+        $organization = Organization::query()->create(['name' => 'Hersteller-Testorganisation']);
+        $this->actingAs($manager)->post('/systems', [
+            'organization_id' => $organization->id,
+            'name' => 'Neues Legacy-System',
+            'system_type' => 'server',
+            'status' => 'active',
+            'vendor' => $manufacturer->code,
+        ])->assertSessionHasErrors('vendor');
+
+        $this->actingAs($manager)->put("/systems/{$system->public_id}", [
+            'organization_id' => $system->organization_id,
+            'site_id' => $system->site_id,
+            'department_id' => $system->department_id,
+            'name' => $system->name,
+            'system_type' => $system->system_type,
+            'status' => $system->status,
+            'vendor' => $manufacturer->code,
+        ])->assertSessionHasNoErrors();
     }
 
     public function test_inactive_type_cannot_be_assigned_but_existing_assignment_can_be_retained(): void
@@ -140,6 +210,40 @@ final class SystemReferenceDataManagementTest extends TestCase
             'sort_order' => 100,
             'is_active' => true,
         ])->assertForbidden();
+
+        $this->actingAs($user)->post('/settings/manufacturers', [
+            'code' => 'forbidden_vendor',
+            'label' => 'Nicht erlaubt',
+            'sort_order' => 100,
+            'is_active' => true,
+        ])->assertForbidden();
+    }
+
+    public function test_system_list_filters_and_searches_by_manufacturer_label(): void
+    {
+        $manager = $this->settingsManager();
+        $manufacturer = Manufacturer::query()->create([
+            'code' => 'example_medical',
+            'label' => 'Example Medical GmbH',
+            'sort_order' => 10,
+            'is_active' => true,
+        ]);
+        $included = System::factory()->create(['name' => 'Hersteller-Treffer', 'vendor' => $manufacturer->code]);
+        System::factory()->create(['name' => 'Anderes System']);
+
+        $this->actingAs($manager)->get('/systems?manufacturer=example_medical')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('items.data', 1)
+                ->where('items.data.0.public_id', $included->public_id)
+                ->where('selectedSystem.vendor_label', 'Example Medical GmbH')
+                ->where('filters.manufacturer', 'example_medical'));
+
+        $this->actingAs($manager)->get('/systems?search=Example%20Medical')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('items.data', 1)
+                ->where('items.data.0.public_id', $included->public_id));
     }
 
     public function test_system_forms_use_custom_reference_labels(): void
@@ -156,6 +260,12 @@ final class SystemReferenceDataManagementTest extends TestCase
             'sort_order' => 15,
             'is_active' => true,
         ]);
+        Manufacturer::query()->create([
+            'code' => 'example_manufacturer',
+            'label' => 'Beispielhersteller',
+            'sort_order' => 15,
+            'is_active' => true,
+        ]);
 
         $this->actingAs($this->settingsManager())->get('/systems')
             ->assertOk()
@@ -163,7 +273,9 @@ final class SystemReferenceDataManagementTest extends TestCase
                 ->where('systemTypes.1.value', 'archive_gateway')
                 ->where('systemTypes.1.label', 'Archiv-Gateway')
                 ->where('statuses.1.value', 'validation')
-                ->where('statuses.1.label', 'In Validierung'));
+                ->where('statuses.1.label', 'In Validierung')
+                ->where('manufacturers.0.value', 'example_manufacturer')
+                ->where('manufacturers.0.label', 'Beispielhersteller'));
     }
 
     private function settingsManager(): User

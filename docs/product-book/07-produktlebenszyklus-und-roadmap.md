@@ -242,7 +242,7 @@ Die detaillierte Arbeitsroadmap wird außerhalb dieses Kapitels gepflegt. Auf Pr
 ### Datenqualität und Verwaltung
 
 - strukturierte Verantwortlichkeiten über die optionale Systemangabe hinaus;
-- weitere konfigurierbare Referenzdaten und Verwaltungsoberflächen über die vorhandenen Systemtypen und Systemstatus hinaus;
+- weitere konfigurierbare Referenzdaten und Verwaltungsoberflächen über die vorhandenen Systemtypen, Systemstatus und Hersteller hinaus;
 - weitere Konsistenzprüfungen und kontrollierte Pflegeverfahren.
 
 ### Dokumente und Audit – weitergehende Härtung

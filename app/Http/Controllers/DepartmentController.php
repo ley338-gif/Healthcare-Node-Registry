@@ -87,6 +87,7 @@ final class DepartmentController extends Controller
             $systems = System::query()
                 ->where('department_id', $selectedDepartment->id)
                 ->whereNull('archived_at')
+                ->with('manufacturerReference:id,code,label')
                 ->withCount([
                     'dicomNodes as dicom_nodes_count' => fn ($query) => $query->active(),
                     'dicomNodes as failed_dicom_nodes_count' => fn ($query) => $query

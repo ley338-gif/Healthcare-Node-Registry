@@ -33,6 +33,7 @@ const props = defineProps<{
     departments: DepartmentOption[];
     systemTypes: SelectOption[];
     statuses: SelectOption[];
+    manufacturers: SelectOption[];
     criticalities: SelectOption[];
 }>();
 
@@ -71,6 +72,7 @@ const availableDepartments = computed(() =>
 );
 const activeSystemTypes = computed(() => props.systemTypes.filter((option) => option.is_active !== false));
 const activeStatuses = computed(() => props.statuses.filter((option) => option.is_active !== false));
+const activeManufacturers = computed(() => props.manufacturers.filter((option) => option.is_active !== false));
 
 const close = (): void => {
     if (form.processing) {
@@ -347,12 +349,20 @@ const submit = (): void => {
                             <div class="mt-4 grid gap-4 sm:grid-cols-2">
                                 <label
                                     ><span class="text-sm font-medium text-slate-700">Hersteller</span
-                                    ><input
+                                    ><select
                                         v-model="form.vendor"
-                                        type="text"
-                                        maxlength="160"
                                         class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
-                                /></label>
+                                    >
+                                        <option value="">Nicht hinterlegt</option>
+                                        <option
+                                            v-for="option in activeManufacturers"
+                                            :key="option.value"
+                                            :value="option.value"
+                                        >
+                                            {{ option.label }}
+                                        </option>
+                                    </select></label
+                                >
                                 <label
                                     ><span class="text-sm font-medium text-slate-700">Produkt</span
                                     ><input

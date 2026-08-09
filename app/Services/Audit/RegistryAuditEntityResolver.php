@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\DiagnosticTestRun;
 use App\Models\DicomConnection;
 use App\Models\DicomNode;
+use App\Models\Manufacturer;
 use App\Models\Organization;
 use App\Models\RegistryDocument;
 use App\Models\SecurityEvent;
@@ -42,6 +43,7 @@ final class RegistryAuditEntityResolver
             Site::class => $this->registryEntity(Site::class, 'Site', 'Standort', 'site', $publicId),
             Department::class => $this->registryEntity(Department::class, 'Department', 'Abteilung', 'department', $publicId),
             System::class => $this->system($publicId),
+            Manufacturer::class => $this->reference(Manufacturer::class, 'Manufacturer', 'Hersteller', $publicId),
             SystemType::class => $this->reference(SystemType::class, 'SystemType', 'Systemtyp', $publicId),
             SystemStatus::class => $this->reference(SystemStatus::class, 'SystemStatus', 'Systemstatus', $publicId),
             DicomNode::class => $this->node($publicId),
@@ -75,7 +77,7 @@ final class RegistryAuditEntityResolver
     }
 
     /**
-     * @param  class-string<SystemType|SystemStatus>  $model
+     * @param  class-string<Manufacturer|SystemType|SystemStatus>  $model
      * @return array{type: string, label: string, public_id: string|null, url: string|null, navigable: bool}
      */
     private function reference(string $model, string $type, string $fallback, ?string $publicId): array

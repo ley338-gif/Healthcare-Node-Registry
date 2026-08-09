@@ -80,6 +80,8 @@ Route::middleware(['auth', 'mfa'])->group(function (): void {
     Route::put('/settings/system-types/{systemType}', [SettingsSystemReferenceController::class, 'updateType'])->name('settings.system-types.update');
     Route::post('/settings/system-statuses', [SettingsSystemReferenceController::class, 'storeStatus'])->name('settings.system-statuses.store');
     Route::put('/settings/system-statuses/{systemStatus}', [SettingsSystemReferenceController::class, 'updateStatus'])->name('settings.system-statuses.update');
+    Route::post('/settings/manufacturers', [SettingsSystemReferenceController::class, 'storeManufacturer'])->name('settings.manufacturers.store');
+    Route::put('/settings/manufacturers/{manufacturer}', [SettingsSystemReferenceController::class, 'updateManufacturer'])->name('settings.manufacturers.update');
 
     Route::get('/structure', OrganizationStructureController::class)->name('structure.index');
     Route::get('/documents', RegistryDocumentIndexController::class)->name('documents.index');

@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Department;
+use App\Models\Manufacturer;
 use App\Models\Organization;
 use App\Models\Site;
 use App\Models\System;
@@ -52,6 +53,22 @@ final class SystemFactory extends Factory
             'network',
             'other',
         ]);
+        $manufacturers = [
+            'visus' => 'VISUS',
+            'dedalus' => 'Dedalus',
+            'siemens_healthineers' => 'Siemens Healthineers',
+            'ge_healthcare' => 'GE HealthCare',
+            'canon_medical' => 'Canon Medical',
+            'philips' => 'Philips',
+            'microsoft' => 'Microsoft',
+            'vmware' => 'VMware',
+            'cisco' => 'Cisco',
+        ];
+        $manufacturerCode = fake()->randomElement(array_keys($manufacturers));
+        Manufacturer::query()->firstOrCreate(
+            ['code' => $manufacturerCode],
+            ['label' => $manufacturers[$manufacturerCode], 'sort_order' => 100, 'is_active' => true],
+        );
 
         return [
             'organization_id' => $organization->id,
@@ -68,17 +85,7 @@ final class SystemFactory extends Factory
             'hostname' => fake()->unique()->domainWord(),
             'fqdn' => fake()->unique()->domainName(),
             'ip_address' => fake()->unique()->ipv4(),
-            'vendor' => fake()->randomElement([
-                'VISUS',
-                'Dedalus',
-                'Siemens Healthineers',
-                'GE HealthCare',
-                'Canon Medical',
-                'Philips',
-                'Microsoft',
-                'VMware',
-                'Cisco',
-            ]),
+            'vendor' => $manufacturerCode,
             'product' => fake()->word(),
             'model' => fake()->optional()->bothify('Model-###'),
             'version' => fake()->optional()->numerify('#.#.#'),

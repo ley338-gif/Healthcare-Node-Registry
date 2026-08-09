@@ -114,6 +114,7 @@ final class OrganizationController extends Controller
                 ->with([
                     'site:id,public_id,name',
                     'department:id,public_id,name',
+                    'manufacturerReference:id,code,label',
                 ])
                 ->withCount([
                     'dicomNodes as dicom_nodes_count' => fn ($query) => $query->active(),

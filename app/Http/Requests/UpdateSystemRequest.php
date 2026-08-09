@@ -24,6 +24,7 @@ final class UpdateSystemRequest extends FormRequest
         $system = $this->route('system');
         $currentType = $system instanceof System ? $system->system_type : null;
         $currentStatus = $system instanceof System ? $system->status : null;
+        $currentVendor = $system instanceof System ? $system->vendor : null;
 
         return [
             'organization_id' => ['required', 'exists:organizations,id'],
@@ -56,7 +57,15 @@ final class UpdateSystemRequest extends FormRequest
             'fqdn' => ['nullable', 'string', 'max:255'],
             'ip_address' => ['nullable', 'ip'],
 
-            'vendor' => ['nullable', 'string', 'max:160'],
+            'vendor' => [
+                'nullable', 'string', 'max:160',
+                Rule::exists('manufacturers', 'code')->where(
+                    fn ($query) => $query->where('is_active', true)->when(
+                        $currentVendor !== null,
+                        fn ($nested) => $nested->orWhere('code', $currentVendor),
+                    ),
+                ),
+            ],
             'product' => ['nullable', 'string', 'max:160'],
             'model' => ['nullable', 'string', 'max:160'],
             'version' => ['nullable', 'string', 'max:120'],

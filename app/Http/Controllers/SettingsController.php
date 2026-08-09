@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Manufacturer;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\SystemStatus;
@@ -22,7 +23,8 @@ final class SettingsController extends Controller
         $canManageUsers = $actor->can('viewAny', User::class);
         $canManageRoles = $actor->can('viewAny', Role::class);
         $canManageReferenceData = $actor->can('viewAny', SystemType::class)
-            && $actor->can('viewAny', SystemStatus::class);
+            && $actor->can('viewAny', SystemStatus::class)
+            && $actor->can('viewAny', Manufacturer::class);
         abort_unless($canManageUsers || $canManageRoles || $canManageReferenceData, 403);
         $search = trim((string) $request->query('search', ''));
         $status = trim((string) $request->query('status', ''));
@@ -60,6 +62,9 @@ final class SettingsController extends Controller
                 : [],
             'systemStatuses' => $canManageReferenceData
                 ? SystemStatus::query()->withCount('systems')->ordered()->get()
+                : [],
+            'manufacturers' => $canManageReferenceData
+                ? Manufacturer::query()->withCount('systems')->ordered()->get()
                 : [],
             'currentUserId' => $actor->public_id,
         ]);
