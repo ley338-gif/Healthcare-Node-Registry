@@ -32,6 +32,7 @@ Kontaktdaten werden minimiert. Teams, Funktionspostfächer und Herstellerkontakt
 | discovery_runs.status | Lebenszyklus eines Laufs | `draft, pending, running, cancelling, completed, partially_failed, cancelled, failed` |
 | dicom_discovery_results.association_successful / echo_successful | Ergebnis eines einzelnen C-ECHO-Versuchs | Association-Erfolg impliziert nicht zwingend C-ECHO-Erfolg |
 | discovery_allowed_networks.cidr | Von einem Administrator freigegebener Scanbereich | Voraussetzung für jeden Discovery-Lauf, Standard: RFC1918 |
+| discovery_port_profiles.ports | Administrierbare JSON-Portliste als Vorlage für neue Discovery-Läufe | 1–40 eindeutige TCP-Ports; nur aktive Profile werden im Wizard angeboten, Änderungen wirken nicht rückwirkend |
 | dicom_connections.evidence_status | Nachweisstärke einer Topologie-Verbindung, unabhängig vom Betriebsstatus | `confirmed, technically_tested, suspected, manually_documented, failed_last_test`; nie automatisch auf `confirmed` gesetzt |
 
 Große technische Rohausgaben (z. B. DCMTK-Konsolenausgabe) werden in `dicom_discovery_results.raw_response` als JSON mit begrenzter Länge gespeichert, nicht in einer separaten Volltextspalte.

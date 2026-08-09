@@ -12,6 +12,13 @@ type PortConfig = {
     is_dicom_candidate: boolean;
     enabled: boolean;
 };
+type PortProfile = {
+    public_id: string;
+    name: string;
+    description: string | null;
+    ports: PortConfig[];
+    is_default: boolean;
+};
 type AeCandidate = {
     ae_title: string;
     role: 'calling' | 'called';
@@ -19,8 +26,7 @@ type AeCandidate = {
 };
 
 const props = defineProps<{
-    defaultDicomPorts: PortConfig[];
-    optionalPorts: PortConfig[];
+    portProfiles: PortProfile[];
     registryAeTitles: string[];
     defaultCallingAe: string;
     maxRangeSize: number;
@@ -29,6 +35,9 @@ const props = defineProps<{
     maxAeAttemptsPerPort: number;
     allowedNetworks: { cidr: string; description: string | null }[];
 }>();
+
+const initialPortProfile = props.portProfiles.find((profile) => profile.is_default) ?? props.portProfiles[0];
+const selectedPortProfileId = ref(initialPortProfile?.public_id ?? '');
 
 const step = ref(1);
 const totalSteps = 5;
@@ -52,7 +61,7 @@ const form = useForm({
         retries: 1,
         profile: 'standard' as 'careful' | 'standard' | 'fast' | 'custom',
     },
-    ports: [...props.defaultDicomPorts, ...props.optionalPorts].map((port) => ({ ...port })) as PortConfig[],
+    ports: (initialPortProfile?.ports ?? []).map((port) => ({ ...port })) as PortConfig[],
     ae_candidates: [{ ae_title: props.defaultCallingAe, role: 'calling', source: 'default' }] as AeCandidate[],
     confirmed: false,
 });
@@ -142,6 +151,10 @@ const addCustomPort = (): void => {
 };
 const removePort = (index: number): void => {
     form.ports.splice(index, 1);
+};
+const applyPortProfile = (): void => {
+    const profile = props.portProfiles.find((item) => item.public_id === selectedPortProfileId.value);
+    if (profile) form.ports = profile.ports.map((port) => ({ ...port }));
 };
 
 const addCalledAe = (source: AeCandidate['source'] = 'manual'): void => {
@@ -481,6 +494,26 @@ const submit = (): void => {
                         Ein offener Port allein beweist keinen DICOM-Dienst. Als "DICOM-Kandidat" markierte, offene
                         Ports werden in Phase C per C-ECHO getestet.
                     </p>
+                    <label v-if="portProfiles.length > 0" class="block">
+                        <span class="text-sm font-medium text-slate-700">Portprofil</span>
+                        <select
+                            v-model="selectedPortProfileId"
+                            class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                            @change="applyPortProfile"
+                        >
+                            <option v-for="profile in portProfiles" :key="profile.public_id" :value="profile.public_id">
+                                {{ profile.name }}{{ profile.is_default ? ' (Standard)' : '' }}
+                            </option>
+                        </select>
+                        <span class="mt-1 block text-xs text-slate-500">
+                            {{
+                                portProfiles.find((profile) => profile.public_id === selectedPortProfileId)?.description
+                            }}
+                        </span>
+                    </label>
+                    <div v-else class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                        Es ist kein aktives Portprofil vorhanden. Fügen Sie die zu prüfenden Ports manuell hinzu.
+                    </div>
                     <div class="overflow-x-auto rounded-xl border border-slate-200">
                         <table class="min-w-full divide-y divide-slate-200 text-sm">
                             <thead class="bg-slate-50 text-xs text-slate-500 uppercase">

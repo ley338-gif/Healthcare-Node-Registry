@@ -17,6 +17,7 @@ use App\Http\Controllers\DicomNodeController;
 use App\Http\Controllers\Discovery\DiscoveredHostController;
 use App\Http\Controllers\Discovery\DiscoveryAllowedNetworkController;
 use App\Http\Controllers\Discovery\DiscoveryDashboardController;
+use App\Http\Controllers\Discovery\DiscoveryPortProfileController;
 use App\Http\Controllers\Discovery\DiscoveryPromotionController;
 use App\Http\Controllers\Discovery\DiscoveryRunController;
 use App\Http\Controllers\Discovery\DiscoveryRunWizardController;
@@ -208,6 +209,8 @@ Route::middleware(['auth', 'mfa'])->group(function (): void {
     Route::post('/settings/discovery', [DiscoveryAllowedNetworkController::class, 'store'])->name('settings.discovery.store');
     Route::put('/settings/discovery/{discoveryAllowedNetwork}', [DiscoveryAllowedNetworkController::class, 'update'])->name('settings.discovery.update');
     Route::delete('/settings/discovery/{discoveryAllowedNetwork}', [DiscoveryAllowedNetworkController::class, 'destroy'])->name('settings.discovery.destroy');
+    Route::post('/settings/discovery/port-profiles', [DiscoveryPortProfileController::class, 'store'])->name('settings.discovery.port-profiles.store');
+    Route::put('/settings/discovery/port-profiles/{discoveryPortProfile}', [DiscoveryPortProfileController::class, 'update'])->name('settings.discovery.port-profiles.update');
 
     Route::get('/tests', TestWorkspaceController::class)
         ->name('tests.index');

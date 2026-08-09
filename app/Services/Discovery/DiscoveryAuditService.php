@@ -4,6 +4,7 @@ namespace App\Services\Discovery;
 
 use App\Models\DiscoveredHost;
 use App\Models\DiscoveryAllowedNetwork;
+use App\Models\DiscoveryPortProfile;
 use App\Models\DiscoveryRun;
 use App\Models\System;
 use App\Models\User;
@@ -74,6 +75,16 @@ final class DiscoveryAuditService
         $this->audit->record("discovery.allowed_network.{$action}", $network, $actor, [
             'cidr' => $network->cidr,
             'active' => $network->active,
+        ]);
+    }
+
+    public function portProfileChanged(string $action, DiscoveryPortProfile $profile, ?User $actor): void
+    {
+        $this->audit->record("discovery.port_profile.{$action}", $profile, $actor, [
+            'name' => $profile->name,
+            'active' => $profile->active,
+            'is_default' => $profile->is_default,
+            'ports' => collect($profile->ports)->pluck('port')->all(),
         ]);
     }
 }

@@ -189,7 +189,7 @@ Die folgenden Themen sind dokumentiert, aber noch nicht als vollständig verfüg
 
 ### Referenzdaten und Verwaltungsoberflächen
 
-Systemtypen, Systemstatus und Hersteller werden unter **Einstellungen > Referenzdaten** zentral gepflegt. Weitere fest hinterlegte oder freie Werte können schrittweise folgen; Kandidaten sind DICOM-Dienste, Dokumentkategorien und Portprofile. Produkte bleiben bis zu einer eigenen fachlichen Modellentscheidung Freitext. Umfang und Datenführerschaft müssen vor jeder Erweiterung separat festgelegt werden.
+Systemtypen, Systemstatus und Hersteller werden unter **Einstellungen > Referenzdaten** zentral gepflegt. Discovery-Portprofile werden in den Discovery-Einstellungen zentral verwaltet und beim Laufstart als eigene Portkonfiguration kopiert. Weitere fest hinterlegte oder freie Werte können schrittweise folgen; Kandidaten sind DICOM-Dienste und Dokumentkategorien. Produkte bleiben bis zu einer eigenen fachlichen Modellentscheidung Freitext. Umfang und Datenführerschaft müssen vor jeder Erweiterung separat festgelegt werden.
 
 ### Weitergehende Verantwortlichkeitsmodellierung
 
