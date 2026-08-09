@@ -48,7 +48,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - DICOM Capability-Matrix auf Basis der Association-Aushandlung
 - DICOM-Dateianalyse mit `dcmdump`
 - Öffentlicher, detailarmer Health-Endpunkt unter `/up`
-- DICOM Discovery: geführter Wizard, asynchroner Netzwerk-Scan (Ping/Reverse-DNS, TCP-Portprüfung, begrenzte DICOM-C-ECHO-Tests), regelbasierte Klassifizierung mit Confidence-Score, Review-Queue mit Duplikaterkennung und Übernahme in die System-Registry (siehe `docs/Features/dicom-discovery.md`)
+- DICOM Discovery: geführter Wizard, sofortige sowie täglich oder wöchentlich geplante asynchrone Netzwerk-Scans (Ping/Reverse-DNS, TCP-Portprüfung, begrenzte DICOM-C-ECHO-Tests), regelbasierte Klassifizierung mit Confidence-Score, Review-Queue mit Export, Duplikaterkennung und Übernahme in die System-Registry (siehe `docs/Features/dicom-discovery.md`)
 - Backup- und Restore-Skripte für PostgreSQL und privaten Dokumentenspeicher
 
 Der Docker-Stack bindet ClamAV 1.5.3 über das interne ClamD-Netzwerk an. Uploads werden synchron gescannt; ein stündlicher Scheduler prüft offene Scans erneut. Ist der Scanner deaktiviert oder nicht erreichbar, werden Dateien mit `unavailable` privat gespeichert und Download sowie Vorschau bleiben fail-closed gesperrt.
@@ -212,7 +212,7 @@ Dieser Zugang ist synthetisch und darf nicht in produktiven oder gemeinsam errei
 
 3. Erlaubten Netzbereich prüfen: Unter Einstellungen > Discovery (`/settings/discovery`, Berechtigung `discovery.manage`) ist standardmäßig `192.168.0.0/16`, `172.16.0.0/12` und `10.0.0.0/8` freigegeben (Seed-Daten). Ohne mindestens einen aktiven Eintrag kann kein Lauf gestartet werden.
 
-4. Testscan starten: unter „Discovery" → „Neuer Discovery-Lauf" einen kleinen, tatsächlich erreichbaren Bereich wählen (z. B. das eigene Docker-Subnetz oder ein einzelnes bekanntes Testgerät), Schritt 5 mit der Sicherheitsbestätigung abschließen. Der Fortschritt ist auf der Laufseite sichtbar; Ergebnisse erscheinen dort in der Review-Queue, sobald der `worker` sie verarbeitet hat.
+4. Testscan starten: unter „Discovery" → „Neuer Discovery-Lauf" einen kleinen, tatsächlich erreichbaren Bereich wählen (z. B. das eigene Docker-Subnetz oder ein einzelnes bekanntes Testgerät), Schritt 5 mit der Sicherheitsbestätigung abschließen. Dort kann der Lauf sofort gestartet oder täglich beziehungsweise wöchentlich geplant werden. Zeitpläne erscheinen auf dem Discovery-Dashboard; der Fortschritt ausgeführter Läufe ist auf der Laufseite sichtbar.
 
 ## Docker-Stack
 
@@ -223,7 +223,7 @@ Dieser Zugang ist synthetisch und darf nicht in produktiven oder gemeinsam errei
 | `web` | Nginx, statische Assets und Weiterleitung an PHP-FPM | `8080` | Standard | `unless-stopped` |
 | `app` | Laravel auf PHP-FPM, Port 9000 nur im Compose-Netz | keiner | Standard | `unless-stopped` |
 | `worker` | Queue-Worker (`php artisan queue:work database --queue=discovery,default`) für asynchrone Discovery-Scan-Läufe; Heartbeat- und Datenbank-Healthcheck | keiner | Standard | `unless-stopped` |
-| `scheduler` | Laravel-Scheduler für den stündlichen Malware-Rescan und die tägliche Dokument-Ablaufprüfung | keiner | Standard | `unless-stopped` |
+| `scheduler` | Laravel-Scheduler für Discovery-Zeitpläne, Malware-Rescans, Dokument-Ablaufprüfung und Audit-Aufbewahrung | keiner | Standard | `unless-stopped` |
 | `clamav` | ClamAV 1.5.3 mit ClamD und FreshClam | keiner | Standard | `unless-stopped` |
 | `db` | PostgreSQL 18.4 | keiner | Standard | `unless-stopped` |
 | `node` | npm-/Vite-Werkzeugcontainer | keiner | `tools` | keine |
@@ -326,6 +326,7 @@ DICOM-Zielports werden pro registriertem Knoten gespeichert und sind keine einge
 | `APP_KEY` | Laravel-Schlüssel für Verschlüsselung; mit `key:generate` erzeugen | kein Vorgabewert |
 | `APP_DEBUG` | Laravel-Debugausgabe | `false` |
 | `APP_URL` | Externe Basis-URL | `http://localhost:8080` |
+| `APP_TIMEZONE` | Standardzeitzone der Anwendung und neuer Discovery-Zeitpläne; IANA-Bezeichner | `Europe/Berlin` in `.env.example` |
 | `HTTPS_HTTP_PORT` | Host-Port für die HTTP-zu-HTTPS-Weiterleitung der optionalen HTTPS-Überlagerung | `80` |
 | `HTTPS_PORT` | Host-Port für TLS der optionalen HTTPS-Überlagerung | `443` |
 | `HTTPS_CERTIFICATE_HOST_DIRECTORY` | Read-only eingebundenes Host-Verzeichnis mit `tls.crt` und `tls.key` | `./docker/https` |

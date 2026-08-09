@@ -4,7 +4,7 @@ Automatisierte, aber ausschließlich unterstützende Erkennung von DICOM-Systeme
 
 ## Workflow
 
-1. **Wizard** (`/discovery/runs/create`, Berechtigung `discovery.run`): Zielbereich (CIDR oder Start-/End-IP), Scanoptionen (Profil Vorsichtig/Standard/Schnell/Benutzerdefiniert), Portliste, AE-Titel-Kandidaten, Zusammenfassung mit verpflichtender Sicherheitsbestätigung.
+1. **Wizard** (`/discovery/runs/create`, Berechtigung `discovery.run`): Zielbereich (CIDR oder Start-/End-IP), Scanoptionen (Profil Vorsichtig/Standard/Schnell/Benutzerdefiniert), Portliste, AE-Titel-Kandidaten, Zusammenfassung mit verpflichtender Sicherheitsbestätigung. Die geprüfte Konfiguration kann einmalig sofort gestartet oder als täglicher beziehungsweise wöchentlicher Zeitplan mit IANA-Zeitzone gespeichert werden.
 2. **Scan-Job** (`App\Jobs\RunDiscoveryScanJob`, Queue `discovery`): Phase A Host-Erkennung (Ping + Reverse-DNS), Phase B TCP-Portprüfung gegen die konfigurierte Portliste, Phase C begrenzte DICOM-C-ECHO-Tests je offenem DICOM-Kandidatenport und AE-Titel-Kandidat.
 
 Die im Wizard konfigurierten Wiederholungsversuche (0–3) gelten für fehlgeschlagene Ping-, TCP-Port- und DICOM-C-ECHO-Prüfungen. Erfolgreiche Ziele werden nicht erneut geprüft. Damit entstehen pro technischer Prüfung höchstens vier Ausführungen; die Begrenzung der AE-Titel-Kandidaten je Host und Port bleibt davon unberührt.
@@ -20,6 +20,7 @@ Die im Wizard konfigurierten Wiederholungsversuche (0–3) gelten für fehlgesch
 - Ping erfolgt über das System-Binary `ping` mit fester Argumentliste (kein Shell-String). TCP-Portprüfung erfolgt über nicht-blockierende PHP-Sockets, kein Nmap.
 - DICOM-C-ECHO läuft über DCMTK `echoscu` mit fester Argumentliste; AE-Titel-Versuche sind über `config('discovery.max_ae_attempts_per_port')` je Host/Port hart begrenzt (Standard 5) - kein unbegrenztes Brute-Forcing.
 - Ein Fehler bei einem einzelnen Host bricht den Lauf nicht ab; ein laufender Lauf kann kooperativ abgebrochen werden (`cancelling` → `cancelled`).
+- Der Laravel-Scheduler prüft fällige Discovery-Zeitpläne minütlich. Vor jeder Ausführung wird die aktuelle Netzfreigabe erneut validiert. Ein überlappender aktiver Lauf verschiebt die Ausführung um fünf Minuten; eine entzogene Freigabe deaktiviert den Zeitplan fail-closed. Freie Cron-Ausdrücke sind nicht vorgesehen.
 - Jede sicherheitsrelevante Aktion (Laufstart, Abbruch, Freigabe/Bestätigung, Übernahme, Änderung freigegebener Netzbereiche) wird als Audit-Ereignis protokolliert (`App\Services\Discovery\DiscoveryAuditService`, siehe `docs/Security/SecurityEventCatalog.md`).
 
 ## Klassifizierung (Abschnitt 12)
@@ -38,13 +39,14 @@ Die Übernahme erzeugt ausschließlich `System`- und `DicomNode`-Datensätze, ni
 
 ## Datenmodell
 
-`discovery_port_profiles` enthält die administrierbaren Vorlagen. `discovery_ports` bleibt die unveränderliche, laufbezogene Kopie der tatsächlich verwendeten Konfiguration.
+`discovery_port_profiles` enthält die administrierbaren Vorlagen. `discovery_ports` bleibt die unveränderliche, laufbezogene Kopie der tatsächlich verwendeten Konfiguration. `discovery_schedules` speichert Intervall, Ortszeit, Zeitzone und eine kontrollierte Konfigurationskopie; erzeugte Läufe verweisen über `discovery_runs.discovery_schedule_id` auf ihren Ursprung.
 
-Siehe `docs/Database/DataDictionary.md` (Abschnitt „Discovery“) und `docs/Database/ERD.md` (Abschnitt „Discovery (implementiertes Schema)“) für die vollständige Tabellenübersicht. Kerntabellen: `discovery_runs`, `discovery_exclusions`, `discovery_ports` (Konfiguration), `discovery_ae_candidates`, `discovered_hosts`, `discovered_ports` (Ergebnis), `dicom_discovery_results`, `discovery_classification_evidence`, `discovery_allowed_networks`.
+Siehe `docs/Database/DataDictionary.md` (Abschnitt „Discovery“) und `docs/Database/ERD.md` (Abschnitt „Discovery (implementiertes Schema)“) für die vollständige Tabellenübersicht. Kerntabellen: `discovery_schedules`, `discovery_runs`, `discovery_exclusions`, `discovery_ports` (Konfiguration), `discovery_ae_candidates`, `discovered_hosts`, `discovered_ports` (Ergebnis), `dicom_discovery_results`, `discovery_classification_evidence`, `discovery_allowed_networks`.
 
 ## Betrieb
 
 - Scan-Jobs laufen über den `worker`-Container (`php artisan queue:work database --queue=discovery,default`), siehe `README.md`.
+- Fällige Zeitpläne werden vom `scheduler`-Container über `php artisan discovery:run-schedules` ausgewertet. Für die lokale Zeitauslegung gilt die je Zeitplan gespeicherte Zeitzone; `APP_TIMEZONE` ist die Vorgabe im Wizard.
 - DCMTK und `iputils-ping` sind im `app`/`worker`-Image installiert (`docker/php/Dockerfile`).
 - Fehlt ICMP-Ping (z. B. fehlende `CAP_NET_RAW`), wird ein Host trotzdem als erreichbar gewertet, sobald mindestens ein konfigurierter Port antwortet - der Lauf bricht dadurch nicht ab.
 

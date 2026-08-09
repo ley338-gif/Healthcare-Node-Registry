@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreDiscoveryRunRequest;
 use App\Models\DiscoveredHost;
 use App\Models\DiscoveryRun;
+use App\Models\User;
 use App\Services\Discovery\DiscoveryHostQuery;
 use App\Services\Discovery\DiscoveryResultExporter;
 use App\Services\Discovery\DiscoveryRunService;
+use App\Services\Discovery\DiscoveryScheduleService;
 use App\Services\Registry\SystemReferenceDataService;
 use App\Support\RegistryAudit;
 use Illuminate\Http\JsonResponse;
@@ -21,9 +23,18 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class DiscoveryRunController extends Controller
 {
-    public function store(StoreDiscoveryRunRequest $request, DiscoveryRunService $service): RedirectResponse
+    public function store(StoreDiscoveryRunRequest $request, DiscoveryRunService $service, DiscoveryScheduleService $scheduleService): RedirectResponse
     {
-        $run = $service->createRun([...$request->validated(), 'created_by' => $request->user()?->id], $request->user());
+        $validated = $request->validated();
+        if (($validated['execution_mode'] ?? 'now') === 'scheduled') {
+            $actor = $request->user();
+            abort_unless($actor instanceof User, 403);
+            $schedule = $scheduleService->create($validated, $actor);
+
+            return redirect()->route('discovery.index')->with('success', "Discovery-Zeitplan \"{$schedule->name}\" wurde angelegt.");
+        }
+
+        $run = $service->createRun([...$validated, 'created_by' => $request->user()?->id], $request->user());
 
         return redirect()->route('discovery.runs.show', $run)->with('success', "Discovery-Lauf \"{$run->name}\" wurde gestartet.");
     }

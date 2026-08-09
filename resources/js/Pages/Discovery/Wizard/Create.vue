@@ -34,6 +34,7 @@ const props = defineProps<{
     maxParallelHostsLimit: number;
     maxAeAttemptsPerPort: number;
     allowedNetworks: { cidr: string; description: string | null }[];
+    defaultScheduleTimezone: string;
 }>();
 
 const initialPortProfile = props.portProfiles.find((profile) => profile.is_default) ?? props.portProfiles[0];
@@ -50,6 +51,13 @@ const form = useForm({
     ip_range: '',
     exclude_ips: [] as string[],
     description: '',
+    execution_mode: 'now' as 'now' | 'scheduled',
+    schedule: {
+        frequency: 'daily' as 'daily' | 'weekly',
+        scheduled_time: '02:00',
+        day_of_week: 1,
+        timezone: props.defaultScheduleTimezone,
+    },
     scan_options: {
         ping_enabled: true,
         reverse_dns_enabled: true,
@@ -698,6 +706,66 @@ const submit = (): void => {
                         </div>
                     </dl>
 
+                    <div class="space-y-3 rounded-xl border border-slate-200 p-4">
+                        <h3 class="text-sm font-semibold text-slate-900">Ausführung</h3>
+                        <div class="flex flex-wrap gap-3 text-sm">
+                            <label class="flex items-center gap-2">
+                                <input v-model="form.execution_mode" type="radio" value="now" /> Einmalig sofort starten
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input v-model="form.execution_mode" type="radio" value="scheduled" /> Wiederkehrenden
+                                Zeitplan speichern
+                            </label>
+                        </div>
+                        <div v-if="form.execution_mode === 'scheduled'" class="grid gap-4 sm:grid-cols-2">
+                            <label class="block">
+                                <span class="text-sm font-medium text-slate-700">Intervall</span>
+                                <select
+                                    v-model="form.schedule.frequency"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                >
+                                    <option value="daily">Täglich</option>
+                                    <option value="weekly">Wöchentlich</option>
+                                </select>
+                            </label>
+                            <label v-if="form.schedule.frequency === 'weekly'" class="block">
+                                <span class="text-sm font-medium text-slate-700">Wochentag</span>
+                                <select
+                                    v-model.number="form.schedule.day_of_week"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                >
+                                    <option :value="1">Montag</option>
+                                    <option :value="2">Dienstag</option>
+                                    <option :value="3">Mittwoch</option>
+                                    <option :value="4">Donnerstag</option>
+                                    <option :value="5">Freitag</option>
+                                    <option :value="6">Samstag</option>
+                                    <option :value="7">Sonntag</option>
+                                </select>
+                            </label>
+                            <label class="block">
+                                <span class="text-sm font-medium text-slate-700">Uhrzeit</span>
+                                <input
+                                    v-model="form.schedule.scheduled_time"
+                                    type="time"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                                />
+                            </label>
+                            <label class="block">
+                                <span class="text-sm font-medium text-slate-700">Zeitzone</span>
+                                <input
+                                    v-model="form.schedule.timezone"
+                                    class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
+                                    placeholder="Europe/Berlin"
+                                />
+                            </label>
+                        </div>
+                        <p v-if="form.execution_mode === 'scheduled'" class="text-xs text-slate-500">
+                            Der erste Lauf startet zum nächsten passenden Zeitpunkt. Die Netzfreigabe wird vor jeder
+                            Ausführung erneut geprüft.
+                        </p>
+                    </div>
+
                     <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                         <p class="flex items-center gap-2 font-semibold">
                             <AlertTriangle :size="16" /> Sicherheitswarnung
@@ -713,8 +781,12 @@ const submit = (): void => {
                         <input v-model="form.confirmed" type="checkbox" class="mt-1 rounded border-slate-300" />
                         <span
                             ><strong
-                                >Ich bin berechtigt, den oben genannten Zielbereich zu scannen, und bestätige den Start
-                                des Discovery-Laufs.</strong
+                                >Ich bin berechtigt, den oben genannten Zielbereich zu scannen, und bestätige
+                                {{
+                                    form.execution_mode === 'scheduled'
+                                        ? 'die wiederkehrenden Discovery-Läufe'
+                                        : 'den Start des Discovery-Laufs'
+                                }}.</strong
                             ><br />Diese Bestätigung wird im Audit protokolliert.</span
                         >
                     </label>
@@ -753,7 +825,14 @@ const submit = (): void => {
                     class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                     @click="submit"
                 >
-                    <Radar :size="16" /> {{ form.processing ? 'Wird gestartet …' : 'Discovery-Lauf starten' }}
+                    <Radar :size="16" />
+                    {{
+                        form.processing
+                            ? 'Wird gespeichert …'
+                            : form.execution_mode === 'scheduled'
+                              ? 'Zeitplan speichern'
+                              : 'Discovery-Lauf starten'
+                    }}
                 </button>
             </div>
         </div>

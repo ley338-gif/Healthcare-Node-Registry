@@ -32,4 +32,4 @@ Diese gelten unabhängig von künftigen Versionen, solange die Anwendung kein Me
 
 ## Nicht implementiert (siehe `docs/roadmap.md` für mögliche Version 2)
 
-Wiederkehrende Läufe, Scanstand-Vergleich, Benachrichtigungen, CSV/Excel-Import für Discovery, PDF-Export der Discovery-Ergebnisse (CSV und JSON sind vorhanden), Worklist-/Query-Retrieve-/Storage-Commitment-/MPPS-Tests im Discovery-Kontext, DICOM-TLS, SNMP, passive Sensorik, Herstellerprofile, Conformance-Statement-Import, Monitoring/Alarmierung, Vier-Augen-Freigabe-Workflow, versionierte Topologie, automatische Änderungsberichte.
+Scanstand-Vergleich, Benachrichtigungen, CSV/Excel-Import für Discovery, PDF-Export der Discovery-Ergebnisse (CSV und JSON sind vorhanden), Worklist-/Query-Retrieve-/Storage-Commitment-/MPPS-Tests im Discovery-Kontext, DICOM-TLS, SNMP, passive Sensorik, Herstellerprofile, Conformance-Statement-Import, Monitoring/Alarmierung, Vier-Augen-Freigabe-Workflow, versionierte Topologie, automatische Änderungsberichte.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Tägliche und wöchentliche Discovery-Zeitpläne mit expliziter Zeitzone, pausierbarer Dashboard-Verwaltung, minütlicher Scheduler-Auswertung, Überlappungsschutz, erneuter Netzfreigabeprüfung vor jedem Lauf und vollständigem Audit ergänzt.
+
 - Gefilterten, berechtigungsgeprüften CSV- und JSON-Export der Discovery-Ergebnisse und Review-Queue mit Audit-Ereignis und Tabellenkalkulationsschutz ergänzt.
 
 - Anwendungsspezifischen Queue-Worker-Healthcheck ergänzt: Queue-Loops aktualisieren einen inhaltsarmen Heartbeat, Docker prüft dessen Aktualität und die Datenbankverbindung, und Betrieb sowie Fehlerdiagnose sind dokumentiert.

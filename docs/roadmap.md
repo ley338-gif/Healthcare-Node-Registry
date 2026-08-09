@@ -5,14 +5,13 @@ document_type: Roadmap
 chapter: Übersicht
 status: draft
 version: 0.1
-last_updated: 2026-08-08
+last_updated: 2026-08-09
 ---
 
 # Roadmap: Mögliche Version-2-Funktionen für Discovery
 
 Diese Funktionen sind bewusst **nicht** Bestandteil des DICOM Discovery & Topology MVP. Sie werden hier dokumentiert, um Erwartungen zu steuern, aber nicht ungefragt implementiert.
 
-- Wiederkehrende, geplante Discovery-Läufe (Zeitplan/Cron statt ausschließlich manuell gestartet)
 - Vergleich zweier Scanstände (Diff: neue/verschwundene/veränderte Hosts)
 - Benachrichtigungen bei neuen oder verschwundenen Systemen
 - CSV-/Excel-Import von AE-Titel-Kandidaten oder Zielbereichen für Discovery (die bestehende allgemeine Registry-CSV-Import-Funktion ist davon unabhängig bereits vorhanden, siehe `docs/Features/csv-registry-import.md`)

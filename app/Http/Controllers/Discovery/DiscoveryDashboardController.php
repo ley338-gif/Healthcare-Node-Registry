@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DicomDiscoveryResult;
 use App\Models\DiscoveredHost;
 use App\Models\DiscoveryRun;
+use App\Models\DiscoverySchedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -42,6 +43,28 @@ final class DiscoveryDashboardController extends Controller
                 'open_reviews_count' => $lastRun->hosts()->whereIn('status', [DiscoveredHost::STATUS_DISCOVERED, DiscoveredHost::STATUS_REVIEWING])->count(),
             ] : null,
             'canRun' => $request->user()?->can('create', DiscoveryRun::class) ?? false,
+            'schedules' => DiscoverySchedule::query()
+                ->with('lastRun:id,public_id,name,status')
+                ->orderByDesc('active')
+                ->orderBy('next_run_at')
+                ->get()
+                ->map(fn (DiscoverySchedule $schedule): array => [
+                    'public_id' => $schedule->public_id,
+                    'name' => $schedule->name,
+                    'frequency' => $schedule->frequency,
+                    'scheduled_time' => substr($schedule->scheduled_time, 0, 5),
+                    'day_of_week' => $schedule->day_of_week,
+                    'timezone' => $schedule->timezone,
+                    'active' => $schedule->active,
+                    'next_run_at' => $schedule->next_run_at->toIso8601String(),
+                    'last_dispatched_at' => $schedule->last_dispatched_at?->toIso8601String(),
+                    'last_error' => $schedule->last_error,
+                    'last_run' => $schedule->lastRun ? [
+                        'public_id' => $schedule->lastRun->public_id,
+                        'name' => $schedule->lastRun->name,
+                        'status' => $schedule->lastRun->status,
+                    ] : null,
+                ]),
         ]);
     }
 }

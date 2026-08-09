@@ -29,6 +29,7 @@ use Illuminate\Support\Str;
  * @property CarbonImmutable|null $started_at
  * @property CarbonImmutable|null $finished_at
  * @property int|null $created_by
+ * @property int|null $discovery_schedule_id
  * @property string|null $description
  * @property string|null $error_message
  */
@@ -94,6 +95,7 @@ final class DiscoveryRun extends Model
         'started_at',
         'finished_at',
         'created_by',
+        'discovery_schedule_id',
         'description',
         'error_message',
     ];

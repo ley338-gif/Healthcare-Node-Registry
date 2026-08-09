@@ -20,6 +20,7 @@
 | Rate Limit ausgelöst | Route-Klasse, Quell-IP, Zeitpunkt | Security Log |
 | Discovery-Lauf gestartet/abgeschlossen (`discovery.run.started`/`.completed`) | Actor, Lauf-ID, Zielbereich, Anzahl IPs, Ergebnisstatus | Audit |
 | Discovery-Lauf abgebrochen (`discovery.run.cancelled`) | Actor, Lauf-ID, verarbeitete/gesamte IPs | Audit |
+| Discovery-Zeitplan geändert/ausgeführt (`discovery.schedule.*`) | Actor oder System, Intervall, Zeitzone, Aktivstatus, nächste Ausführung | Audit |
 | Discovery-Fund bestätigt/ignoriert (`discovery.finding.confirmed`/`.ignored`) | Actor, Host-ID, IP-Adresse, Confidence-Score | Audit |
 | Discovery-System übernommen (`discovery.system.promoted`) | Actor, System-ID, Discovery-Lauf-ID, Quell-IP | Audit |
 | Freigegebener Netzbereich geändert (`discovery.allowed_network.*`) | Actor, CIDR, aktiv/inaktiv | Audit |
