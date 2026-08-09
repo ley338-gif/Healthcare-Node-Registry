@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Discovery;
 
 use App\Http\Controllers\Controller;
 use App\Models\DiscoveryAllowedNetwork;
+use App\Models\DiscoveryPortProfile;
 use App\Services\Discovery\DiscoveryAuditService;
 use App\Services\Discovery\NetworkRangeException;
 use App\Services\Discovery\NetworkRangeService;
@@ -29,6 +30,20 @@ final class DiscoveryAllowedNetworkController extends Controller
                 'creator' => $network->creator?->name,
                 'created_at' => $network->created_at?->toIso8601String(),
             ]),
+            'portProfiles' => DiscoveryPortProfile::query()
+                ->with('creator:id,public_id,name')
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (DiscoveryPortProfile $profile): array => [
+                    'public_id' => $profile->public_id,
+                    'name' => $profile->name,
+                    'description' => $profile->description,
+                    'ports' => $profile->ports,
+                    'active' => $profile->active,
+                    'is_default' => $profile->is_default,
+                    'creator' => $profile->creator?->name,
+                ]),
         ]);
     }
 

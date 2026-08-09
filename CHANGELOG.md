@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Administrierbare Discovery-Portprofile ergänzt: aktive Profile stehen im Scan-Assistenten als Vorlagen bereit, das bisherige Portset wird als Standardprofil migriert und jeder Lauf speichert weiterhin eine unabhängige Portkopie; Änderungen werden auditiert.
+
 - Hersteller als fremdschlüsselgesicherte, auditierte Referenzdaten ergänzt; vorhandene Herstellertexte werden verlustfrei übernommen, neue Zuordnungen verwenden aktive Auswahllisten und CSV-Importe lösen Code oder Anzeigename kontrolliert auf.
 - Systemtypen und Systemstatus als fremdschlüsselgesicherte, auditierte Referenzdaten mit zentraler Verwaltungsoberfläche, Bestandsschutz für deaktivierte Werte sowie einheitlicher Validierung in Systempflege, CSV-Import und Discovery umgesetzt.
 - Systemkritikalität in Anlage, Bearbeitung, Detailansicht, Listenkennzeichnung, Filter und Export integriert; Änderungen werden über das bestehende Registry-Audit mit Vorher-/Nachher-Werten protokolliert.

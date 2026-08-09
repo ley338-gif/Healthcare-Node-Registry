@@ -22,4 +22,4 @@ Der Systemexport und die Oberflächen zeigen den Anzeigenamen. Im CSV-Import kan
 
 ## Abgrenzung
 
-Produkte, DICOM-Dienste, Dokumentkategorien und Discovery-Portprofile sind nicht Bestandteil dieser Verwaltung. Produkt und Modell bleiben Freitextfelder.
+Produkte, DICOM-Dienste und Dokumentkategorien sind nicht Bestandteil dieser Verwaltung. Discovery-Portprofile werden separat unter den Discovery-Einstellungen gepflegt. Produkt und Modell bleiben Freitextfelder.

@@ -11,6 +11,8 @@ Automatisierte, aber ausschließlich unterstützende Erkennung von DICOM-Systeme
 
 ## Sicherheitsgrenzen
 
+- Wiederverwendbare Portprofile werden unter `/settings/discovery` mit der Berechtigung `discovery.manage` verwaltet. Der Wizard bietet nur aktive Profile an. Beim Laufstart wird die ausgewählte und gegebenenfalls angepasste Portliste als eigene Laufkonfiguration gespeichert; spätere Profiländerungen verändern bestehende Läufe nicht.
+
 - Scans sind auf von einem Administrator freigegebene Netzbereiche beschränkt (`discovery_allowed_networks`, verwaltet unter `/settings/discovery`, Berechtigung `discovery.manage`). Standardmäßig ausschließlich RFC1918-Bereiche.
 - Zielbereich ist auf `config('discovery.max_range_size')` Adressen begrenzt (Standard 1024).
 - Ping erfolgt über das System-Binary `ping` mit fester Argumentliste (kein Shell-String). TCP-Portprüfung erfolgt über nicht-blockierende PHP-Sockets, kein Nmap.
@@ -33,6 +35,8 @@ Wichtige, in der Oberfläche wiederholt sichtbare Einschränkungen:
 Die Übernahme erzeugt ausschließlich `System`- und `DicomNode`-Datensätze, niemals automatisch eine `DicomConnection`. Übernommene Systeme erscheinen dadurch automatisch in der bestehenden Topologie (`/network`), ohne dass eine zweite Topologie-Implementierung nötig ist. Verbindungen zwischen Systemen müssen weiterhin manuell über `/connections` angelegt werden. Der dort ergänzte Nachweis-Status (`DicomConnection::$evidence_status`: bestätigt, technisch getestet, vermutet, manuell dokumentiert, zuletzt fehlgeschlagen) steuert den Linienstil in `DicomNetworkMap.vue` (siehe `docs/UI/Topology.md`).
 
 ## Datenmodell
+
+`discovery_port_profiles` enthält die administrierbaren Vorlagen. `discovery_ports` bleibt die unveränderliche, laufbezogene Kopie der tatsächlich verwendeten Konfiguration.
 
 Siehe `docs/Database/DataDictionary.md` (Abschnitt „Discovery“) und `docs/Database/ERD.md` (Abschnitt „Discovery (implementiertes Schema)“) für die vollständige Tabellenübersicht. Kerntabellen: `discovery_runs`, `discovery_exclusions`, `discovery_ports` (Konfiguration), `discovery_ae_candidates`, `discovered_hosts`, `discovered_ports` (Ergebnis), `dicom_discovery_results`, `discovery_classification_evidence`, `discovery_allowed_networks`.
 
