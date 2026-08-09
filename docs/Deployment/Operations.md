@@ -58,3 +58,15 @@ docker compose exec app php artisan registry-documents:notify-expiry
 ```
 
 Bei deaktiviertem oder nicht erreichbarem Scanner bleiben neue und offene Dateien mit einem nicht freigegebenen Scanstatus gesperrt. Der Scheduler wiederholt offene Scans stündlich.
+
+## Queue-Worker
+
+Der `worker`-Container aktualisiert bei jedem Laravel-Queue-Loop die Datei `storage/framework/worker-heartbeat`. Der Docker-Healthcheck führt alle zehn Sekunden `php artisan registry:worker-health --quiet` aus und prüft die Queue-Datenbank sowie den Worker-Zustand. Im Leerlauf darf der Heartbeat höchstens 15 Sekunden alt sein. Während eines Jobs gilt die im Queue-Payload hinterlegte Job-Timeoutfrist zuzüglich 15 Sekunden Abschlussfrist; dadurch werden lange Discovery-Läufe nicht fälschlich als Ausfall gewertet, festgefahrene Jobs aber nach ihrer eigenen Obergrenze erkannt. Nach einer Startfrist von 30 Sekunden führen drei aufeinanderfolgende Fehler zum Status `unhealthy`.
+
+```bash
+docker compose ps worker db
+docker compose exec worker php artisan registry:worker-health
+docker compose logs --tail=200 worker
+```
+
+Der Heartbeat enthält nur einen Unix-Zeitstempel und keine Job-, Ziel- oder Patientendaten. Bei mehreren künftig skalierten Worker-Replikaten wäre ein je Replikat getrennter Heartbeat erforderlich; der aktuelle Referenz-Stack betreibt genau einen Worker.

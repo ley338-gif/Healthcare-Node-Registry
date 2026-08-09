@@ -29,6 +29,5 @@ Diese Funktionen sind bewusst **nicht** Bestandteil des DICOM Discovery & Topolo
 - Versionierte Topologie mit Änderungshistorie
 - Automatische Änderungsberichte zwischen zwei Discovery-Läufen
 - Echte Multi-Prozess- oder Redis-gestützte Parallelität für sehr große, zeitkritische Scans (siehe ADR-0011)
-- Anwendungsspezifischer Healthcheck für den `worker`-Container
 
 Siehe `docs/limitations.md` für Einschränkungen des aktuellen MVP.
