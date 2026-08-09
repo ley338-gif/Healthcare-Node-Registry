@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { AlertTriangle, Ban, CheckCircle2, Eye, RefreshCw, ShieldCheck, X, XCircle } from '@lucide/vue';
+import { AlertTriangle, Ban, CheckCircle2, Download, Eye, RefreshCw, ShieldCheck, X, XCircle } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import Pagination from '../../../Components/Pagination.vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
@@ -108,6 +108,15 @@ const applyFilters = (): void => {
         replace: true,
         only: ['hosts', 'filters'],
     });
+};
+const exportUrl = (format: 'csv' | 'json'): string => {
+    const query = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+        if (value) query.set(key, value);
+    });
+
+    const suffix = query.toString();
+    return `/discovery/runs/${props.run.public_id}/export/${format}${suffix ? `?${suffix}` : ''}`;
 };
 
 const isActive = computed(() => ['pending', 'running', 'cancelling'].includes(props.run.status));
@@ -231,6 +240,18 @@ const filteredDepartments = computed(
         <div class="space-y-6">
             <PageHeader eyebrow="Erkennung" :title="run.name" :description="run.description ?? undefined">
                 <template #actions>
+                    <a
+                        :href="exportUrl('csv')"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                        <Download :size="16" /> CSV
+                    </a>
+                    <a
+                        :href="exportUrl('json')"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                        <Download :size="16" /> JSON
+                    </a>
                     <button
                         v-if="canCancel && ['pending', 'running'].includes(run.status)"
                         type="button"
