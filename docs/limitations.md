@@ -27,7 +27,6 @@ Diese gelten unabhängig von künftigen Versionen, solange die Anwendung kein Me
 - **Ein Zielbereich pro Discovery-Lauf.** Mehrere getrennte Bereiche in einem Lauf sind nicht vorgesehen (siehe ADR-0011).
 - **Parallelität ist auf einen Batch begrenzt**, keine Multi-Prozess- oder Multi-Worker-Architektur. Für die im MVP erwartete Nutzung (einzelne, gezielte Läufe) ausreichend, aber nicht für sehr große, zeitkritische Scans optimiert.
 - **ICMP-Ping erfordert `CAP_NET_RAW` im Container.** Fehlt diese Capability, gilt ein Host trotzdem als erreichbar, sobald ein konfigurierter Port antwortet - eine reine ICMP-Aussage ("Host antwortet nicht auf Ping, aber auf keinem Port") wird in diesem Fall nicht separat ausgewiesen.
-- **Wiederholungsversuche (Retries) werden im Wizard erfasst, aber im MVP nicht auf jede Phase angewendet** - Ping nutzt die konfigurierte Anzahl nicht als Mehrfachversuch, sondern als einzelner Versuch mit dem konfigurierten Timeout. Technisch vorbereitet über `scan_options.retries`, im MVP nicht vollständig ausgewertet.
 - **Keine Bulk-Auswahl in der Review-Queue.** Bestätigen/Ignorieren/Übernehmen erfolgt je Fund einzeln, keine Mehrfachauswahl mit Sammelaktion.
 - **Kein separates Rollen-Freigabe-Vier-Augen-Prinzip.** Die Übernahme in die Registry erfordert eine einzelne Person mit `discovery.manage` und `registry.manage`.
 - **Kein dediziertes Healthcheck für den `worker`-Container.** `docker compose ps` zeigt den Laufstatus, aber es gibt keinen anwendungsspezifischen Healthcheck-Endpunkt für den Queue-Worker.

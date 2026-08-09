@@ -74,6 +74,7 @@ final class RunDiscoveryScanJob implements ShouldQueue
             $dicomCheckEnabled = (bool) ($options['dicom_check_enabled'] ?? true);
             $scanUnresponsiveHosts = (bool) ($options['scan_unresponsive_hosts'] ?? false);
             $timeoutSeconds = max(1, (int) ($options['timeout_seconds'] ?? 2));
+            $retries = max(0, min(3, (int) ($options['retries'] ?? 0)));
             $maxParallelHosts = min(
                 (int) config('discovery.max_parallel_hosts', 16),
                 max(1, (int) ($options['max_parallel_hosts'] ?? 8)),
@@ -109,6 +110,7 @@ final class RunDiscoveryScanJob implements ShouldQueue
                         dicomCheckEnabled: $dicomCheckEnabled,
                         scanUnresponsiveHosts: $scanUnresponsiveHosts,
                         timeoutSeconds: $timeoutSeconds,
+                        retries: $retries,
                         portNumbers: $portNumbers,
                         dicomCandidatePorts: $dicomCandidatePorts,
                         callingAeTitles: $callingAeTitles,
@@ -177,6 +179,7 @@ final class RunDiscoveryScanJob implements ShouldQueue
         bool $dicomCheckEnabled,
         bool $scanUnresponsiveHosts,
         int $timeoutSeconds,
+        int $retries,
         array $portNumbers,
         array $dicomCandidatePorts,
         array $callingAeTitles,
@@ -189,7 +192,7 @@ final class RunDiscoveryScanJob implements ShouldQueue
         ClassificationService $classificationService,
     ): void {
         $pingResults = $pingEnabled
-            ? $hostDiscoveryService->pingBatch($batch, $timeoutSeconds)
+            ? $hostDiscoveryService->pingBatch($batch, $timeoutSeconds, $retries)
             : array_fill_keys($batch, ['reachable' => false, 'latency_ms' => null, 'error' => null]);
 
         $portScanTargets = [];
@@ -200,7 +203,7 @@ final class RunDiscoveryScanJob implements ShouldQueue
             }
         }
 
-        $portResults = $portScanTargets !== [] ? $portScanService->scanMany($portScanTargets, $timeoutSeconds) : [];
+        $portResults = $portScanTargets !== [] ? $portScanService->scanMany($portScanTargets, $timeoutSeconds, $retries) : [];
 
         foreach ($batch as $ip) {
             $reachablePing = $pingResults[$ip]['reachable'] ?? false;
@@ -256,7 +259,7 @@ final class RunDiscoveryScanJob implements ShouldQueue
                     }
                 }
 
-                $echoResults = $echoScanService->testMany($targets, config('discovery.timeouts.dicom_echo_seconds', 5));
+                $echoResults = $echoScanService->testMany($targets, config('discovery.timeouts.dicom_echo_seconds', 5), $retries);
 
                 foreach ($echoResults as $result) {
                     $host->dicomResults()->create([

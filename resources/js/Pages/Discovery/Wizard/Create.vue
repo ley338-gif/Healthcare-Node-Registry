@@ -176,14 +176,16 @@ const removeAeCandidate = (candidate: AeCandidate): void => {
 
 const estimatedTechnicalChecks = computed(() => {
     const hosts = addressCount.value;
-    const portChecks = hosts * enabledPorts.value.length;
-    const echoChecks =
-        hosts *
-        Math.min(
-            dicomCandidatePorts.value.length * calledAeCandidates.value.length,
-            dicomCandidatePorts.value.length * props.maxAeAttemptsPerPort,
-        );
-    return portChecks + Math.max(0, echoChecks);
+    const attempts = Math.max(1, Math.min(4, form.scan_options.retries + 1));
+    const pingChecks = form.scan_options.ping_enabled ? hosts * attempts : 0;
+    const portChecks = form.scan_options.tcp_scan_enabled ? hosts * enabledPorts.value.length * attempts : 0;
+    const echoChecks = form.scan_options.dicom_check_enabled
+        ? hosts *
+          dicomCandidatePorts.value.length *
+          Math.min(callingAeCandidates.value.length * calledAeCandidates.value.length, props.maxAeAttemptsPerPort) *
+          attempts
+        : 0;
+    return pingChecks + portChecks + Math.max(0, echoChecks);
 });
 
 const stepValid = computed<boolean>(() => {
@@ -687,10 +689,11 @@ const submit = (): void => {
                             <dd class="font-medium">{{ form.scan_options.max_parallel_hosts }} Hosts</dd>
                         </div>
                         <div class="col-span-2 sm:col-span-3">
-                            <dt class="text-slate-500">Geschätzte Anzahl technischer Prüfungen</dt>
+                            <dt class="text-slate-500">Maximale Anzahl technischer Prüfungen</dt>
                             <dd class="font-medium">
-                                ≈ {{ estimatedTechnicalChecks.toLocaleString('de-DE') }} (Ping/Port-/DICOM-Prüfungen
-                                zusammen, grobe Schätzung)
+                                Bis zu
+                                {{ estimatedTechnicalChecks.toLocaleString('de-DE') }} Ping-/Port-/DICOM-Prüfungen
+                                einschließlich Wiederholungen
                             </dd>
                         </div>
                     </dl>
