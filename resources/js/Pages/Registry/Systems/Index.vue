@@ -458,7 +458,9 @@ const closeEditPanel = (): void => {
         />
 
         <div v-else class="mt-6 grid min-h-[720px] gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
-            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section
+                class="flex max-h-full min-h-0 flex-col self-start overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+            >
                 <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
                     <div>
                         <h2 class="font-semibold text-slate-950">Systemauswahl</h2>
@@ -466,7 +468,7 @@ const closeEditPanel = (): void => {
                     </div>
                 </header>
 
-                <div class="max-h-[760px] divide-y divide-slate-100 overflow-y-auto">
+                <div class="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto">
                     <button
                         v-for="system in items.data"
                         :key="system.public_id"
