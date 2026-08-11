@@ -49,6 +49,7 @@ ADRs dokumentieren langfristig bindende oder schwer umkehrbare technische Entsch
 - [ADR-0023: Benachrichtigungen über Discovery-Änderungen](ADR-0023-discovery-change-notifications.md)
 - [ADR-0024: Import von Discovery-AE-Titel-Kandidaten](ADR-0024-discovery-ae-candidate-import.md)
 - [ADR-0025: PDF-Export der Discovery-Ergebnisse](ADR-0025-discovery-pdf-export.md)
+- [ADR-0026: Rollenabhängige DICOM-Netzwerkendpunkte](ADR-0026-role-dependent-dicom-endpoints.md)
 
 ## Offener Konsolidierungsbedarf
 

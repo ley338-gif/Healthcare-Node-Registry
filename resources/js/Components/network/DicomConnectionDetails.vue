@@ -29,7 +29,21 @@ const endpoint = (node: NetworkNode | null): string => {
         return 'Nicht verfügbar';
     }
 
-    return `${node.host}:${node.port}`;
+    if (node.host && node.port !== null) {
+        return `${node.host}:${node.port}`;
+    }
+
+    return node.host || 'Kein Listener hinterlegt';
+};
+
+const targetEndpoint = (node: NetworkNode | null, portOverride: number | null): string => {
+    if (node === null || !node.host) {
+        return 'Nicht verfügbar';
+    }
+
+    const port = portOverride ?? node.port;
+
+    return port === null ? node.host : `${node.host}:${port}`;
 };
 </script>
 
@@ -152,11 +166,7 @@ const endpoint = (node: NetworkNode | null): string => {
                                     Ziel
                                 </dt>
                                 <dd class="font-mono text-sm text-slate-900">
-                                    {{
-                                        targetNode
-                                            ? `${targetNode.host}:${connection.port ?? targetNode.port}`
-                                            : 'Nicht verfügbar'
-                                    }}
+                                    {{ targetEndpoint(targetNode, connection.port) }}
                                 </dd>
                             </div>
 

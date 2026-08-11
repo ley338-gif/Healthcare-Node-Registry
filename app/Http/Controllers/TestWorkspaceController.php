@@ -36,6 +36,8 @@ final class TestWorkspaceController extends Controller
 
         $nodeModels = DicomNode::query()
             ->active()
+            ->whereNotNull('host')
+            ->whereNotNull('port')
             ->with([
                 'system:id,public_id,organization_id,site_id,department_id,name,system_type,status',
                 'system.organization:id,public_id,name',

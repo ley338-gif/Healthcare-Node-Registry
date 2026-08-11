@@ -20,8 +20,8 @@ export type NetworkNode = {
     public_id: string;
     name: string;
     ae_title: string;
-    host: string;
-    port: number;
+    host: string | null;
+    port: number | null;
     role: string;
     status: string;
     tls_enabled: boolean;

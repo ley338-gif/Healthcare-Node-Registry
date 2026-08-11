@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\DicomConnection;
+use App\Models\DicomNode;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -162,8 +163,43 @@ final class UpdateDicomConnectionRequest extends FormRequest
                             'Ein separater Zielknoten ist nur bei C-MOVE erlaubt.',
                         );
                 }
+
+                $this->validateAddressableNode(
+                    $validator,
+                    'target_dicom_node_id',
+                    $this->input('target_dicom_node_id'),
+                    $this->integer('port_override') ?: null,
+                );
+
+                if ($service === DicomConnection::SERVICE_MOVE) {
+                    $this->validateAddressableNode(
+                        $validator,
+                        'destination_dicom_node_id',
+                        $destinationId,
+                    );
+                }
             },
         ];
+    }
+
+    private function validateAddressableNode(
+        Validator $validator,
+        string $field,
+        mixed $nodeId,
+        ?int $portOverride = null,
+    ): void {
+        if (! is_numeric($nodeId)) {
+            return;
+        }
+
+        $node = DicomNode::query()->find((int) $nodeId);
+
+        if ($node !== null && ! $node->hasNetworkEndpoint($portOverride)) {
+            $validator->errors()->add(
+                $field,
+                'Der Zielknoten benötigt einen Host und einen DICOM-Port oder Port-Override.',
+            );
+        }
     }
 
     /**

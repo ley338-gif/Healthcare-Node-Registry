@@ -80,7 +80,13 @@ final class GlobalSearchService
     private function dicomNodes(string $pattern): Collection
     {
         return DicomNode::query()->active()->with('system:id,name,archived_at')->whereHas('system', fn (Builder $query) => $query->whereNull('archived_at'))->where(fn (Builder $query) => $query->where('name', 'ilike', $pattern)->orWhere('ae_title', 'ilike', $pattern)->orWhere('host', 'ilike', $pattern))
-            ->limit(self::LIMIT_PER_GROUP)->get()->map(fn (DicomNode $item): array => $this->result('DICOM', 'DICOM-Knoten', $item->name, "{$item->ae_title} · {$item->host}:{$item->port} · {$item->system->name}", "/network?node={$item->public_id}"));
+            ->limit(self::LIMIT_PER_GROUP)->get()->map(function (DicomNode $item): array {
+                $endpoint = $item->hasNetworkEndpoint()
+                    ? "{$item->host}:{$item->port}"
+                    : ($item->host ?? 'kein Listener');
+
+                return $this->result('DICOM', 'DICOM-Knoten', $item->name, "{$item->ae_title} · {$endpoint} · {$item->system->name}", "/network?node={$item->public_id}");
+            });
     }
 
     /** @return Collection<int, array{group: string, type: string, title: string, subtitle: string, url: string}> */

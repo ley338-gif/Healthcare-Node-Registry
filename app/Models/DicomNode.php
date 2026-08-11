@@ -18,8 +18,8 @@ use Illuminate\Support\Str;
  * @property string $name
  * @property string $ae_title
  * @property string|null $modality
- * @property string $host
- * @property int $port
+ * @property string|null $host
+ * @property int|null $port
  * @property int|null $last_verification_duration_ms
  * @property string $role
  * @property string $status
@@ -114,6 +114,12 @@ final class DicomNode extends Model
     public function getRouteKeyName(): string
     {
         return 'public_id';
+    }
+
+    public function hasNetworkEndpoint(?int $portOverride = null): bool
+    {
+        return filled($this->host)
+            && ($portOverride !== null || $this->port !== null);
     }
 
     /**

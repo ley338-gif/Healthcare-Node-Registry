@@ -101,6 +101,13 @@ final class DicomNodeController extends Controller
             );
         }
 
+        if (! $dicomNode->hasNetworkEndpoint()) {
+            return back()->with(
+                'error',
+                'Für diesen DICOM-Knoten ist kein vollständiger Zielendpunkt mit Host und Port hinterlegt.',
+            );
+        }
+
         $result = $echoService->test($dicomNode);
 
         DB::transaction(

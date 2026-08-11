@@ -26,6 +26,10 @@ final class PacsQueryDiagnosticController extends Controller
         if (! $dicomNode->supports_query) {
             return back()->with('error', 'Für diesen DICOM-Knoten ist Query nicht aktiviert.');
         }
+        if (! $dicomNode->hasNetworkEndpoint()) {
+            return back()->with('error', 'Für diesen DICOM-Knoten ist kein vollständiger Zielendpunkt hinterlegt.');
+        }
+
         $v = $request->validated();
         $get = static fn (string $key): ?string => isset($v[$key]) && is_string($v[$key]) && $v[$key] !== '' ? $v[$key] : null;
         $parameters = new PacsQueryParameters(

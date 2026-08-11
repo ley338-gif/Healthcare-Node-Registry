@@ -109,6 +109,78 @@ final class DicomNodeManagementTest extends TestCase
         ]);
     }
 
+    public function test_scu_node_can_be_created_without_a_network_listener(): void
+    {
+        $user = $this->createRegistryManager();
+        $system = System::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->post(
+                "/systems/{$system->public_id}/dicom-nodes",
+                $this->validPayload([
+                    'name' => 'CT Send AE',
+                    'ae_title' => 'CT_SEND',
+                    'host' => null,
+                    'port' => null,
+                    'role' => 'scu',
+                ]),
+            );
+
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('dicom_nodes', [
+            'system_id' => $system->id,
+            'ae_title' => 'CT_SEND',
+            'host' => null,
+            'port' => null,
+            'role' => 'scu',
+        ]);
+    }
+
+    public function test_scu_node_can_document_a_host_without_a_listener_port(): void
+    {
+        $user = $this->createRegistryManager();
+        $system = System::factory()->create();
+
+        $this->actingAs($user)
+            ->post(
+                "/systems/{$system->public_id}/dicom-nodes",
+                $this->validPayload([
+                    'host' => '10.10.20.30',
+                    'port' => null,
+                    'role' => 'scu',
+                ]),
+            )
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('dicom_nodes', [
+            'system_id' => $system->id,
+            'host' => '10.10.20.30',
+            'port' => null,
+            'role' => 'scu',
+        ]);
+    }
+
+    public function test_scp_node_requires_host_and_port(): void
+    {
+        $user = $this->createRegistryManager();
+        $system = System::factory()->create();
+
+        $this->actingAs($user)
+            ->post(
+                "/systems/{$system->public_id}/dicom-nodes",
+                $this->validPayload([
+                    'host' => null,
+                    'port' => null,
+                    'role' => 'scp',
+                ]),
+            )
+            ->assertSessionHasErrors(['host', 'port']);
+
+        $this->assertDatabaseCount('dicom_nodes', 0);
+    }
+
     public function test_invalid_modality_is_rejected(): void
     {
         $user = $this->createRegistryManager();
@@ -257,6 +329,34 @@ final class DicomNodeManagementTest extends TestCase
         $this->assertDatabaseHas('dicom_nodes', [
             'id' => $dicomNode->id,
             'modality' => 'DX',
+        ]);
+    }
+
+    public function test_registry_manager_can_remove_the_listener_when_changing_a_node_to_scu(): void
+    {
+        $user = $this->createRegistryManager();
+        $dicomNode = DicomNode::factory()->create(['role' => 'both']);
+
+        $response = $this
+            ->actingAs($user)
+            ->put(
+                "/dicom-nodes/{$dicomNode->public_id}",
+                $this->validPayload([
+                    'name' => $dicomNode->name,
+                    'ae_title' => $dicomNode->ae_title,
+                    'host' => null,
+                    'port' => null,
+                    'role' => 'scu',
+                ]),
+            );
+
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('dicom_nodes', [
+            'id' => $dicomNode->id,
+            'host' => null,
+            'port' => null,
+            'role' => 'scu',
         ]);
     }
 

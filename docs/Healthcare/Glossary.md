@@ -5,7 +5,7 @@
 | Asset/System | physisches oder logisches IT-System, zum Beispiel Modalität, PACS, RIS, Archiv oder Viewer |
 | Gerät | physische technische Einheit; kann ein Asset darstellen, ist aber nicht automatisch ein DICOM-Endpoint |
 | Endpoint | konkrete technische Kommunikationsadresse eines Assets |
-| DICOM Application Entity | konkreter DICOM-Endpoint mit AE Title, Host/IP, Port und Diensten |
+| DICOM Application Entity | logischer DICOM-Kommunikationspartner mit AE Title und Diensten; ein empfangender SCP besitzt zusätzlich Host/IP und Port |
 | DICOM Node | umgangssprachlicher Begriff; im Datenmodell nicht als Ersatz für Asset oder Endpoint verwenden |
 | Connection | gerichtete, dokumentierte Beziehung zwischen einem Quell- und Zielendpoint |
 | Service | fachlich-technischer Kommunikationsdienst, zum Beispiel C-STORE, MWL oder HL7-ADT |

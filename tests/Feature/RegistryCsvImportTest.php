@@ -63,6 +63,36 @@ final class RegistryCsvImportTest extends TestCase
         $this->assertDatabaseCount('dicom_nodes', 1);
     }
 
+    public function test_scu_node_csv_accepts_empty_host_and_port(): void
+    {
+        $organization = Organization::query()->create(['name' => 'Klinik Nord']);
+        System::factory()->create(['organization_id' => $organization->id, 'name' => 'CT Nord']);
+        $csv = $this->nodeHeader()."\nKlinik Nord,CT Nord,CT Send,CT_SEND,,,scu,active,false,,true,false,false,false,false,false,false,,";
+
+        $response = $this->actingAs($this->administrator())->post('/systems/import/preview', [
+            'kind' => 'dicom_nodes',
+            'csv_file' => UploadedFile::fake()->createWithContent('nodes.csv', $csv),
+        ]);
+        parse_str((string) parse_url((string) $response->headers->get('Location'), PHP_URL_QUERY), $query);
+
+        $this->actingAs($this->administrator())
+            ->get('/systems/import?token='.$query['token'])
+            ->assertInertia(fn ($page) => $page
+                ->where('preview.valid', 1)
+                ->where('preview.invalid', 0));
+
+        $this->actingAs($this->administrator())
+            ->post('/systems/import/'.$query['token'])
+            ->assertRedirect('/systems');
+
+        $this->assertDatabaseHas('dicom_nodes', [
+            'ae_title' => 'CT_SEND',
+            'host' => null,
+            'port' => null,
+            'role' => 'scu',
+        ]);
+    }
+
     private function administrator(): User
     {
         $this->seed();

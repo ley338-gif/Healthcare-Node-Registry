@@ -155,11 +155,11 @@ Die fachliche und technische Identität wird durch mehrere Angaben beschrieben:
 
 - verständlicher Name;
 - AE-Titel;
-- Host;
-- Port;
+- optionaler Host beziehungsweise optionale IP-Adresse;
+- optionaler Port;
 - zugehöriges System.
 
-Der AE-Titel wird normalisiert und auf die DICOM-gerechte Maximallänge begrenzt. Die Kombination aus System, AE-Titel, Host und Port ist im aktuellen Modell eindeutig.
+Der AE-Titel wird normalisiert und auf die DICOM-gerechte Maximallänge begrenzt. Reine SCU-Knoten benötigen keinen eingehenden Listener; Host und Port sind deshalb optional. Für SCP-Knoten und kombinierte SCU-/SCP-Knoten sind beide Angaben verpflichtend. Die Kombination aus System, AE-Titel, Host und Port ist im aktuellen Modell eindeutig.
 
 ### Rolle und Dienste
 

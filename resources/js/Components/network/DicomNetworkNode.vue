@@ -6,8 +6,8 @@ export type DicomMapNodeData = {
     publicId: string;
     name: string;
     aeTitle: string;
-    host: string;
-    port: number;
+    host: string | null;
+    port: number | null;
     role: string;
     tlsEnabled: boolean;
     verificationStatus: string | null;
@@ -44,6 +44,14 @@ const statusText = (): string => {
 
     return 'Noch nicht geprüft';
 };
+
+const endpointText = (): string => {
+    if (props.data.host && props.data.port !== null) {
+        return `${props.data.host}:${props.data.port}`;
+    }
+
+    return props.data.host || 'Kein Listener hinterlegt';
+};
 </script>
 
 <template>
@@ -69,7 +77,7 @@ const statusText = (): string => {
         </div>
 
         <div class="mt-3 rounded-xl border border-slate-200/80 bg-white/80 px-3 py-2">
-            <p class="font-mono text-xs text-slate-700">{{ data.host }}:{{ data.port }}</p>
+            <p class="font-mono text-xs text-slate-700">{{ endpointText() }}</p>
             <div class="mt-2 flex items-center justify-between gap-2">
                 <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 uppercase">
                     {{ data.role }}

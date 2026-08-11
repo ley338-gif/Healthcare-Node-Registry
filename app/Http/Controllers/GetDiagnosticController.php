@@ -31,6 +31,10 @@ final class GetDiagnosticController extends Controller
             return back()->with('error', 'Der Zielknoten ist archiviert.');
         }
 
+        if (! $targetNode->hasNetworkEndpoint()) {
+            return back()->with('error', 'Für den Zielknoten ist kein vollständiger Zielendpunkt hinterlegt.');
+        }
+
         $result = $test->run($targetNode, strtoupper($request->validated('calling_ae_title')), strtoupper($request->validated('called_ae_title')));
         DB::transaction(function () use ($request, $dicomConnection, $targetNode, $result, $recorder, $audit): void {
             $recorder->record($result, $targetNode, $request->user());

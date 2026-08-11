@@ -48,12 +48,15 @@ final class UpdateDicomNodeRequest extends FormRequest
                 'regex:/^[A-Z0-9]+$/i',
             ],
             'host' => [
-                'required',
+                'nullable',
+                'required_if:role,scp,both',
+                'required_with:port',
                 'string',
                 'max:255',
             ],
             'port' => [
-                'required',
+                'nullable',
+                'required_if:role,scp,both',
                 'integer',
                 'between:1,65535',
             ],
@@ -133,6 +136,9 @@ final class UpdateDicomNodeRequest extends FormRequest
             'ae_title.regex' => 'Der AE Title darf nur Buchstaben, Zahlen, Leerzeichen, Bindestriche und Unterstriche enthalten.',
             'ae_title.unique' => 'Dieser DICOM-Endpunkt ist für das System bereits registriert.',
             'modality.regex' => 'Die Modalität darf nur Buchstaben und Zahlen enthalten (z. B. DX, CT, MR).',
+            'host.required_if' => 'Host/IP ist für SCP-Knoten verpflichtend.',
+            'host.required_with' => 'Zu einem Port muss ein Host oder eine IP-Adresse angegeben werden.',
+            'port.required_if' => 'Der Port ist für SCP-Knoten verpflichtend.',
             'port.between' => 'Der Port muss zwischen 1 und 65535 liegen.',
         ];
     }

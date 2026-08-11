@@ -26,7 +26,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - Mehrere Netzwerkinterfaces je System mit primärer Schnittstelle und kompatiblen Alt-Feldern
 - Gefilterter Excel-/PDF-Export der System- und DICOM-Knotenübersicht
 - CSV-Import für Systeme und DICOM-Knoten mit Vorschau, Validierung und Duplikaterkennung
-- DICOM-Knoten mit AE Title, Host, Port, Rolle, Status und Verifikation
+- DICOM-Knoten mit AE Title, Rolle, Status und Verifikation; Host und Port sind für reine SCU-Nodes optional
 - DICOM-Verbindungen zwischen registrierten Knoten sowie grafische Netzwerkansicht
 - Globale DICOM-Verbindungsübersicht und Firewall-/Portmatrix mit CSV-/PDF-Export
 - Globale, berechtigungsgeprüfte Suche

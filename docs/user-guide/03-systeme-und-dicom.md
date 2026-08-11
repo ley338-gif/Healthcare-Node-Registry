@@ -16,13 +16,13 @@ last_updated: 2026-08-02
 
 ## DICOM-Knoten pflegen
 
-Ein DICOM-Knoten beschreibt eine Application Entity mit AE Title, Host, Port, Rolle, Status und Diensten. Prüfen Sie insbesondere:
+Ein DICOM-Knoten beschreibt eine Application Entity mit AE Title, Rolle, Status, Diensten und – soweit vorhanden – einem Netzwerkendpunkt. Prüfen Sie insbesondere:
 
 - AE Title mit maximal 16 Zeichen;
-- im Anwendungscontainer auflösbaren Host beziehungsweise korrekte IP-Adresse;
-- tatsächlichen DICOM-Port;
+- bei `SCP` oder `SCU & SCP` den im Anwendungscontainer auflösbaren Host beziehungsweise die korrekte IP-Adresse und den tatsächlichen DICOM-Port;
+- bei einer reinen `SCU` nur tatsächlich bekannte Endpunktdaten; AE Title allein oder AE Title mit IP-Adresse ist zulässig;
 - SCU-/SCP-Rolle je fachlichem Dienst;
-- aktiven Status nur für verwendbare Ziele.
+- aktiven Status nur für verwendbare Ziele. Technische Diagnosen benötigen immer Host und Port.
 
 ## Kommunikationsbeziehungen
 
