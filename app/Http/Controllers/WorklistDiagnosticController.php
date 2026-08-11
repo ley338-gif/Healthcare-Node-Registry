@@ -34,6 +34,10 @@ final class WorklistDiagnosticController extends Controller
             return back()->with('error', 'Für diesen DICOM-Knoten ist Worklist nicht aktiviert.');
         }
 
+        if (! $dicomNode->hasNetworkEndpoint()) {
+            return back()->with('error', 'Für diesen DICOM-Knoten ist kein vollständiger Zielendpunkt hinterlegt.');
+        }
+
         $validated = $request->validated();
         $parameters = new WorklistFindParameters(
             callingAeTitle: strtoupper($validated['calling_ae_title']),

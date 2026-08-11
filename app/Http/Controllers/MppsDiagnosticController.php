@@ -23,6 +23,10 @@ final class MppsDiagnosticController extends Controller
             return back()->with('error', 'Der ausgewählte DICOM-Knoten unterstützt keinen ausführbaren MPPS-Test.');
         }
 
+        if (! $dicomNode->hasNetworkEndpoint()) {
+            return back()->with('error', 'Für diesen DICOM-Knoten ist kein vollständiger Zielendpunkt hinterlegt.');
+        }
+
         $result = $test->run($dicomNode, strtoupper($request->validated('calling_ae_title')), strtoupper($request->validated('called_ae_title')));
         DB::transaction(function () use ($request, $dicomNode, $result, $recorder, $audit): void {
             $recorder->record($result, $dicomNode, $request->user());

@@ -16,7 +16,7 @@ Diese Referenz erläutert die in der HNR verwendeten DICOM-Begriffe. Sie ersetzt
 
 ## Application Entity und Knoten
 
-Eine DICOM Application Entity (AE) ist ein logischer Kommunikationspartner. In der HNR wird sie als DICOM-Knoten mit AE Title, Host, Port, Rolle, Status, Systemzuordnung und Diensten dokumentiert. Gerät, System und AE sind nicht zwingend identisch.
+Eine DICOM Application Entity (AE) ist ein logischer Kommunikationspartner. In der HNR wird sie als DICOM-Knoten mit AE Title, Rolle, Status, Systemzuordnung, Diensten und optionalem Netzwerkendpunkt dokumentiert. Reine SCUs benötigen keinen eingehenden Listener; für SCPs sind Host und Port erforderlich. Gerät, System und AE sind nicht zwingend identisch.
 
 ## Rollen und Dienste
 

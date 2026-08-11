@@ -34,8 +34,8 @@ export type DicomNode = {
     name: string;
     ae_title: string;
     modality: string | null;
-    host: string;
-    port: number;
+    host: string | null;
+    port: number | null;
     role: 'scu' | 'scp' | 'both';
     status: 'active' | 'planned' | 'maintenance' | 'inactive';
     tls_enabled: boolean;
@@ -109,12 +109,22 @@ const serviceDefinitions: Array<{
 const activeServices = (node: DicomNode): string[] =>
     serviceDefinitions.filter((service) => node[service.key]).map((service) => service.label);
 
+const hasNetworkEndpoint = (node: DicomNode): boolean => Boolean(node.host) && node.port !== null;
+
+const endpointLabel = (node: DicomNode): string => {
+    if (node.host && node.port !== null) {
+        return `${node.host}:${node.port}`;
+    }
+
+    return node.host || 'Kein Listener hinterlegt';
+};
+
 const emptyForm = () => ({
     name: '',
     ae_title: '',
     modality: '',
-    host: '',
-    port: 11112,
+    host: '' as string | null,
+    port: 11112 as number | null,
     role: 'both' as DicomNode['role'],
     status: 'active' as DicomNode['status'],
     tls_enabled: false,
@@ -377,7 +387,7 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                         </td>
 
                         <td class="px-5 py-4">
-                            <p class="font-mono text-sm text-slate-800">{{ node.host }}:{{ node.port }}</p>
+                            <p class="font-mono text-sm text-slate-800">{{ endpointLabel(node) }}</p>
                             <p
                                 v-if="node.tls_enabled"
                                 class="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700"
@@ -459,12 +469,16 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                             <div class="flex justify-end gap-1">
                                 <button
                                     type="button"
-                                    :disabled="!node.supports_echo || verifyProcessingId !== null"
+                                    :disabled="
+                                        !node.supports_echo || !hasNetworkEndpoint(node) || verifyProcessingId !== null
+                                    "
                                     :aria-label="`${node.name} per C-ECHO prüfen`"
                                     :title="
-                                        node.supports_echo
-                                            ? 'C-ECHO testen'
-                                            : 'C-ECHO ist für diesen Knoten deaktiviert'
+                                        !hasNetworkEndpoint(node)
+                                            ? 'C-ECHO benötigt Host und Port'
+                                            : node.supports_echo
+                                              ? 'C-ECHO testen'
+                                              : 'C-ECHO ist für diesen Knoten deaktiviert'
                                     "
                                     class="rounded-lg p-2 text-slate-500 transition hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-35"
                                     @click="verifyNode(node)"
@@ -579,7 +593,9 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                             </label>
 
                             <label>
-                                <span class="text-sm font-medium text-slate-700"> Host/IP * </span>
+                                <span class="text-sm font-medium text-slate-700">
+                                    Host/IP {{ createForm.role === 'scu' ? '(optional)' : '*' }}
+                                </span>
                                 <input
                                     v-model="createForm.host"
                                     type="text"
@@ -591,7 +607,9 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                             </label>
 
                             <label>
-                                <span class="text-sm font-medium text-slate-700"> Port * </span>
+                                <span class="text-sm font-medium text-slate-700">
+                                    Port {{ createForm.role === 'scu' ? '(optional)' : '*' }}
+                                </span>
                                 <input
                                     v-model.number="createForm.port"
                                     type="number"
@@ -628,6 +646,14 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                                     <option value="inactive">Inaktiv</option>
                                 </select>
                             </label>
+
+                            <p
+                                v-if="createForm.role === 'scu'"
+                                class="rounded-xl bg-blue-50 px-3 py-2.5 text-xs text-blue-800 sm:col-span-2"
+                            >
+                                Eine reine SCU-Application-Entity benötigt keinen eingehenden DICOM-Listener. Der AE
+                                Title genügt; Host/IP kann zur Dokumentation hinterlegt werden.
+                            </p>
 
                             <label class="flex items-center gap-3 rounded-xl border border-slate-200 p-3 sm:self-end">
                                 <input v-model="createForm.tls_enabled" type="checkbox" class="h-4 w-4" />
@@ -772,16 +798,23 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                             </label>
 
                             <label>
-                                <span class="text-sm font-medium text-slate-700"> Host/IP * </span>
+                                <span class="text-sm font-medium text-slate-700">
+                                    Host/IP {{ editForm.role === 'scu' ? '(optional)' : '*' }}
+                                </span>
                                 <input
                                     v-model="editForm.host"
                                     type="text"
                                     class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm"
                                 />
+                                <span v-if="editForm.errors.host" class="mt-1 block text-xs text-red-600">
+                                    {{ editForm.errors.host }}
+                                </span>
                             </label>
 
                             <label>
-                                <span class="text-sm font-medium text-slate-700"> Port * </span>
+                                <span class="text-sm font-medium text-slate-700">
+                                    Port {{ editForm.role === 'scu' ? '(optional)' : '*' }}
+                                </span>
                                 <input
                                     v-model.number="editForm.port"
                                     type="number"
@@ -789,6 +822,9 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                                     max="65535"
                                     class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
                                 />
+                                <span v-if="editForm.errors.port" class="mt-1 block text-xs text-red-600">
+                                    {{ editForm.errors.port }}
+                                </span>
                             </label>
 
                             <label>
@@ -815,6 +851,14 @@ const verificationIconClass = (verification: DicomNodeVerification): string =>
                                     <option value="inactive">Inaktiv</option>
                                 </select>
                             </label>
+
+                            <p
+                                v-if="editForm.role === 'scu'"
+                                class="rounded-xl bg-blue-50 px-3 py-2.5 text-xs text-blue-800 sm:col-span-2"
+                            >
+                                Eine reine SCU-Application-Entity benötigt keinen eingehenden DICOM-Listener. Der AE
+                                Title genügt; Host/IP kann zur Dokumentation hinterlegt werden.
+                            </p>
 
                             <label class="flex items-center gap-3 rounded-xl border border-slate-200 p-3 sm:self-end">
                                 <input v-model="editForm.tls_enabled" type="checkbox" class="h-4 w-4" />

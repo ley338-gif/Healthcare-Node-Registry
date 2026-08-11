@@ -24,6 +24,10 @@ final class StorageCommitmentDiagnosticController extends Controller
             return back()->with('error', 'Der ausgewählte DICOM-Knoten unterstützt keinen ausführbaren Storage-Commitment-Test.');
         }
 
+        if (! $dicomNode->hasNetworkEndpoint()) {
+            return back()->with('error', 'Für diesen DICOM-Knoten ist kein vollständiger Zielendpunkt hinterlegt.');
+        }
+
         $lock = Cache::lock('diagnostics:storage-commitment', 90);
         if (! $lock->get()) {
             return back()->with('error', 'Ein Storage-Commitment-Test läuft bereits. Bitte versuchen Sie es später erneut.');

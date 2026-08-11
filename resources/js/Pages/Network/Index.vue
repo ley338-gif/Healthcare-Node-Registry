@@ -74,7 +74,9 @@ const visibleNodes = computed(() =>
 
         const matchesSearch =
             term === '' ||
-            [node.name, node.ae_title, node.host, node.system.name].some((value) => value.toLowerCase().includes(term));
+            [node.name, node.ae_title, node.host, node.system.name].some(
+                (value) => value !== null && value.toLowerCase().includes(term),
+            );
 
         const matchesOrganization = organization.value === '' || node.system.organization === organization.value;
 

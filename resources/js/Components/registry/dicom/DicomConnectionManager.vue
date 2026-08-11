@@ -11,8 +11,8 @@ export type DicomNodeOption = {
     system_id: number;
     name: string;
     ae_title: string;
-    host: string;
-    port: number;
+    host: string | null;
+    port: number | null;
     last_verified_at?: string | null;
     last_verification_status?: string | null;
     system: SystemOption;
@@ -289,7 +289,8 @@ const effectiveCallingAe = (connection: DicomConnection): string =>
     connection.calling_ae_title ?? connection.source_node.ae_title;
 const effectiveCalledAe = (connection: DicomConnection): string =>
     connection.called_ae_title ?? connection.target_node.ae_title;
-const effectivePort = (connection: DicomConnection): number => connection.port_override ?? connection.target_node.port;
+const effectivePort = (connection: DicomConnection): number | null =>
+    connection.port_override ?? connection.target_node.port;
 </script>
 
 <template>

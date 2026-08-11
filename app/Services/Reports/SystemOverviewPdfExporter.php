@@ -18,7 +18,9 @@ final class SystemOverviewPdfExporter
             implode(' / ', array_filter([$row['hostname'], $row['ip_address']])),
             implode(' / ', array_filter([$row['vendor'], $row['product'], $row['version']])),
             (string) ($row['dicom_node'] ?? '-'),
-            $row['ae_title'] === null ? '-' : $row['ae_title'].' @ '.$row['dicom_host'].':'.$row['dicom_port'],
+            $row['ae_title'] === null
+                ? '-'
+                : $row['ae_title'].' @ '.self::endpoint($row['dicom_host'], $row['dicom_port']),
         ]);
 
         return $this->pdf->export('System- und Knotenuebersicht', 'Gefilterte Registry-Systeme', [
@@ -30,5 +32,14 @@ final class SystemOverviewPdfExporter
             ['label' => 'DICOM-Knoten', 'width' => 90],
             ['label' => 'DICOM-Endpunkt', 'width' => 88],
         ], $tableRows);
+    }
+
+    private static function endpoint(mixed $host, mixed $port): string
+    {
+        if (is_string($host) && $host !== '' && is_numeric($port)) {
+            return $host.':'.$port;
+        }
+
+        return is_string($host) && $host !== '' ? $host : 'kein Listener';
     }
 }

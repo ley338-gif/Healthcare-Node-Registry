@@ -19,7 +19,12 @@ final class CapabilityMatrixDiagnosticController extends Controller
     {
         Gate::authorize('view', $dicomNode);
         Gate::authorize(DiagnosticPermission::CapabilityMatrix->value);
-        abort_if($dicomNode->archived_at !== null || ! $dicomNode->supports_store, 422);
+        abort_if(
+            $dicomNode->archived_at !== null
+            || ! $dicomNode->supports_store
+            || ! $dicomNode->hasNetworkEndpoint(),
+            422,
+        );
         $result = $test->run($dicomNode, strtoupper($request->validated('calling_ae_title')), strtoupper($request->validated('called_ae_title')));
         DB::transaction(function () use ($request, $dicomNode, $result, $recorder, $audit): void {
             $recorder->record($result, $dicomNode, $request->user());

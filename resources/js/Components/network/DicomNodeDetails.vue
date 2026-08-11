@@ -117,14 +117,14 @@ const verificationLabel = (status: string | null): string => {
                             <div class="grid grid-cols-[130px_1fr] gap-3 px-4 py-3">
                                 <dt class="text-xs text-slate-500">Host</dt>
                                 <dd class="font-mono text-sm text-slate-900">
-                                    {{ node.host }}
+                                    {{ node.host ?? 'Nicht hinterlegt' }}
                                 </dd>
                             </div>
 
                             <div class="grid grid-cols-[130px_1fr] gap-3 px-4 py-3">
                                 <dt class="text-xs text-slate-500">Port</dt>
                                 <dd class="font-mono text-sm text-slate-900">
-                                    {{ node.port }}
+                                    {{ node.port ?? 'Nicht hinterlegt' }}
                                 </dd>
                             </div>
 

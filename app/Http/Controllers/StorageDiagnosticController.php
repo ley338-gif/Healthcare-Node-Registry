@@ -27,6 +27,10 @@ final class StorageDiagnosticController extends Controller
             return back()->with('error', 'Für diesen DICOM-Knoten ist Storage nicht aktiviert.');
         }
 
+        if (! $dicomNode->hasNetworkEndpoint()) {
+            return back()->with('error', 'Für diesen DICOM-Knoten ist kein vollständiger Zielendpunkt hinterlegt.');
+        }
+
         $sopClass = SyntheticStorageSopClass::from($request->validated('sop_class'));
         $result = $test->run($dicomNode, strtoupper($request->validated('calling_ae_title')), strtoupper($request->validated('called_ae_title')), $sopClass);
         DB::transaction(function () use ($request, $dicomNode, $result, $recorder, $audit): void {

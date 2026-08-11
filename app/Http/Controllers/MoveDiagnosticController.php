@@ -39,6 +39,10 @@ final class MoveDiagnosticController extends Controller
             return back()->with('error', 'Ziel- oder Move-Destination-Knoten ist archiviert.');
         }
 
+        if (! $targetNode->hasNetworkEndpoint() || ! $destinationNode->hasNetworkEndpoint()) {
+            return back()->with('error', 'Ziel- und Move-Destination-Knoten benötigen vollständige Netzwerkendpunkte.');
+        }
+
         $result = $test->run(
             $targetNode,
             $destinationNode,

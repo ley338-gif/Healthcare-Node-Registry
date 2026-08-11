@@ -27,6 +27,10 @@ final class NetworkDiagnosticController extends Controller
             return back()->with('error', 'Ein archivierter DICOM-Knoten kann nicht getestet werden.');
         }
 
+        if (! $dicomNode->hasNetworkEndpoint()) {
+            return back()->with('error', 'Für diesen DICOM-Knoten ist kein vollständiger Zielendpunkt hinterlegt.');
+        }
+
         $result = $networkTest->run($dicomNode);
 
         DB::transaction(function () use ($request, $dicomNode, $result, $recorder, $audit): void {

@@ -18,7 +18,7 @@ last_updated: 2026-08-02
 | Audit | nachvollziehbare produkt- oder sicherheitsrelevante Ereignisse |
 | Called AE | Ziel-AE einer DICOM Association |
 | Calling AE | initiierende AE einer DICOM Association |
-| DICOM-Knoten | registrierte AE mit Host, Port, Rolle und Diensten |
+| DICOM-Knoten | registrierte AE mit Rolle und Diensten; Host und Port sind nur bei einem empfangenden Netzwerkendpunkt verpflichtend |
 | DICOM-Verbindung | dokumentierte Beziehung von Quelle, Ziel und Dienst |
 | Dokumentation | strukturierte beschreibende Registry-Felder |
 | Dokument | Metadaten mit unveränderlichen Dateiversionen |

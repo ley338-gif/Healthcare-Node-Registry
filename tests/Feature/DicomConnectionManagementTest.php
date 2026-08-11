@@ -106,6 +106,65 @@ final class DicomConnectionManagementTest extends TestCase
         );
     }
 
+    public function test_non_addressable_scu_node_can_be_used_as_connection_source(): void
+    {
+        $user = $this->createRegistryManager();
+        $sourceNode = DicomNode::factory()->create([
+            'role' => 'scu',
+            'host' => null,
+            'port' => null,
+        ]);
+        $targetNode = DicomNode::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/dicom-connections', $this->validPayload($sourceNode, $targetNode))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('dicom_connections', [
+            'source_dicom_node_id' => $sourceNode->id,
+            'target_dicom_node_id' => $targetNode->id,
+        ]);
+    }
+
+    public function test_non_addressable_node_cannot_be_used_as_connection_target(): void
+    {
+        $user = $this->createRegistryManager();
+        $sourceNode = DicomNode::factory()->create();
+        $targetNode = DicomNode::factory()->create([
+            'role' => 'scu',
+            'host' => null,
+            'port' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->post('/dicom-connections', $this->validPayload($sourceNode, $targetNode))
+            ->assertSessionHasErrors('target_dicom_node_id');
+
+        $this->assertDatabaseCount('dicom_connections', 0);
+    }
+
+    public function test_connection_port_override_completes_a_host_only_target(): void
+    {
+        $user = $this->createRegistryManager();
+        $sourceNode = DicomNode::factory()->create();
+        $targetNode = DicomNode::factory()->create([
+            'role' => 'scu',
+            'host' => '10.10.20.30',
+            'port' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->post('/dicom-connections', $this->validPayload($sourceNode, $targetNode, [
+                'port_override' => 104,
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('dicom_connections', [
+            'target_dicom_node_id' => $targetNode->id,
+            'port_override' => 104,
+        ]);
+    }
+
     public function test_duplicate_service_path_is_rejected(): void
     {
         $user = $this->createRegistryManager();
