@@ -127,7 +127,7 @@ const applyFilters = (): void => {
         only: ['hosts', 'filters'],
     });
 };
-const exportUrl = (format: 'csv' | 'json'): string => {
+const exportUrl = (format: 'csv' | 'json' | 'pdf'): string => {
     const query = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
         if (value) query.set(key, value);
@@ -288,6 +288,12 @@ const filteredDepartments = computed(
                             <GitCompare :size="16" /> Vergleichen
                         </a>
                     </div>
+                    <a
+                        :href="exportUrl('pdf')"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                        <Download :size="16" /> PDF
+                    </a>
                     <a
                         :href="exportUrl('csv')"
                         class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"

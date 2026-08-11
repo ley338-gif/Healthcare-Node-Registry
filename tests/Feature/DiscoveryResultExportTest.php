@@ -8,6 +8,7 @@ use App\Models\DiscoveredPort;
 use App\Models\DiscoveryRun;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\SecurityEvent;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -75,6 +76,55 @@ final class DiscoveryResultExportTest extends TestCase
         self::assertSame(['confidence' => 'very_high'], $payload['filters']);
         self::assertSame('10.20.30.40', $payload['results'][0]['ip_address']);
         self::assertSame([104], $payload['results'][0]['open_ports']);
+    }
+
+    public function test_viewer_can_export_filtered_review_queue_as_pdf(): void
+    {
+        $run = DiscoveryRun::factory()->create(['name' => 'Radiologie Scan', 'ip_range' => '10.40.0.0/24']);
+        $included = DiscoveredHost::factory()->create([
+            'discovery_run_id' => $run->id,
+            'ip_address' => '10.40.0.20',
+            'hostname' => 'pacs-prod',
+            'status' => DiscoveredHost::STATUS_CONFIRMED,
+            'confidence_score' => DiscoveredHost::CONFIDENCE_HIGH,
+            'confidence_percentage' => 88,
+            'suggested_system_type' => 'pacs',
+        ]);
+        DiscoveredPort::factory()->create([
+            'discovered_host_id' => $included->id,
+            'port' => 11112,
+            'is_open' => true,
+            'is_dicom_candidate' => true,
+        ]);
+        DicomDiscoveryResult::factory()->create([
+            'discovered_host_id' => $included->id,
+            'port' => 11112,
+            'called_ae' => 'PACS_PROD',
+            'echo_successful' => true,
+        ]);
+        DiscoveredHost::factory()->create([
+            'discovery_run_id' => $run->id,
+            'ip_address' => '10.40.0.21',
+            'status' => DiscoveredHost::STATUS_IGNORED,
+        ]);
+
+        $response = $this->actingAs($this->viewer())
+            ->get("/discovery/runs/{$run->public_id}/export/pdf?status=confirmed");
+
+        $response->assertOk()->assertDownload()->assertHeader('content-type', 'application/pdf');
+        $content = $response->getContent();
+        self::assertStringStartsWith('%PDF-1.4', $content);
+        self::assertStringContainsString('Discovery-Ergebnisbericht', $content);
+        self::assertStringContainsString('10.40.0.20', $content);
+        self::assertStringContainsString('PACS_PROD@10.40.0.20:11112', $content);
+        self::assertStringNotContainsString('10.40.0.21', $content);
+        $this->assertDatabaseHas('security_events', [
+            'event_type' => 'discovery.results-exported',
+            'subject_public_id' => $run->public_id,
+        ]);
+        $event = SecurityEvent::query()->where('event_type', 'discovery.results-exported')->latest('id')->firstOrFail();
+        self::assertSame('pdf', $event->metadata['format']);
+        self::assertSame(['status' => 'confirmed'], $event->metadata['filters']);
     }
 
     public function test_export_requires_view_permission_and_a_supported_format(): void

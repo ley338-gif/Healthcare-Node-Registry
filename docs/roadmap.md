@@ -12,7 +12,6 @@ last_updated: 2026-08-11
 
 Diese Funktionen sind bewusst **nicht** Bestandteil des DICOM Discovery & Topology MVP. Sie werden hier dokumentiert, um Erwartungen zu steuern, aber nicht ungefragt implementiert.
 
-- PDF-Export der Discovery-Ergebnisse und der Review-Queue (gefilterte CSV- und JSON-Exporte sind implementiert)
 - Worklist-C-FIND-, Query/Retrieve-, Storage-Commitment- und MPPS-Tests im Discovery-Kontext (bestehen bereits für verifizierte Registry-Knoten im Test-Arbeitsbereich, nicht aber als Discovery-Scan-Phase)
 - DICOM-TLS als Discovery-Prüfoption
 - SNMP-Abfragen als zusätzliche Erkennungsquelle
