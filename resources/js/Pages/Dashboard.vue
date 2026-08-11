@@ -15,6 +15,7 @@ import {
     Radio,
 } from '@lucide/vue';
 import { computed } from 'vue';
+import DiscoveryChangesPanel, { type DiscoveryChange } from '../Components/dashboard/DiscoveryChangesPanel.vue';
 import ExpiringDocumentsPanel, { type ExpiringDocument } from '../Components/dashboard/ExpiringDocumentsPanel.vue';
 import AppLayout from '../Layouts/AppLayout.vue';
 
@@ -66,12 +67,18 @@ type ExpiringDocuments = {
     items: ExpiringDocument[];
 };
 
+type DiscoveryChanges = {
+    unread: number;
+    items: DiscoveryChange[];
+};
+
 const props = defineProps<{
     summary: Summary;
     recentChanges: RecentChange[];
     tasks: Task[];
     diagnostics: Diagnostics | null;
     expiringDocuments: ExpiringDocuments | null;
+    discoveryChanges: DiscoveryChanges | null;
 }>();
 
 const testTypeLabel = (type: string): string =>
@@ -260,6 +267,12 @@ const changeIconClass = (eventType: string): string => {
             :expiring-soon="expiringDocuments.expiringSoon"
             :warning-days="expiringDocuments.warningDays"
             :items="expiringDocuments.items"
+        />
+
+        <DiscoveryChangesPanel
+            v-if="discoveryChanges"
+            :unread="discoveryChanges.unread"
+            :items="discoveryChanges.items"
         />
 
         <section v-if="diagnostics" class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

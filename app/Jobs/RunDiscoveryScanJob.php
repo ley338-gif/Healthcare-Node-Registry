@@ -11,6 +11,7 @@ use App\Services\Discovery\Classification\ClassificationContext;
 use App\Services\Discovery\Classification\ClassificationService;
 use App\Services\Discovery\DicomEchoScanService;
 use App\Services\Discovery\DiscoveryAuditService;
+use App\Services\Discovery\DiscoveryChangeNotificationService;
 use App\Services\Discovery\DiscoveryEchoTarget;
 use App\Services\Discovery\HostDiscoveryService;
 use App\Services\Discovery\NetworkRangeService;
@@ -55,6 +56,7 @@ final class RunDiscoveryScanJob implements ShouldQueue
         DicomEchoScanService $echoScanService,
         ClassificationService $classificationService,
         DiscoveryAuditService $auditService,
+        DiscoveryChangeNotificationService $changeNotificationService,
     ): void {
         $run = DiscoveryRun::query()->find($this->discoveryRunId);
 
@@ -149,6 +151,13 @@ final class RunDiscoveryScanJob implements ShouldQueue
 
             $run->update(['status' => $finalStatus, 'finished_at' => now(), 'progress_percentage' => 100]);
             $auditService->runCompleted($run);
+            if ($finalStatus === DiscoveryRun::STATUS_COMPLETED) {
+                try {
+                    $changeNotificationService->notifyForCompletedRun($run);
+                } catch (Throwable $exception) {
+                    report($exception);
+                }
+            }
         } catch (Throwable $exception) {
             $run->update([
                 'status' => DiscoveryRun::STATUS_FAILED,
