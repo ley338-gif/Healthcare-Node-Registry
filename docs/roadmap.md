@@ -5,14 +5,13 @@ document_type: Roadmap
 chapter: Übersicht
 status: draft
 version: 0.1
-last_updated: 2026-08-10
+last_updated: 2026-08-11
 ---
 
 # Roadmap: Mögliche Version-2-Funktionen für Discovery
 
 Diese Funktionen sind bewusst **nicht** Bestandteil des DICOM Discovery & Topology MVP. Sie werden hier dokumentiert, um Erwartungen zu steuern, aber nicht ungefragt implementiert.
 
-- Benachrichtigungen bei neuen oder verschwundenen Systemen
 - CSV-/Excel-Import von AE-Titel-Kandidaten oder Zielbereichen für Discovery (die bestehende allgemeine Registry-CSV-Import-Funktion ist davon unabhängig bereits vorhanden, siehe `docs/Features/csv-registry-import.md`)
 - PDF-Export der Discovery-Ergebnisse und der Review-Queue (gefilterte CSV- und JSON-Exporte sind implementiert)
 - Worklist-C-FIND-, Query/Retrieve-, Storage-Commitment- und MPPS-Tests im Discovery-Kontext (bestehen bereits für verifizierte Registry-Knoten im Test-Arbeitsbereich, nicht aber als Discovery-Scan-Phase)

@@ -5,7 +5,7 @@ document_type: ADR-Index
 chapter: Übersicht
 status: draft
 version: 0.1
-last_updated: 2026-08-10
+last_updated: 2026-08-11
 ---
 
 # Architecture Decision Records
@@ -46,6 +46,7 @@ ADRs dokumentieren langfristig bindende oder schwer umkehrbare technische Entsch
 - [ADR-0020: Administrierbare System-Referenzdaten](ADR-0020-system-reference-data.md)
 - [ADR-0021: Administrierbare Hersteller-Referenzdaten](ADR-0021-manufacturer-reference-data.md)
 - [ADR-0022: Vergleich von Discovery-Scanständen](ADR-0022-discovery-run-comparison.md)
+- [ADR-0023: Benachrichtigungen über Discovery-Änderungen](ADR-0023-discovery-change-notifications.md)
 
 ## Offener Konsolidierungsbedarf
 

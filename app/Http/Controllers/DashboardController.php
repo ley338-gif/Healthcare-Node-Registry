@@ -11,6 +11,7 @@ use App\Models\RegistryDocument;
 use App\Models\SecurityEvent;
 use App\Models\Site;
 use App\Models\System;
+use App\Notifications\DiscoveryRunChangedNotification;
 use App\Notifications\RegistryDocumentExpiryNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
@@ -81,6 +82,40 @@ final class DashboardController extends Controller
                     })
                     ->values()
                     ->all(),
+            ];
+        }
+
+        $discoveryChanges = null;
+        $canViewDiscovery = $user !== null && (
+            $user->hasPermission('discovery.view')
+            || $user->hasPermission('discovery.run')
+            || $user->hasPermission('discovery.manage')
+        );
+        if ($canViewDiscovery && $user !== null) {
+            $discoveryNotifications = $user->notifications()
+                ->where('type', DiscoveryRunChangedNotification::class)
+                ->latest()
+                ->limit(8)
+                ->get();
+            $discoveryChanges = [
+                'unread' => $user->unreadNotifications()->where('type', DiscoveryRunChangedNotification::class)->count(),
+                'items' => $discoveryNotifications->map(function ($notification): array {
+                    $url = $notification->data['url'] ?? '/discovery';
+
+                    return [
+                        'id' => $notification->id,
+                        'title' => (string) ($notification->data['title'] ?? 'Discovery-Änderung erkannt'),
+                        'scheduleName' => (string) ($notification->data['schedule_name'] ?? ''),
+                        'currentRunName' => (string) ($notification->data['current_run_name'] ?? ''),
+                        'newHostsCount' => (int) ($notification->data['new_hosts_count'] ?? 0),
+                        'missingHostsCount' => (int) ($notification->data['missing_hosts_count'] ?? 0),
+                        'createdAt' => $notification->created_at?->toIso8601String(),
+                        'unread' => $notification->read_at === null,
+                        'href' => $notification->read_at === null
+                            ? route('notifications.show', ['notification' => $notification->id])
+                            : (is_string($url) ? $url : '/discovery'),
+                    ];
+                })->values()->all(),
             ];
         }
 
@@ -160,6 +195,7 @@ final class DashboardController extends Controller
             'recentChanges' => $recentChanges,
             'diagnostics' => $diagnostics,
             'expiringDocuments' => $expiringDocuments,
+            'discoveryChanges' => $discoveryChanges,
             'tasks' => [
                 [
                     'label' => 'Mindestens ein System dokumentieren',

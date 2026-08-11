@@ -48,7 +48,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - DICOM Capability-Matrix auf Basis der Association-Aushandlung
 - DICOM-Dateianalyse mit `dcmdump`
 - Öffentlicher, detailarmer Health-Endpunkt unter `/up`
-- DICOM Discovery: geführter Wizard, sofortige sowie täglich oder wöchentlich geplante asynchrone Netzwerk-Scans (Ping/Reverse-DNS, TCP-Portprüfung, begrenzte DICOM-C-ECHO-Tests), regelbasierte Klassifizierung mit Confidence-Score, Review-Queue mit Export, Vergleich abgeschlossener Scanstände, Duplikaterkennung und Übernahme in die System-Registry (siehe `docs/Features/dicom-discovery.md`)
+- DICOM Discovery: geführter Wizard, sofortige sowie täglich oder wöchentlich geplante asynchrone Netzwerk-Scans (Ping/Reverse-DNS, TCP-Portprüfung, begrenzte DICOM-C-ECHO-Tests), regelbasierte Klassifizierung mit Confidence-Score, Review-Queue mit Export, Vergleich abgeschlossener Scanstände, In-App-Hinweise bei neuen oder verschwundenen Hosts, Duplikaterkennung und Übernahme in die System-Registry (siehe `docs/Features/dicom-discovery.md`)
 - Backup- und Restore-Skripte für PostgreSQL und privaten Dokumentenspeicher
 
 Der Docker-Stack bindet ClamAV 1.5.3 über das interne ClamD-Netzwerk an. Uploads werden synchron gescannt; ein stündlicher Scheduler prüft offene Scans erneut. Ist der Scanner deaktiviert oder nicht erreichbar, werden Dateien mit `unavailable` privat gespeichert und Download sowie Vorschau bleiben fail-closed gesperrt.
