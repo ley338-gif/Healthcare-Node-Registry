@@ -4,8 +4,8 @@ description: Strukturierte Registry-Dokumentation und versionierte Dateien verwe
 document_type: Benutzerhandbuch
 chapter: 4
 status: draft
-version: 0.1
-last_updated: 2026-08-02
+version: 0.2
+last_updated: 2026-08-11
 ---
 
 # Dokumentation und Dokumente
@@ -20,4 +20,4 @@ Der Bereich **Dokumente** und die objektbezogenen Panels verwalten Metadaten, Ka
 
 Verwenden Sie die zutreffende Kategorie, einen nachvollziehbaren Titel und, soweit verfügbar, Gültigkeitsdaten. Archivieren Sie veraltete Dokumente; überschreiben Sie historische Versionen nicht.
 
-Ein Dokumentstatus ist derzeit kein vollständiger formaler Vier-Augen-Freigabeworkflow. Dateien mit nicht erfolgreicher Sicherheitsprüfung können gesperrt sein. Details enthält die [Registry-Dokumentation](../Features/registry-documentation.md).
+Neue Dateiversionen müssen zur Prüfung eingereicht und anschließend von einer zweiten Person mit Freigaberecht genehmigt werden. Als betrieblicher Sonderfall darf ein Systemadministrator eine eigene Version freigeben; diese Selbstfreigabe wird im Audit ausdrücklich als Override gekennzeichnet. Eigene Versionen selbst abzulehnen ist nicht möglich. Nur freigegebene und malwareseitig sauber geprüfte Dateien können heruntergeladen oder als PDF angezeigt werden. Details enthält die [Registry-Dokumentation](../Features/registry-documentation.md).

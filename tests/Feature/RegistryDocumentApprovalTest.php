@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Permission;
 use App\Models\RegistryDocumentVersion;
+use App\Models\Role;
 use App\Models\SecurityEvent;
 use App\Models\User;
 use App\Support\RbacBootstrapper;
@@ -14,12 +16,39 @@ final class RegistryDocumentApprovalTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_uploader_cannot_approve_own_version_even_as_system_administrator(): void
+    public function test_system_administrator_can_approve_own_clean_pending_version_as_audited_override(): void
     {
         $uploader = $this->administrator();
         $version = $this->pendingVersion($uploader);
 
+        $this->actingAs($uploader)->post("/registry-document-versions/{$version->public_id}/approve")->assertSessionHasNoErrors();
+
+        $version->refresh();
+        self::assertSame(RegistryDocumentApprovalStatus::Approved, $version->approval_status);
+        self::assertSame($uploader->id, $version->reviewed_by);
+        self::assertSame($version->id, $version->document->current_version_id);
+        $event = SecurityEvent::query()->where('event_type', 'document.approved')->firstOrFail();
+        self::assertTrue($event->metadata['system_administrator_override']);
+    }
+
+    public function test_non_administrator_cannot_approve_own_version(): void
+    {
+        $uploader = $this->userWithPermission('documents.approve');
+        $version = $this->pendingVersion($uploader);
+
         $this->actingAs($uploader)->post("/registry-document-versions/{$version->public_id}/approve")->assertForbidden();
+
+        self::assertSame(RegistryDocumentApprovalStatus::PendingReview, $version->refresh()->approval_status);
+    }
+
+    public function test_system_administrator_cannot_reject_own_version(): void
+    {
+        $uploader = $this->administrator();
+        $version = $this->pendingVersion($uploader);
+
+        $this->actingAs($uploader)->post("/registry-document-versions/{$version->public_id}/reject", [
+            'review_note' => 'Eigener Upload',
+        ])->assertForbidden();
 
         self::assertSame(RegistryDocumentApprovalStatus::PendingReview, $version->refresh()->approval_status);
     }
@@ -41,6 +70,7 @@ final class RegistryDocumentApprovalTest extends TestCase
         $event = SecurityEvent::query()->where('event_type', 'document.approved')->firstOrFail();
         self::assertNotNull($event->event_hash);
         self::assertSame($version->public_id, $event->metadata['version_public_id']);
+        self::assertFalse($event->metadata['system_administrator_override']);
     }
 
     public function test_draft_can_be_submitted_and_rejection_requires_a_second_person_and_reason(): void
@@ -90,6 +120,23 @@ final class RegistryDocumentApprovalTest extends TestCase
     private function administrator(): User
     {
         $role = app(RbacBootstrapper::class)->ensureSystemAdministratorRole();
+        $user = User::factory()->create();
+        $user->roles()->attach($role);
+
+        return $user;
+    }
+
+    private function userWithPermission(string $permissionName): User
+    {
+        $permission = Permission::query()->firstOrCreate(
+            ['name' => $permissionName],
+            ['display_name' => $permissionName],
+        );
+        $role = Role::query()->create([
+            'name' => 'test-role-'.str()->uuid(),
+            'display_name' => 'Testrolle',
+        ]);
+        $role->permissions()->attach($permission);
         $user = User::factory()->create();
         $user->roles()->attach($role);
 

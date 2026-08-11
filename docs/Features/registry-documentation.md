@@ -63,7 +63,7 @@ Der Scheduler führt stündlich `registry-documents:rescan --limit=250` aus. Das
 
 ## Freigabe und Vier-Augen-Prinzip
 
-Neue Versionen beginnen als `draft`. Berechtigte Versionsverwalter reichen sie als `pending_review` ein. Eine zweite Person mit `documents.approve` kann die Version freigeben oder mit Begründung ablehnen. Der Uploader darf seine eigene Version auch als Systemadministrator nicht freigeben oder ablehnen; diese Regel wird zusätzlich zur Policy unmittelbar im schreibenden Controller und innerhalb der gesperrten Datenbanktransaktion geprüft.
+Neue Versionen beginnen als `draft`. Berechtigte Versionsverwalter reichen sie als `pending_review` ein. Eine zweite Person mit `documents.approve` kann die Version freigeben oder mit Begründung ablehnen. Ausschließlich Benutzer mit der technischen Rolle `system-administrator` dürfen als dokumentierter Override auch eine selbst hochgeladene Version freigeben. Dieser Override umgeht weder den Status `pending_review` noch die erforderliche saubere Malware-Prüfung und wird im Audit-Ereignis `document.approved` gekennzeichnet. Eigene Uploads abzulehnen bleibt auch für Systemadministratoren gesperrt. Die Regeln werden zusätzlich zur Policy unmittelbar im schreibenden Controller und innerhalb der gesperrten Datenbanktransaktion geprüft.
 
 Nur `approved` und zugleich malwareseitig `clean` bewertete Versionen sind als Download oder PDF-Vorschau abrufbar. Bei einer neuen Version bleibt die bisherige freigegebene Version aktuell, bis die Nachfolgeversion genehmigt wurde. Der Dokument-Slideover zeigt Freigabestatus, Prüfer, Prüfnotiz und die verfügbaren Aktionen. Benutzer ohne Freigaberecht sehen ausdrücklich, dass die Version auf eine zweite Person wartet.
 
@@ -89,7 +89,7 @@ Die Dokumentenfunktionen verwenden das bestehende RBAC und zusätzlich die Polic
 - `documents.archive`: archivieren und wiederherstellen
 - `documents.download`: saubere Version herunterladen
 - `documents.manage_versions`: neue Version anlegen
-- `documents.approve`: fremde Versionen freigeben oder ablehnen
+- `documents.approve`: fremde Versionen freigeben oder ablehnen; die Rolle `system-administrator` darf zusätzlich eigene Versionen freigeben
 
 Die Datei liegt auf dem nicht öffentlich ausgelieferten Disk `registry_documents` unter `storage/app/private/registry-documents`. Downloads und Vorschauen erfolgen ausschließlich über autorisierte Controller-Endpunkte. Downloads verwenden `Content-Disposition: attachment` und `X-Content-Type-Options: nosniff`. Die PDF-Vorschau verwendet `inline`, private No-Store-Header, `SAMEORIGIN` und eine restriktive Content-Security-Policy.
 

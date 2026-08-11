@@ -313,7 +313,7 @@ Weitere Anforderungen beschreibt [Backup und Wiederherstellung](../Deployment/Ba
 | Authentisierung | sichere lokale Sitzungs- und Passwortmechanismen | HTTPS, sichere Konfiguration, Kontenprüfung |
 | Autorisierung | serverseitige Rollen- und Berechtigungsprüfung | angemessenes Rollenkonzept und Access Reviews |
 | Netzwerkdiagnose | registrierte Ziele, Validierung, Timeouts, Berechtigungen | Firewall, Egress-Begrenzung, Zielsystemfreigaben |
-| Dokumente | private Ablage, Validierung, Prüfsummen, ClamAV, Vier-Augen-Freigabe und Mindestaufbewahrung | zulässige Inhalte, Fristfestlegung und kontrollierte Löschverfahren |
+| Dokumente | private Ablage, Validierung, Prüfsummen, ClamAV, Vier-Augen-Freigabe mit auditiertem Systemadministrator-Override und Mindestaufbewahrung | zulässige Inhalte, Fristfestlegung, organisatorische Regeln für den Override und kontrollierte Löschverfahren |
 | Datenschutz | Datenminimierung und Maskierung definierter Inhalte | Rechtsgrundlage, Zweck, Fristen, Betroffenenverfahren |
 | Audit | strukturierte append-only Ereignisquelle | Zeitsynchronisation, Review, Aufbewahrung und Exportkontrolle |
 | Backup | dokumentierte Daten- und Storage-Zusammenhänge | Backupbetrieb, Schutz, Restore-Test und Freigabe |
@@ -328,7 +328,7 @@ Weitere Anforderungen beschreibt [Backup und Wiederherstellung](../Deployment/Ba
 | DICOM-Ziele | aktive registrierte Knoten; CIDR-Allowlist für Discovery | Discovery-TLS und weitere installationsbezogene Egress-Härtung |
 | Diagnose-Transport | begrenzte TCP-/DICOM-Aufrufe und optionales DICOM-TLS ohne Klartext-Fallback | zentrale Parallelitätsgrenzen für direkte Diagnoseläufe |
 | Dokumentprüfung | Allowlist, Signatur, Hash, ClamAV und Rescan | installationsbezogene Scannerüberwachung |
-| Dokumentkontrolle | Versionen, Vier-Augen-Freigabe und Mindestaufbewahrung | kontrollierter physischer Löschprozess nach Fristende |
+| Dokumentkontrolle | Versionen, Vier-Augen-Freigabe mit auditiertem Systemadministrator-Override und Mindestaufbewahrung | organisatorische Überwachung von Overrides und kontrollierter physischer Löschprozess nach Fristende |
 | Audit | Ereignisgruppen, CSV, interne Hash-Chain und kontrollierte Aufbewahrung | externe signierte Verankerung |
 | Datenschutz | keine erforderlichen Patientendaten, Maskierung definierter Schlüssel | vollständige Lösch-, Anonymisierungs- und Auskunftsverfahren |
 

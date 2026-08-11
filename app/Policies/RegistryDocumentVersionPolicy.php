@@ -17,12 +17,14 @@ final class RegistryDocumentVersionPolicy
     public function approve(User $user, RegistryDocumentVersion $version): bool
     {
         return $user->hasPermission('documents.approve')
-            && $user->id !== $version->uploaded_by
+            && ($user->id !== $version->uploaded_by || $user->hasRole('system-administrator'))
             && $version->approval_status === RegistryDocumentApprovalStatus::PendingReview;
     }
 
     public function reject(User $user, RegistryDocumentVersion $version): bool
     {
-        return $this->approve($user, $version);
+        return $user->hasPermission('documents.approve')
+            && $user->id !== $version->uploaded_by
+            && $version->approval_status === RegistryDocumentApprovalStatus::PendingReview;
     }
 }

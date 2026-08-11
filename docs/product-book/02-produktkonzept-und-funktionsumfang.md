@@ -132,7 +132,7 @@ Die private Dokumentenablage ordnet Dokumente einem Registry-Kontext zu. Der akt
 - eine ClamAV-Anbindung mit fail-closed Fallback und Rescan-Prozess;
 - berechtigungsgeprüften Download;
 - abgesicherte PDF-Vorschau;
-- versionenbezogene Freigabe mit serverseitigem Vier-Augen-Prinzip;
+- versionenbezogene Freigabe mit serverseitigem Vier-Augen-Prinzip und auditiertem Systemadministrator-Override;
 - kategoriebasierte Mindestaufbewahrung;
 - Suche, Filter und serverseitige Seitennavigation;
 - Archivierung und Audit-Ereignisse.
