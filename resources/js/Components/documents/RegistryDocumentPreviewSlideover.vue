@@ -99,7 +99,7 @@ const reject = (publicId: string): void => {
                             <p class="mt-2 max-w-lg text-sm text-slate-600">
                                 {{
                                     version.approval_status === 'pending_review'
-                                        ? 'Wartet auf Freigabe durch eine zweite Person.'
+                                        ? 'Wartet auf Freigabe durch eine zweite Person oder einen Systemadministrator.'
                                         : 'Eine Vorschau ist erst nach Freigabe und erfolgreicher Dateiprüfung verfügbar.'
                                 }}
                             </p>

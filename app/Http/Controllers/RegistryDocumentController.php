@@ -154,7 +154,7 @@ final class RegistryDocumentController extends Controller
     {
         $user = $request->user();
         abort_unless($user instanceof User, 403);
-        abort_if($user->id === $registryDocumentVersion->uploaded_by, 403, 'Eigene Uploads dürfen nicht selbst freigegeben werden.');
+        abort_if($user->id === $registryDocumentVersion->uploaded_by && ! $user->hasRole('system-administrator'), 403, 'Eigene Uploads dürfen nicht selbst freigegeben werden.');
         $context = $this->context($registryDocumentVersion->document);
         Gate::authorize('view', $context);
         Gate::authorize('approve', $registryDocumentVersion);
@@ -163,7 +163,8 @@ final class RegistryDocumentController extends Controller
 
         DB::transaction(function () use ($registryDocumentVersion, $context, $user, $note, $audit): void {
             $version = RegistryDocumentVersion::query()->lockForUpdate()->findOrFail($registryDocumentVersion->id);
-            abort_if($user->id === $version->uploaded_by, 403);
+            $systemAdministratorOverride = $user->id === $version->uploaded_by && $user->hasRole('system-administrator');
+            abort_if($user->id === $version->uploaded_by && ! $systemAdministratorOverride, 403);
             abort_unless($version->approval_status === RegistryDocumentApprovalStatus::PendingReview, 422);
             abort_unless($version->malware_scan_status === 'clean', 422, 'Nur sauber geprüfte Dateien dürfen freigegeben werden.');
             $version->update([
@@ -173,7 +174,10 @@ final class RegistryDocumentController extends Controller
                 'review_note' => $note,
             ]);
             $version->document()->update(['current_version_id' => $version->id, 'updated_by' => $user->id]);
-            $audit->record('document.approved', $context, $user, $this->reviewAuditIdentity($version));
+            $audit->record('document.approved', $context, $user, [
+                ...$this->reviewAuditIdentity($version),
+                'system_administrator_override' => $systemAdministratorOverride,
+            ]);
         });
 
         return back()->with('success', 'Dokumentversion wurde freigegeben.');

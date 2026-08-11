@@ -7,6 +7,7 @@ use App\Models\RegistryDocumentVersion;
 use App\Models\Role;
 use App\Models\User;
 use App\Policies\RegistryDocumentVersionPolicy;
+use App\Support\RbacBootstrapper;
 use App\Support\RegistryDocumentApprovalStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -32,11 +33,12 @@ final class RegistryDocumentVersionPolicyTest extends TestCase
         self::assertFalse($policy->submitReview($manager, $version));
     }
 
-    public function test_approval_and_rejection_require_permission_second_person_and_pending_state(): void
+    public function test_approval_allows_a_system_administrator_override_but_rejection_still_requires_a_second_person(): void
     {
         $policy = new RegistryDocumentVersionPolicy;
         $uploader = $this->userWithPermission('documents.approve');
         $reviewer = $this->userWithPermission('documents.approve');
+        $administrator = $this->administrator();
         $unauthorized = User::factory()->create();
         $version = RegistryDocumentVersion::factory()->create([
             'uploaded_by' => $uploader->id,
@@ -47,6 +49,10 @@ final class RegistryDocumentVersionPolicyTest extends TestCase
         self::assertTrue($policy->reject($reviewer, $version));
         self::assertFalse($policy->approve($unauthorized, $version));
         self::assertFalse($policy->approve($uploader, $version));
+
+        $version->uploaded_by = $administrator->id;
+        self::assertTrue($policy->approve($administrator, $version));
+        self::assertFalse($policy->reject($administrator, $version));
 
         $version->approval_status = RegistryDocumentApprovalStatus::Approved;
         self::assertFalse($policy->approve($reviewer, $version));
@@ -64,6 +70,15 @@ final class RegistryDocumentVersionPolicyTest extends TestCase
             'display_name' => 'Testrolle',
         ]);
         $role->permissions()->attach($permission);
+        $user = User::factory()->create();
+        $user->roles()->attach($role);
+
+        return $user;
+    }
+
+    private function administrator(): User
+    {
+        $role = app(RbacBootstrapper::class)->ensureSystemAdministratorRole();
         $user = User::factory()->create();
         $user->roles()->attach($role);
 
