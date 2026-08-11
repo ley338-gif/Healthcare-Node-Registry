@@ -22,6 +22,7 @@ final class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn (): ?string => $request->session()->get('success'),
                 'error' => fn (): ?string => $request->session()->get('error'),
+                'discoveryAeImportPreview' => fn (): mixed => $request->session()->get('discovery_ae_import_preview'),
             ],
         ];
     }
