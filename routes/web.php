@@ -15,6 +15,7 @@ use App\Http\Controllers\DicomFileAnalysisController;
 use App\Http\Controllers\DicomNetworkMapController;
 use App\Http\Controllers\DicomNodeController;
 use App\Http\Controllers\Discovery\DiscoveredHostController;
+use App\Http\Controllers\Discovery\DiscoveryAeCandidateImportController;
 use App\Http\Controllers\Discovery\DiscoveryAllowedNetworkController;
 use App\Http\Controllers\Discovery\DiscoveryDashboardController;
 use App\Http\Controllers\Discovery\DiscoveryPortProfileController;
@@ -196,6 +197,7 @@ Route::middleware(['auth', 'mfa'])->group(function (): void {
 
     Route::get('/discovery', DiscoveryDashboardController::class)->name('discovery.index');
     Route::get('/discovery/runs/create', [DiscoveryRunWizardController::class, 'create'])->name('discovery.runs.create');
+    Route::post('/discovery/ae-candidates/import-preview', DiscoveryAeCandidateImportController::class)->name('discovery.ae-candidates.import-preview');
     Route::post('/discovery/runs', [DiscoveryRunController::class, 'store'])->name('discovery.runs.store');
     Route::get('/discovery/runs/{discoveryRun}/compare/{baselineRun}', DiscoveryRunComparisonController::class)->name('discovery.runs.compare');
     Route::get('/discovery/runs/{discoveryRun}', [DiscoveryRunController::class, 'show'])->name('discovery.runs.show');

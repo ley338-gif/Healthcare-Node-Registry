@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Kontrollierten CSV-/XLSX-Import von AE-Titel-Kandidaten im Discovery-Wizard ergänzt: versioniertes Schema, serverseitige Vorschau mit Zeilenfehlern und Duplikatwarnungen, Formel- und XML-Härtung sowie ausdrückliche Übernahme ohne automatischen Scanstart.
+
 - Deduplizierte In-App-Benachrichtigungen für aktive Discovery-Benutzer ergänzt: vollständig erfolgreiche Zeitplanläufe werden mit ihrem vorherigen erfolgreichen Stand verglichen und melden neue oder verschwundene Hosts auf dem Dashboard; unvollständige und manuelle Läufe bleiben zur Vermeidung von Fehlalarmen ausgeschlossen.
 
 - Manuellen Vergleich vollständig abgeschlossener Discovery-Läufe desselben Zielbereichs ergänzt; neue, verschwundene, technisch veränderte und unveränderte Hosts werden anhand stabiler Scanmerkmale nachvollziehbar gegenübergestellt.

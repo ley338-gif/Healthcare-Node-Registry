@@ -4,10 +4,31 @@ Automatisierte, aber ausschließlich unterstützende Erkennung von DICOM-Systeme
 
 ## Workflow
 
-1. **Wizard** (`/discovery/runs/create`, Berechtigung `discovery.run`): Zielbereich (CIDR oder Start-/End-IP), Scanoptionen (Profil Vorsichtig/Standard/Schnell/Benutzerdefiniert), Portliste, AE-Titel-Kandidaten, Zusammenfassung mit verpflichtender Sicherheitsbestätigung. Die geprüfte Konfiguration kann einmalig sofort gestartet oder als täglicher beziehungsweise wöchentlicher Zeitplan mit IANA-Zeitzone gespeichert werden.
+1. **Wizard** (`/discovery/runs/create`, Berechtigung `discovery.run`): Zielbereich (CIDR oder Start-/End-IP), Scanoptionen (Profil Vorsichtig/Standard/Schnell/Benutzerdefiniert), Portliste, AE-Titel-Kandidaten, Zusammenfassung mit verpflichtender Sicherheitsbestätigung. AE-Titel-Kandidaten können zusätzlich über eine kontrollierte CSV-/XLSX-Vorschau in das Formular übernommen werden. Die geprüfte Konfiguration kann einmalig sofort gestartet oder als täglicher beziehungsweise wöchentlicher Zeitplan mit IANA-Zeitzone gespeichert werden.
 2. **Scan-Job** (`App\Jobs\RunDiscoveryScanJob`, Queue `discovery`): Phase A Host-Erkennung (Ping + Reverse-DNS), Phase B TCP-Portprüfung gegen die konfigurierte Portliste, Phase C begrenzte DICOM-C-ECHO-Tests je offenem DICOM-Kandidatenport und AE-Titel-Kandidat.
 
 Die im Wizard konfigurierten Wiederholungsversuche (0–3) gelten für fehlgeschlagene Ping-, TCP-Port- und DICOM-C-ECHO-Prüfungen. Erfolgreiche Ziele werden nicht erneut geprüft. Damit entstehen pro technischer Prüfung höchstens vier Ausführungen; die Begrenzung der AE-Titel-Kandidaten je Host und Port bleibt davon unberührt.
+
+### Importformat für AE-Titel-Kandidaten
+
+CSV-Dateien müssen UTF-8-kodiert sein und dürfen Komma oder Semikolon als Trennzeichen verwenden. XLSX-Dateien verwenden das erste Arbeitsblatt; Formeln werden nicht ausgewertet und führen zur Ablehnung. Beide Formate besitzen dieselben Spalten und höchstens 30 Datenzeilen:
+
+| Spalte | Pflicht | Inhalt |
+| --- | --- | --- |
+| `schema_version` | ja | aktuell immer `1` |
+| `ae_title` | ja | 1–16 Zeichen, Buchstaben, Ziffern, Leerzeichen, `_` oder `-` |
+| `role` | nein | `called` (Standard) oder `calling` |
+
+Beispiel:
+
+```csv
+schema_version,ae_title,role
+1,PACS_PROD,called
+1,RIS_TEST,called
+1,HNR_DISCOVERY,calling
+```
+
+Der Import zeigt zunächst Fehler und Duplikatwarnungen mit Zeilenbezug. Erst **Gültige Kandidaten übernehmen** überträgt die Werte in das lokale Wizard-Formular. Es wird weder ein Discovery-Lauf gespeichert noch Netzwerkverkehr gestartet. Die Gesamtliste bleibt auf 30 Einträge und die späteren Echo-Versuche bleiben auf `DISCOVERY_MAX_AE_ATTEMPTS_PER_PORT` begrenzt.
 3. **Fortschritt & Review** (`/discovery/runs/{id}`): Live-Fortschritt per Polling, Review-Queue mit Filtern (erreichbar, DICOM-Kandidat, erfolgreicher C-ECHO, Review-Status, Confidence, Systemtyp), Detail-Drawer mit Ports, DICOM-Testergebnissen und Klassifizierungs-Hinweisen. Die aktuelle, gefilterte Ergebnismenge kann als UTF-8-CSV oder JSON exportiert werden; der Export erfordert dieselbe `discovery.view`-Berechtigung wie die Laufansicht und wird auditiert.
    Abgeschlossene Läufe desselben Zielbereichs können zusätzlich miteinander verglichen werden. Die Ansicht unterscheidet neue, verschwundene, veränderte und unveränderte Hosts. Latenzwerte und manuelle Review-Aktionen werden dabei bewusst nicht als technische Änderung gewertet.
    Nach einem vollständig erfolgreichen Zeitplanlauf vergleicht die Anwendung den Stand automatisch mit dem vorherigen erfolgreichen Lauf desselben Zeitplans. Aktive Benutzer mit Discovery-Recht erhalten bei neuen oder verschwundenen Hosts einen deduplizierten In-App-Hinweis auf dem Dashboard mit direktem Link zum Vergleich. Manuelle, erste, teilweise fehlgeschlagene oder abgebrochene Läufe lösen keine Meldung aus; ein externer Benachrichtigungskanal ist nicht vorhanden.

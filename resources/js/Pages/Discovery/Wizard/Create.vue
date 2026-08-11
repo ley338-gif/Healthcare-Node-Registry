@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { AlertTriangle, ArrowLeft, ArrowRight, Plus, Radar, ShieldAlert, Trash2 } from '@lucide/vue';
+import { AlertTriangle, ArrowLeft, ArrowRight, FileUp, Plus, Radar, ShieldAlert, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
@@ -23,6 +23,13 @@ type AeCandidate = {
     ae_title: string;
     role: 'calling' | 'called';
     source: 'manual' | 'imported' | 'registry' | 'hostname_derived' | 'default';
+};
+type AeImportPreview = {
+    format: 'csv' | 'xlsx';
+    rows_processed: number;
+    candidates: AeCandidate[];
+    errors: { line: number; message: string }[];
+    warnings: string[];
 };
 
 const props = defineProps<{
@@ -79,6 +86,9 @@ const startIpInput = ref('');
 const endIpInput = ref('');
 const excludeIpsText = ref('');
 const newCalledAe = ref('');
+const importPreview = ref<AeImportPreview | null>(null);
+const importApplyError = ref('');
+const importForm = useForm({ ae_candidate_file: null as File | null });
 
 const profiles = {
     careful: { max_parallel_hosts: 4, timeout_seconds: 3, retries: 2, scan_unresponsive_hosts: false },
@@ -180,6 +190,44 @@ const addCallingAe = (): void => {
 };
 const removeAeCandidate = (candidate: AeCandidate): void => {
     form.ae_candidates = form.ae_candidates.filter((c) => c !== candidate);
+};
+
+const selectImportFile = (event: Event): void => {
+    importForm.ae_candidate_file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    importPreview.value = null;
+    importApplyError.value = '';
+    importForm.clearErrors();
+};
+
+const previewAeImport = (): void => {
+    if (!importForm.ae_candidate_file) return;
+    importForm.post('/discovery/ae-candidates/import-preview', {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: (page) => {
+            const flash = page.props.flash as { discoveryAeImportPreview?: AeImportPreview | null };
+            importPreview.value = flash.discoveryAeImportPreview ?? null;
+        },
+    });
+};
+
+const applyAeImport = (): void => {
+    if (!importPreview.value || importPreview.value.errors.length > 0) return;
+    const merged = form.ae_candidates.filter((candidate) => candidate.source !== 'imported');
+    const seen = new Set(merged.map((candidate) => `${candidate.role}|${candidate.ae_title.trim().toUpperCase()}`));
+    for (const candidate of importPreview.value.candidates) {
+        const key = `${candidate.role}|${candidate.ae_title}`;
+        if (!seen.has(key)) {
+            merged.push(candidate);
+            seen.add(key);
+        }
+    }
+    if (merged.length > 30) {
+        importApplyError.value = 'Zusammen mit den vorhandenen Einträgen wären mehr als 30 AE-Titel konfiguriert.';
+        return;
+    }
+    form.ae_candidates = merged;
+    importApplyError.value = '';
 };
 
 const estimatedTechnicalChecks = computed(() => {
@@ -589,6 +637,58 @@ const submit = (): void => {
                         hier konfigurierten Kandidaten getestet – begrenzt auf {{ maxAeAttemptsPerPort }} Versuche je
                         Host und Port.
                     </p>
+
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                            <FileUp :size="16" /> Kandidaten aus CSV oder Excel importieren
+                        </h3>
+                        <p class="mt-1 text-xs text-slate-500">
+                            Versioniertes Schema mit den Spalten <code>schema_version</code>, <code>ae_title</code> und
+                            optional <code>role</code>. Der Import wird zunächst nur geprüft und startet keinen Scan.
+                        </p>
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            <input
+                                type="file"
+                                accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                class="max-w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:font-semibold file:text-slate-700"
+                                @change="selectImportFile"
+                            />
+                            <button
+                                type="button"
+                                :disabled="!importForm.ae_candidate_file || importForm.processing"
+                                class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40"
+                                @click="previewAeImport"
+                            >
+                                {{ importForm.processing ? 'Wird geprüft …' : 'Datei prüfen' }}
+                            </button>
+                        </div>
+                        <p v-if="importForm.errors.ae_candidate_file" class="mt-2 text-sm text-red-600">
+                            {{ importForm.errors.ae_candidate_file }}
+                        </p>
+                        <div v-if="importPreview" class="mt-3 space-y-2 text-sm">
+                            <p class="font-medium text-slate-700">
+                                {{ importPreview.rows_processed }} Zeilen geprüft ·
+                                {{ importPreview.candidates.length }} gültige Kandidaten
+                            </p>
+                            <ul v-if="importPreview.errors.length" class="space-y-1 text-red-700">
+                                <li v-for="error in importPreview.errors" :key="`${error.line}-${error.message}`">
+                                    Zeile {{ error.line }}: {{ error.message }}
+                                </li>
+                            </ul>
+                            <ul v-if="importPreview.warnings.length" class="space-y-1 text-amber-700">
+                                <li v-for="warning in importPreview.warnings" :key="warning">{{ warning }}</li>
+                            </ul>
+                            <button
+                                v-if="importPreview.errors.length === 0"
+                                type="button"
+                                class="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white"
+                                @click="applyAeImport"
+                            >
+                                Gültige Kandidaten übernehmen
+                            </button>
+                            <p v-if="importApplyError" class="text-red-600">{{ importApplyError }}</p>
+                        </div>
+                    </div>
 
                     <div>
                         <h3 class="text-sm font-semibold text-slate-800">Calling AE Titles</h3>
