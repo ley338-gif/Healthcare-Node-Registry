@@ -12,6 +12,7 @@ use App\Services\Discovery\DiscoveryResultExporter;
 use App\Services\Discovery\DiscoveryRunService;
 use App\Services\Discovery\DiscoveryScheduleService;
 use App\Services\Registry\SystemReferenceDataService;
+use App\Services\Reports\DiscoveryResultPdfExporter;
 use App\Support\RegistryAudit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -19,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class DiscoveryRunController extends Controller
@@ -66,10 +68,11 @@ final class DiscoveryRunController extends Controller
         string $format,
         DiscoveryHostQuery $hostQuery,
         DiscoveryResultExporter $exporter,
+        DiscoveryResultPdfExporter $pdf,
         RegistryAudit $audit,
-    ): StreamedResponse {
+    ): HttpResponse|StreamedResponse {
         Gate::authorize('view', $discoveryRun);
-        abort_unless(in_array($format, ['csv', 'json'], true), 404);
+        abort_unless(in_array($format, ['csv', 'json', 'pdf'], true), 404);
 
         $filters = $this->filters($request);
         $audit->record('discovery.results-exported', $discoveryRun, $request->user(), [
@@ -78,6 +81,15 @@ final class DiscoveryRunController extends Controller
         ]);
 
         $filename = 'discovery-'.$discoveryRun->public_id.'-'.now()->format('Y-m-d-His').'.'.$format;
+
+        if ($format === 'pdf') {
+            $hosts = $hostQuery->build($discoveryRun, $filters)->get();
+
+            return response($pdf->export($discoveryRun, $filters, $hosts), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => "attachment; filename={$filename}",
+            ]);
+        }
 
         return response()->streamDownload(function () use ($discoveryRun, $filters, $format, $hostQuery, $exporter): void {
             $stream = fopen('php://output', 'w');

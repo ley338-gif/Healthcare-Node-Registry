@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Gefilterten, berechtigungsgeprüften und auditierten PDF-Export der Discovery-Ergebnisse und Review-Queue auf Basis der gemeinsamen Host-Abfrage und des vorhandenen mehrseitigen PDF-Tabellenkerns ergänzt.
+
 - Kontrollierten CSV-/XLSX-Import von AE-Titel-Kandidaten im Discovery-Wizard ergänzt: versioniertes Schema, serverseitige Vorschau mit Zeilenfehlern und Duplikatwarnungen, Formel- und XML-Härtung sowie ausdrückliche Übernahme ohne automatischen Scanstart.
 
 - Deduplizierte In-App-Benachrichtigungen für aktive Discovery-Benutzer ergänzt: vollständig erfolgreiche Zeitplanläufe werden mit ihrem vorherigen erfolgreichen Stand verglichen und melden neue oder verschwundene Hosts auf dem Dashboard; unvollständige und manuelle Läufe bleiben zur Vermeidung von Fehlalarmen ausgeschlossen.
