@@ -1,5 +1,7 @@
 # Clean Install und Restore validieren
 
+Der folgende Ablauf beschreibt die Entwicklungsvalidierung. Eine Pilot- oder Release-Abnahme muss stattdessen die unveränderlichen Images und den Ablauf aus [`ReleaseProcess.md`](ReleaseProcess.md) verwenden; Composer- und npm-Abhängigkeiten werden dabei bereits während des Image-Builds installiert.
+
 ```bash
 cp .env.example .env
 docker compose build --no-cache

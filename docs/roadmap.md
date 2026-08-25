@@ -5,10 +5,18 @@ document_type: Roadmap
 chapter: Übersicht
 status: draft
 version: 0.1
-last_updated: 2026-08-11
+last_updated: 2026-08-25
 ---
 
 # Roadmap: Mögliche Version-2-Funktionen für Discovery
+
+## Pilot-Readiness
+
+- [x] unveränderlicher Release-Build ohne produktive Quellcode-Bind-Mounts sowie dokumentierter Installations-, Upgrade- und Rollback-Prozess
+- [ ] automatisierte Supply-Chain-Nachweise einschließlich Secret Scan, Container Scan und SBOM
+- [ ] überprüfbare Pilot-Go-/No-Go-Matrix mit Release-, Security-, Betriebs- und Healthcare-E2E-Nachweisen
+
+Die offenen Punkte sind pilot-blockierend und werden vor weiteren Discovery-Produktfunktionen bearbeitet.
 
 Diese Funktionen sind bewusst **nicht** Bestandteil des DICOM Discovery & Topology MVP. Sie werden hier dokumentiert, um Erwartungen zu steuern, aber nicht ungefragt implementiert.
 

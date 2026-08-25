@@ -10,6 +10,8 @@
 - getrenntes Backupziel
 - SMTP oder alternative Benachrichtigung optional
 
+Für Pilot- und Release-Installationen ist der unveränderliche Build aus [`ReleaseProcess.md`](ReleaseProcess.md) verbindlich. Der Standard-Stack mit Quellcode-Bind-Mounts dient ausschließlich Entwicklung und lokaler Prüfung.
+
 ## Betriebsaufgaben
 
 - Anwendung und Abhängigkeiten aktualisieren
@@ -29,9 +31,9 @@ Der lokale Standard-Stack bleibt über HTTP auf Port 8080 testbar. Für einen pr
 Der Betreiber stellt in einem geschützten Host-Verzeichnis `tls.crt` mit vollständiger Server-Zertifikatskette und den zugehörigen privaten Schlüssel `tls.key` bereit. Die Dateien werden nur lesbar eingebunden und dürfen nicht im Repository liegen. In `.env` sind mindestens `APP_URL=https://<dns-name>`, `SESSION_SECURE_COOKIE=true` und `HTTPS_CERTIFICATE_HOST_DIRECTORY=<absoluter-host-pfad>` zu setzen. Die Überlagerung erzwingt das Secure-Flag zusätzlich im `app`-Container, sodass ein versehentlich verbliebener Entwicklungswert keine unsicheren Session-Cookies erzeugt.
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.https.yml config --quiet
-docker compose -f docker-compose.yml -f docker-compose.https.yml up --build -d
-docker compose -f docker-compose.yml -f docker-compose.https.yml exec app php artisan registry:doctor
+docker compose -f docker-compose.yml -f docker-compose.release.yml -f docker-compose.https.yml config --quiet
+docker compose -f docker-compose.yml -f docker-compose.release.yml -f docker-compose.https.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.release.yml -f docker-compose.https.yml exec app php artisan registry:doctor
 ```
 
 Die Zertifikatskette, DNS-Namen, Dateirechte und Erneuerung müssen auf dem Zielhost geprüft werden. Fehlen Zertifikat oder Schlüssel, startet Nginx absichtlich nicht. Bei einer Zertifikatserneuerung den `web`-Dienst mit beiden Compose-Dateien neu erstellen. Ein vorgeschalteter Unternehmens-Reverse-Proxy kann weiterhin verwendet werden, muss aber mindestens gleichwertige TLS-, Header- und Cookie-Vorgaben umsetzen.

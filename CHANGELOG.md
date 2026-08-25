@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Unveränderlichen Release-Build für den Pilotbetrieb ergänzt: Anwendungscode, produktive Composer-Abhängigkeiten und Frontend-Artefakte werden in getrennte App- und Webimages eingebaut; die Release-Compose-Überlagerung entfernt produktive Quellcode-Bind-Mounts und dokumentiert Installation, Upgrade und Rollback.
+
 - Gefilterten, berechtigungsgeprüften und auditierten PDF-Export der Discovery-Ergebnisse und Review-Queue auf Basis der gemeinsamen Host-Abfrage und des vorhandenen mehrseitigen PDF-Tabellenkerns ergänzt.
 
 - Kontrollierten CSV-/XLSX-Import von AE-Titel-Kandidaten im Discovery-Wizard ergänzt: versioniertes Schema, serverseitige Vorschau mit Zeilenfehlern und Duplikatwarnungen, Formel- und XML-Härtung sowie ausdrückliche Übernahme ohne automatischen Scanstart.

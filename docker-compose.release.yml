@@ -1,0 +1,49 @@
+services:
+  app:
+    image: "healthcare-node-registry-app:${HNR_IMAGE_TAG:-0.9.0-rc.1}"
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: release-app
+      args:
+        APP_VERSION: "${HNR_VERSION:-0.9.0-rc.1}"
+        VCS_REF: "${HNR_REVISION:-unknown}"
+    volumes: !override
+      - app_storage:/var/www/html/storage
+      - ${DIAGNOSTIC_TLS_PROFILE_HOST_DIRECTORY:-./docker/dicom-tls}:${DIAGNOSTIC_TLS_PROFILE_DIRECTORY:-/run/secrets/dicom-tls}:ro
+
+  worker:
+    image: "healthcare-node-registry-app:${HNR_IMAGE_TAG:-0.9.0-rc.1}"
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: release-app
+      args:
+        APP_VERSION: "${HNR_VERSION:-0.9.0-rc.1}"
+        VCS_REF: "${HNR_REVISION:-unknown}"
+    volumes: !override
+      - app_storage:/var/www/html/storage
+      - ${DIAGNOSTIC_TLS_PROFILE_HOST_DIRECTORY:-./docker/dicom-tls}:${DIAGNOSTIC_TLS_PROFILE_DIRECTORY:-/run/secrets/dicom-tls}:ro
+
+  scheduler:
+    image: "healthcare-node-registry-app:${HNR_IMAGE_TAG:-0.9.0-rc.1}"
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: release-app
+      args:
+        APP_VERSION: "${HNR_VERSION:-0.9.0-rc.1}"
+        VCS_REF: "${HNR_REVISION:-unknown}"
+    volumes: !override
+      - app_storage:/var/www/html/storage
+
+  web:
+    image: "healthcare-node-registry-web:${HNR_IMAGE_TAG:-0.9.0-rc.1}"
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: release-web
+      args:
+        APP_VERSION: "${HNR_VERSION:-0.9.0-rc.1}"
+        VCS_REF: "${HNR_REVISION:-unknown}"
+    volumes: !override []
