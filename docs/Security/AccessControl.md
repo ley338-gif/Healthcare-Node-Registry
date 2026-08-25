@@ -53,3 +53,5 @@ Echte technische Tenant-Isolation ist nicht Bestandteil des MVP.
 - datenverändernde DICOM-Tests verwenden strengere Rechte als reine Lese-/Verbindungstests
 - External Support ist standardmäßig read-only, zeitlich begrenzbar und ohne Export
 - regelmäßiger Access Review ist Organisationsprozess
+
+Für den Pilot sind namentliche Rolleninhaber, MFA, Recovery, separates Break Glass, Offboarding und mindestens monatliche Rechteprüfung verpflichtend. Das ausführbare Mindestmodell und der Abnahmenachweis stehen unter [Pilot-Rollenmodell](../Pilot/RolesAndAccess.md).

@@ -5,7 +5,8 @@
 - [x] unveränderlicher Release-Build ohne produktive Quellcode-Bind-Mounts
 - [x] dokumentierter Installations-, Upgrade- und Rollback-Prozess
 - [x] automatisierte Secret-, Container- und SBOM-Prüfungen
-- [ ] verbindliche Pilot-Go-/No-Go-Matrix und Healthcare-E2E-Abnahmenachweise
+- [x] verbindliche Pilot-Go-/No-Go-Matrix mit Release-, Security-, Betriebs-, Rollen-, UX- und Dokumentationsgates
+- [ ] Healthcare-E2E-, Zielhost-, Restore-, Alarmweg-, Rollen- und Dokumentfreigabenachweise in der autorisierten Pilotumgebung
 
 - [x] Zentraler Audit-Arbeitsbereich mit globaler Suche, Filtern, Detailansicht und CSV-Export
 

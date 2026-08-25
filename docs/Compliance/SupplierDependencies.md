@@ -24,7 +24,7 @@
 ## Nachweise
 
 - Lockfiles
-- CycloneDX-SBOMs der gebauten Release-App- und Webimages
+- CycloneDX-SBOMs der Release-App-, Web-, PostgreSQL- und ClamAV-Images
 - Composer-, npm- und Trivy-Scans als verbindliche CI-Gates
 - vollständiger Secret-History-Scan
 - dokumentierte ADRs für wesentliche Abhängigkeiten

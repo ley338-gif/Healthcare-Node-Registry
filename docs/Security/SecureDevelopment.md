@@ -20,8 +20,8 @@ Implementiert:
 - Dependency Scans für Composer- und produktive npm-Pakete
 - statische Analyse
 - Unit-/Feature-Tests und Coverage-Gates
-- Container Scan der beiden Release-Images auf behebbare hohe und kritische Befunde
-- CycloneDX-SBOMs der tatsächlich gebauten Release-Images
+- Container Scan der Release-App-, Web-, PostgreSQL- und ClamAV-Images auf behebbare hohe und kritische Befunde
+- CycloneDX-SBOMs aller vier Runtime-Images des Release-Stacks
 
 Verbindliche Schwellen, Nachweise und Ausnahmebedingungen beschreibt [Supply-Chain-Sicherheit](SupplyChain.md).
 

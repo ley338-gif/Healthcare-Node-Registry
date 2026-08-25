@@ -14,9 +14,10 @@ last_updated: 2026-08-25
 
 - [x] unveränderlicher Release-Build ohne produktive Quellcode-Bind-Mounts sowie dokumentierter Installations-, Upgrade- und Rollback-Prozess
 - [x] automatisierte Supply-Chain-Nachweise einschließlich Secret Scan, Container Scan und SBOM
-- [ ] überprüfbare Pilot-Go-/No-Go-Matrix mit Release-, Security-, Betriebs- und Healthcare-E2E-Nachweisen
+- [x] überprüfbare Pilot-Go-/No-Go-Matrix mit Release-, Security-, Betriebs-, Rollen-, UX- und Dokumentationskriterien
+- [ ] Healthcare-E2E-, Zielhost-, Restore-, Alarmweg-, Rollen- und Dokumentfreigabenachweise in der autorisierten Pilotumgebung
 
-Die offenen Punkte sind pilot-blockierend und werden vor weiteren Discovery-Produktfunktionen bearbeitet.
+Der offene Nachweispunkt ist pilot-blockierend. Er benötigt eine autorisierte Zielumgebung und namentlich verantwortliche Freigaben; er darf nicht durch simulierte lokale Ergebnisse ersetzt werden.
 
 Diese Funktionen sind bewusst **nicht** Bestandteil des DICOM Discovery & Topology MVP. Sie werden hier dokumentiert, um Erwartungen zu steuern, aber nicht ungefragt implementiert.
 

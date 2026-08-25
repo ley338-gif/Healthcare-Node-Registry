@@ -33,6 +33,8 @@ Die Skripte prüfen native Docker-Exitcodes, Datenbank- und Archivformat sowie S
 - Schlüssel nie zusammen mit dem Backup speichern
 - Backups nie in Git committen
 
+Für den Pilot gelten mindestens RPO 24 Stunden und RTO 8 Stunden. Das bedeutet ein tägliches konsistentes Backup auf ein getrenntes, verschlüsseltes Ziel und einen gemessenen Restore vor Pilotstart. Der vollständige Restore-Test wird mindestens quartalsweise und nach wesentlichen Änderungen an Datenbank, Storage oder Sicherungsverfahren wiederholt. Details und Alarmgrenzen: [Betriebliche Pilotabnahme](../Pilot/OperationalAcceptance.md).
+
 - PostgreSQL und `storage/app/private/registry-documents` aus demselben konsistenten Sicherungszeitpunkt wiederherstellen
 - alte Versionen und archivierte Dokumente vollständig in Sicherung und Restore einbeziehen
 - nach Restore Dateiexistenz, Größe und SHA-256 gegen `registry_document_versions` prüfen

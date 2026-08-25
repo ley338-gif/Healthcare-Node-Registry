@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- Verbindliche Supply-Chain-Gates ergänzt: vollständiger Gitleaks-Historiencheck, Trivy-Scans beider Release-Images auf behebbare hohe und kritische Befunde sowie CycloneDX-SBOM-Artefakte; PHP-, Nginx- und `pydicom`-Laufzeiten auf gepinnte, gepatchte Stände angehoben und nicht benötigte Python-Installationswerkzeuge aus der Runtime entfernt.
+- Verbindliche Pilot-Go-/No-Go-Matrix mit Betriebsbaseline (RPO/RTO, Restore, Logrotation, Speicher-/Zertifikats-/Health-Alarme), minimalem Rollenmodell und Healthcare-E2E-Testmatrix ergänzt; PostgreSQL-, ClamAV- und Tool-Images digest-gepinnt, Runtime-Scans/SBOMs auf alle vier Release-Images erweitert und der Storage-Commitment-Callback auf eine konfigurierbare Hostadresse begrenzbar gemacht.
+
+- Verbindliche Supply-Chain-Gates ergänzt: vollständiger Gitleaks-Historiencheck, Trivy-Scans der Release-Runtime-Images auf behebbare hohe und kritische Befunde sowie CycloneDX-SBOM-Artefakte; PHP-, Nginx- und `pydicom`-Laufzeiten auf gepinnte, gepatchte Stände angehoben und nicht benötigte Python-Installationswerkzeuge aus der Runtime entfernt.
 
 - Unveränderlichen Release-Build für den Pilotbetrieb ergänzt: Anwendungscode, produktive Composer-Abhängigkeiten und Frontend-Artefakte werden in getrennte App- und Webimages eingebaut; die Release-Compose-Überlagerung entfernt produktive Quellcode-Bind-Mounts und dokumentiert Installation, Upgrade und Rollback.
 
