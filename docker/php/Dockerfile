@@ -1,4 +1,16 @@
-FROM php:8.4.16-fpm-bookworm
+FROM node:24.18.0-bookworm-slim AS frontend-build
+
+WORKDIR /build
+
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+
+COPY resources ./resources
+COPY public ./public
+COPY vite.config.ts tsconfig.json ./
+RUN npm run build
+
+FROM php:8.4.16-fpm-bookworm AS php-base
 
 ARG COMPOSER_VERSION=2.8.12
 
@@ -64,3 +76,46 @@ RUN sed -i 's/\r$//' /usr/local/bin/registry-entrypoint \
 ENTRYPOINT ["/usr/local/bin/registry-entrypoint"]
 
 CMD ["php-fpm", "-F"]
+
+FROM php-base AS development
+
+FROM php-base AS release-app
+
+ARG APP_VERSION=0.9.0-rc.1
+ARG VCS_REF=unknown
+
+LABEL org.opencontainers.image.title="Healthcare Node Registry" \
+      org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.source="https://github.com/ley338-gif/Healthcare-Node-Registry"
+
+ENV APP_VERSION="${APP_VERSION}"
+
+COPY --chown=www-data:www-data . /var/www/html
+
+RUN composer install \
+        --no-dev \
+        --no-interaction \
+        --no-progress \
+        --prefer-dist \
+        --classmap-authoritative \
+    && rm -rf /var/www/.composer/cache/* \
+    && php artisan package:discover --ansi
+
+COPY --from=frontend-build --chown=www-data:www-data /build/public/build /var/www/html/public/build
+
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+FROM nginx:1.28.0-alpine3.21 AS release-web
+
+ARG APP_VERSION=0.9.0-rc.1
+ARG VCS_REF=unknown
+
+LABEL org.opencontainers.image.title="Healthcare Node Registry Web" \
+      org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.source="https://github.com/ley338-gif/Healthcare-Node-Registry"
+
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY public /var/www/html/public
+COPY --from=frontend-build /build/public/build /var/www/html/public/build

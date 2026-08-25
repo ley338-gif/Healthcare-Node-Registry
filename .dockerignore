@@ -1,7 +1,11 @@
 .git
 .github
+.claude
 node_modules
 vendor
+coverage
+tmp
 storage/logs/*
 .env
+.phpunit.result.cache
 *.zip

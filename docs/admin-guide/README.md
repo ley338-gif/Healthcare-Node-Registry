@@ -22,4 +22,4 @@ Dieses Handbuch führt betriebliche Verfahren zusammen. Installationsspezifische
 4. [Backup, Restore und Update](04-backup-restore-update.md)
 5. [DICOM-Diagnosebetrieb](05-dicom-diagnosebetrieb.md)
 
-Die vorhandenen Detailverfahren unter [Deployment](../Deployment/) und [Security](../Security/) bleiben ergänzende technische Quellen.
+Die vorhandenen Detailverfahren unter [Deployment](../Deployment/) und [Security](../Security/) bleiben ergänzende technische Quellen. Für Pilotinstallationen gilt insbesondere der verbindliche [Release-, Installations-, Upgrade- und Rollback-Prozess](../Deployment/ReleaseProcess.md).

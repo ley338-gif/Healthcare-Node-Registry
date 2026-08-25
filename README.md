@@ -98,6 +98,8 @@ Für einen reproduzierbaren Betrieb wird Docker empfohlen.
 
 ## Installation mit Docker
 
+Der folgende Standardablauf ist für lokale Entwicklung und Validierung vorgesehen und bindet den Arbeitsbaum in die Container ein. Für Pilot- und Release-Installationen ist der [unveränderliche Release-, Installations-, Upgrade- und Rollback-Prozess](docs/Deployment/ReleaseProcess.md) mit `docker-compose.release.yml` verbindlich.
+
 Die folgenden Befehle werden im Repository-Stamm ausgeführt.
 
 1. Repository klonen und in das Verzeichnis wechseln:
@@ -216,7 +218,7 @@ Dieser Zugang ist synthetisch und darf nicht in produktiven oder gemeinsam errei
 
 ## Docker-Stack
 
-`docker-compose.yml` definiert den Standard-Stack. `docker-compose.https.yml` ist eine optionale Überlagerung für den HTTPS-Betrieb; ohne diese Datei bleibt der lokale HTTP-Start auf Port 8080 unverändert.
+`docker-compose.yml` definiert den lokalen Entwicklungs- und Validierungsstack. `docker-compose.release.yml` ersetzt die Quellcode-Bind-Mounts durch unveränderliche App- und Webimages. `docker-compose.https.yml` ergänzt beide Varianten optional um HTTPS; ohne diese Datei bleibt der lokale HTTP-Start auf Port 8080 unverändert.
 
 | Dienst | Zweck | Host-Port | Profil | Restart Policy |
 | --- | --- | --- | --- | --- |
@@ -531,6 +533,7 @@ Der Einstieg in die Projektdokumentation befindet sich unter [`docs/README.md`](
 - [`docs/Security/MultiFactorAuthentication.md`](docs/Security/MultiFactorAuthentication.md) – TOTP-MFA, Recovery und Break Glass
 - [`docs/Security/FileUploadSecurity.md`](docs/Security/FileUploadSecurity.md) – Dokumenten-Uploadschutz
 - [`docs/Deployment/BackupRestore.md`](docs/Deployment/BackupRestore.md) – Backup und Restore
+- [`docs/Deployment/ReleaseProcess.md`](docs/Deployment/ReleaseProcess.md) – unveränderlicher Release-Build, Installation, Upgrade und Rollback
 - [`docs/maintenance/repository-cleanup.md`](docs/maintenance/repository-cleanup.md) – letzter Repository-Cleanup
 - [`docs/Features/dicom-discovery.md`](docs/Features/dicom-discovery.md) – DICOM Discovery: Workflow, Sicherheitsgrenzen, Klassifizierung
 - [`docs/Decisions/ADR-0011-discovery-scanning.md`](docs/Decisions/ADR-0011-discovery-scanning.md) – Architekturentscheidungen der Scan-Engine

@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      target: development
     restart: unless-stopped
     ports:
       - "${DIAGNOSTIC_STORAGE_COMMITMENT_HOST_PORT:-11113}:${DIAGNOSTIC_STORAGE_COMMITMENT_CALLBACK_PORT:-11113}"
@@ -26,6 +27,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      target: development
     restart: unless-stopped
     command: ["php", "artisan", "queue:work", "database", "--queue=discovery,default", "--sleep=1", "--tries=1", "--max-time=3600"]
     env_file: .env
@@ -52,6 +54,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      target: development
     restart: unless-stopped
     command: ["php", "artisan", "schedule:work"]
     env_file: .env
@@ -124,6 +127,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      target: development
     profiles: ["test"]
     environment:
       APP_NAME: Healthcare Node Registry Tests

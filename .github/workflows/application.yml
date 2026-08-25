@@ -32,6 +32,8 @@ jobs:
         run: |
           docker compose config --quiet
           docker compose -f docker-compose.yml -f docker-compose.https.yml config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.release.yml config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.release.yml -f docker-compose.https.yml config --quiet
 
       - name: Validate HTTPS Nginx configuration
         shell: bash
@@ -122,5 +124,13 @@ jobs:
         with:
           context: .
           file: docker/php/Dockerfile
+          target: release-app
           push: false
           tags: healthcare-node-registry:ci
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/php/Dockerfile
+          target: release-web
+          push: false
+          tags: healthcare-node-registry-web:ci
