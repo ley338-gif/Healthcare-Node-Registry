@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Die bestehenden Application-/Documentation-Workflows verwenden teilweise noch Actions auf Node-20-Basis, die GitHub derzeit unter Node 24 ausführt und mit einer Deprecation-Warnung versieht. Der neue Supply-Chain-Workflow verwendet bereits SHA-gepinnte Node-24-Actions; die übrige CI-Aktualisierung ist als nicht pilot-blockierende Wartung offen.
+
 - Der Audit-Trail besitzt eine interne SHA-256-Hash-Chain und kontrollierte Aufbewahrung;
   eine externe signierte Verankerung gegen Angreifer mit vollständigem Datenbank-Schreibzugriff
   ist noch nicht umgesetzt.

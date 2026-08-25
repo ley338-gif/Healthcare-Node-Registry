@@ -1,0 +1,96 @@
+name: Supply-chain security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: Secret history
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Scan repository history
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-images:
+    name: Release images and SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build release images
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --pull \
+            --target release-app \
+            --build-arg "APP_VERSION=0.9.0-rc.1" \
+            --build-arg "VCS_REF=${GITHUB_SHA}" \
+            --tag healthcare-node-registry-app:security \
+            --file docker/php/Dockerfile .
+          docker build --pull \
+            --target release-web \
+            --build-arg "APP_VERSION=0.9.0-rc.1" \
+            --build-arg "VCS_REF=${GITHUB_SHA}" \
+            --tag healthcare-node-registry-web:security \
+            --file docker/php/Dockerfile .
+
+      - name: Scan application image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.74.0
+          image-ref: healthcare-node-registry-app:security
+          scanners: vuln
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+          timeout: 15m
+
+      - name: Scan web image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.74.0
+          image-ref: healthcare-node-registry-web:security
+          scanners: vuln
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+          timeout: 15m
+
+      - name: Generate application image SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: healthcare-node-registry-app:security
+          format: cyclonedx-json
+          output-file: healthcare-node-registry-app.cdx.json
+          artifact-name: healthcare-node-registry-app-sbom
+          syft-version: v1.51.0
+          upload-artifact-retention: 30
+          upload-release-assets: false
+
+      - name: Generate web image SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: healthcare-node-registry-web:security
+          format: cyclonedx-json
+          output-file: healthcare-node-registry-web.cdx.json
+          artifact-name: healthcare-node-registry-web-sbom
+          syft-version: v1.51.0
+          upload-artifact-retention: 30
+          upload-release-assets: false
