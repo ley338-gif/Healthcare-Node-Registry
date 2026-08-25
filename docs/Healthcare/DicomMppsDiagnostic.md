@@ -14,5 +14,4 @@ Der Test verändert das Zielsystem, weil dort eine synthetische MPPS-Instanz ang
 
 ## Implementierung
 
-Das App-Image installiert `pynetdicom==3.0.4` und `pydicom==3.0.1` mit festgelegten SHA-256-Hashes. Laravel übergibt Host, Port und AE Titles per JSON über die Standardeingabe an `scripts/dicom_mpps.py`; sensible Werte erscheinen dadurch nicht in der Prozessliste. Der Prozess besitzt ein Zeitlimit von 30 Sekunden.
-
+Das App-Image installiert `pynetdicom==3.0.4` und `pydicom==3.0.2` mit festgelegten SHA-256-Hashes. Laravel übergibt Host, Port und AE Titles per JSON über die Standardeingabe an `scripts/dicom_mpps.py`; sensible Werte erscheinen dadurch nicht in der Prozessliste. Der Prozess besitzt ein Zeitlimit von 30 Sekunden.

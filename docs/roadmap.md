@@ -13,7 +13,7 @@ last_updated: 2026-08-25
 ## Pilot-Readiness
 
 - [x] unveränderlicher Release-Build ohne produktive Quellcode-Bind-Mounts sowie dokumentierter Installations-, Upgrade- und Rollback-Prozess
-- [ ] automatisierte Supply-Chain-Nachweise einschließlich Secret Scan, Container Scan und SBOM
+- [x] automatisierte Supply-Chain-Nachweise einschließlich Secret Scan, Container Scan und SBOM
 - [ ] überprüfbare Pilot-Go-/No-Go-Matrix mit Release-, Security-, Betriebs- und Healthcare-E2E-Nachweisen
 
 Die offenen Punkte sind pilot-blockierend und werden vor weiteren Discovery-Produktfunktionen bearbeitet.

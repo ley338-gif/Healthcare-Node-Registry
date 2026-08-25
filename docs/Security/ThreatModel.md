@@ -35,7 +35,7 @@ Auch ohne Patientendaten sind diese Informationen sicherheitskritisch.
 | Datenmanipulation | Verbindung unbemerkt geändert | Constraints, Audit, Reviews, Backups | Konzept vorhanden |
 | Informationsabfluss | Export/Download | gesonderte Rechte, Audit, Scope-Prüfung | Konzept vorhanden |
 | schädliche Datei | kompromittierter Upload | Allowlist, Quarantäne, Scanner, Fail Closed | Konzept vorhanden |
-| Supply Chain | verwundbare Abhängigkeit | Lockfiles, Scans, SBOM, Freigaben | offen bis CI |
+| Supply Chain | verwundbare Abhängigkeit oder kompromittiertes Build-Artefakt | Lockfiles, History-Secret-Scan, Dependency- und Release-Image-Scans, CycloneDX-SBOM, SHA-gepinnte CI-Actions und Freigaben | automatisierte CI-Gates implementiert; Signierung/Provenance offen |
 | Ransomware | Daten und Backups verschlüsselt | getrennte Backups, Restore-Tests | Betriebsentscheidung offen |
 | Log Leakage | Secrets in Logs | Redaction, strukturierte Logs, Event Catalog | Konzept vorhanden |
 | CSRF/XSS | manipulierte Adminaktion | Frameworkschutz, CSP, Encoding | offen bis Implementierung |

@@ -92,7 +92,7 @@ PHP, Composer, PostgreSQL, Node.js und DCMTK müssen bei dieser Variante nicht a
 - PostgreSQL 18
 - Node.js 24 und npm
 - DCMTK für native DICOM-Diagnosen (`echoscu`, `findscu`, `movescu`, `getscu`, `storescu`, `dcmdump`, `dump2dcm`)
-- Python 3 mit `venv`, `pynetdicom==3.0.4` und `pydicom==3.0.1` unter `/opt/registry-dicom` für MPPS und Storage Commitment
+- Python 3 mit `venv`, `pynetdicom==3.0.4` und `pydicom==3.0.2` unter `/opt/registry-dicom` für MPPS und Storage Commitment
 
 Für einen reproduzierbaren Betrieb wird Docker empfohlen.
 

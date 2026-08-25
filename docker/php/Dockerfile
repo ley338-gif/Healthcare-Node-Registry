@@ -1,4 +1,4 @@
-FROM node:24.18.0-bookworm-slim AS frontend-build
+FROM node:24.18.0-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d AS frontend-build
 
 WORKDIR /build
 
@@ -10,11 +10,12 @@ COPY public ./public
 COPY vite.config.ts tsconfig.json ./
 RUN npm run build
 
-FROM php:8.4.16-fpm-bookworm AS php-base
+FROM php:8.4.24-fpm-bookworm@sha256:d19afbcc35ef6eae436be15439d9e0e96a000f40e95578ec86a6ddff3d66e4bb AS php-base
 
 ARG COMPOSER_VERSION=2.8.12
 
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
@@ -42,6 +43,7 @@ COPY docker/php/requirements-dicom.txt /tmp/requirements-dicom.txt
 
 RUN python3 -m venv /opt/registry-dicom \
     && /opt/registry-dicom/bin/pip install --no-cache-dir --require-hashes -r /tmp/requirements-dicom.txt \
+    && /opt/registry-dicom/bin/pip uninstall --yes pip setuptools \
     && rm /tmp/requirements-dicom.txt
 
 RUN curl -fsSL "https://getcomposer.org/download/${COMPOSER_VERSION}/composer.phar" \
@@ -106,7 +108,9 @@ COPY --from=frontend-build --chown=www-data:www-data /build/public/build /var/ww
 
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-FROM nginx:1.28.0-alpine3.21 AS release-web
+FROM nginx:1.30.4-alpine3.24@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46 AS release-web
+
+RUN apk upgrade --no-cache
 
 ARG APP_VERSION=0.9.0-rc.1
 ARG VCS_REF=unknown

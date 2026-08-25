@@ -7,7 +7,7 @@
 | R-003 | Unbefugter Zugriff auf Infrastrukturinfos | mittel | hoch | RBAC, MFA-Fähigkeit, Audit | Security | offen |
 | R-004 | Schadsoftware in Dokumentenuploads | mittel | hoch | Quarantäne, Prüfung, Scan-Adapter | Security | offen |
 | R-005 | Backup ist nicht wiederherstellbar | niedrig-mittel | hoch | regelmäßiger Restore-Test | Operations | offen |
-| R-006 | Abhängigkeit wird nicht gepflegt | mittel | mittel-hoch | Abhängigkeitsreview, SBOM | Lead Dev | offen |
+| R-006 | Abhängigkeit oder Basisimage wird nicht gepflegt | mittel | mittel-hoch | Lockfiles, Dependency- und Container-Gates, SBOM, wöchentlicher Rescan | Lead Dev / Security | behandelt, laufend |
 | R-007 | UI suggeriert Live-Monitoring | mittel | mittel | klare Statussemantik | UX | offen |
 | R-008 | ISO-Readiness wird als Zertifizierung vermarktet | niedrig | hoch | Freigabeprozess für Claims | Management | offen |
 | R-009 | Einzelentwickler-Bus-Faktor | hoch | hoch | Dokumentation, Automatisierung | Project Owner | offen |

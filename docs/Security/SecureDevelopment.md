@@ -14,16 +14,21 @@
 
 ## Automatisierte Kontrollen
 
-Geplant:
+Implementiert:
 
-- Secret Scan
-- Dependency Scan
-- Static Analysis
-- Unit/Feature Tests
-- Container Scan
-- SBOM-Generierung
-- Lizenzprüfung
-- Build-Provenance, soweit praktikabel
+- Secret Scan der vollständigen Git-Historie
+- Dependency Scans für Composer- und produktive npm-Pakete
+- statische Analyse
+- Unit-/Feature-Tests und Coverage-Gates
+- Container Scan der beiden Release-Images auf behebbare hohe und kritische Befunde
+- CycloneDX-SBOMs der tatsächlich gebauten Release-Images
+
+Verbindliche Schwellen, Nachweise und Ausnahmebedingungen beschreibt [Supply-Chain-Sicherheit](SupplyChain.md).
+
+Noch geplant:
+
+- automatisierte Lizenzprüfung
+- signierte Build-Provenance und Artefaktsignaturen
 
 ## Manuelle Kontrollen
 

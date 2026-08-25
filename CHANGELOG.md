@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Verbindliche Supply-Chain-Gates ergänzt: vollständiger Gitleaks-Historiencheck, Trivy-Scans beider Release-Images auf behebbare hohe und kritische Befunde sowie CycloneDX-SBOM-Artefakte; PHP-, Nginx- und `pydicom`-Laufzeiten auf gepinnte, gepatchte Stände angehoben und nicht benötigte Python-Installationswerkzeuge aus der Runtime entfernt.
+
 - Unveränderlichen Release-Build für den Pilotbetrieb ergänzt: Anwendungscode, produktive Composer-Abhängigkeiten und Frontend-Artefakte werden in getrennte App- und Webimages eingebaut; die Release-Compose-Überlagerung entfernt produktive Quellcode-Bind-Mounts und dokumentiert Installation, Upgrade und Rollback.
 
 - Gefilterten, berechtigungsgeprüften und auditierten PDF-Export der Discovery-Ergebnisse und Review-Queue auf Basis der gemeinsamen Host-Abfrage und des vorhandenen mehrseitigen PDF-Tabellenkerns ergänzt.

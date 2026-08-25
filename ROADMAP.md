@@ -4,7 +4,7 @@
 
 - [x] unveränderlicher Release-Build ohne produktive Quellcode-Bind-Mounts
 - [x] dokumentierter Installations-, Upgrade- und Rollback-Prozess
-- [ ] automatisierte Secret-, Container- und SBOM-Prüfungen
+- [x] automatisierte Secret-, Container- und SBOM-Prüfungen
 - [ ] verbindliche Pilot-Go-/No-Go-Matrix und Healthcare-E2E-Abnahmenachweise
 
 - [x] Zentraler Audit-Arbeitsbereich mit globaler Suche, Filtern, Detailansicht und CSV-Export
