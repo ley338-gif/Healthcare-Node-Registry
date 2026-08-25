@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:18.4-bookworm
+        image: postgres:18.4-bookworm@sha256:882236b897e39051d2368c5ccc6cda944904723506b2dfc97f2a8f5bc9afa382
         env:
           POSTGRES_DB: healthcare_node_registry_test
           POSTGRES_USER: registry
@@ -119,6 +119,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Validate rootless database image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --pull --tag healthcare-node-registry-postgres:ci --file docker/postgres/Dockerfile .
+          test "$(docker image inspect healthcare-node-registry-postgres:ci --format '{{.Config.User}}')" = "postgres"
+          container_id="$(docker run --detach \
+            --env POSTGRES_DB=registry_validation \
+            --env POSTGRES_USER=registry_validation \
+            --env POSTGRES_PASSWORD=synthetic-validation-only \
+            healthcare-node-registry-postgres:ci)"
+          trap 'docker rm --force "$container_id" >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 30); do
+            if docker exec "$container_id" pg_isready -U registry_validation -d registry_validation; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              docker logs "$container_id"
+              exit 1
+            fi
+            sleep 1
+          done
+          docker exec "$container_id" sh -c 'test ! -e /usr/local/bin/gosu'
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v6
         with:

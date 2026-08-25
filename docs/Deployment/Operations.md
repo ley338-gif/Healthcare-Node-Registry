@@ -24,6 +24,8 @@ Für Pilot- und Release-Installationen ist der unveränderliche Build aus [`Rele
 - Schwachstellenmeldungen verfolgen
 - Release Notes vor Update lesen
 
+Die verbindlichen Pilotziele (RPO höchstens 24 Stunden, RTO höchstens 8 Stunden), Alarmgrenzen, Prüfintervalle und Abnahmenachweise stehen in der [betrieblichen Pilotabnahme](../Pilot/OperationalAcceptance.md). Der Compose-Stack rotiert Containerlogs standardmäßig bei 10 MiB und bewahrt fünf Dateien je Container auf; `DOCKER_LOG_MAX_SIZE` und `DOCKER_LOG_MAX_FILES` dürfen an strengere lokale Vorgaben angepasst werden.
+
 ## HTTPS-Referenzbetrieb
 
 Der lokale Standard-Stack bleibt über HTTP auf Port 8080 testbar. Für einen produktionsnahen HTTPS-Betrieb wird zusätzlich `docker-compose.https.yml` geladen. Die Überlagerung benötigt Docker Compose 2.24.4 oder neuer, ersetzt die Host-Portfreigabe des `web`-Dienstes, leitet Port 80 permanent auf HTTPS um und terminiert TLS auf Port 443.
@@ -43,6 +45,8 @@ Die Zertifikatskette, DNS-Namen, Dateirechte und Erneuerung müssen auf dem Ziel
 Diagnosefunktionen dürfen keine Secrets oder Dokumentinhalte offenlegen. Support-Bundles benötigen explizite Auswahl, Redaction und Auditierung.
 
 Der App-Container benötigt DCMTK sowie ausgehenden TCP-Zugriff auf die freigegebenen Ports registrierter DICOM-Knoten. Produktive Firewalls sollten Egress auf konkrete Zieladressen und Ports begrenzen. Calling AE `NODE_REGISTRY` muss in Zielsystemen autorisiert werden. C-STORE kann ein dauerhaftes synthetisches Objekt erzeugen und erfordert einen abgestimmten Bereinigungsprozess im Zielsystem. Details: [Diagnostic Test Workspace](../Healthcare/DiagnosticTestWorkspace.md).
+
+Der Storage-Commitment-Callback wird mit `DIAGNOSTIC_STORAGE_COMMITMENT_BIND_ADDRESS` im Pilot auf die ausdrücklich freigegebene Hostschnittstelle begrenzt. Die Firewall erlaubt den Hostport ausschließlich von den vereinbarten Zielsystemen; der Standard `0.0.0.0` dient der Kompatibilität und ist ohne dokumentierte Netzsegmentierung nicht pilotfähig.
 
 Für DICOM-TLS wird das über `DIAGNOSTIC_TLS_PROFILE_HOST_DIRECTORY` konfigurierte Zertifikatsverzeichnis read-only in `app` und `worker` eingebunden. Zertifikatslayout, Dateirechte und Rotation sind unter [DICOM-TLS für Diagnose-Runner](../Healthcare/DicomTlsDiagnostics.md) beschrieben.
 

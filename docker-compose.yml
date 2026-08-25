@@ -1,5 +1,11 @@
 name: healthcare-node-registry
 
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "${DOCKER_LOG_MAX_SIZE:-10m}"
+    max-file: "${DOCKER_LOG_MAX_FILES:-5}"
+
 services:
   app:
     build:
@@ -8,7 +14,8 @@ services:
       target: development
     restart: unless-stopped
     ports:
-      - "${DIAGNOSTIC_STORAGE_COMMITMENT_HOST_PORT:-11113}:${DIAGNOSTIC_STORAGE_COMMITMENT_CALLBACK_PORT:-11113}"
+      - "${DIAGNOSTIC_STORAGE_COMMITMENT_BIND_ADDRESS:-0.0.0.0}:${DIAGNOSTIC_STORAGE_COMMITMENT_HOST_PORT:-11113}:${DIAGNOSTIC_STORAGE_COMMITMENT_CALLBACK_PORT:-11113}"
+    logging: *default-logging
     env_file: .env
     volumes:
       - ./:/var/www/html
@@ -29,6 +36,7 @@ services:
       dockerfile: docker/php/Dockerfile
       target: development
     restart: unless-stopped
+    logging: *default-logging
     command: ["php", "artisan", "queue:work", "database", "--queue=discovery,default", "--sleep=1", "--tries=1", "--max-time=3600"]
     env_file: .env
     volumes:
@@ -56,6 +64,7 @@ services:
       dockerfile: docker/php/Dockerfile
       target: development
     restart: unless-stopped
+    logging: *default-logging
     command: ["php", "artisan", "schedule:work"]
     env_file: .env
     volumes:
@@ -73,6 +82,7 @@ services:
   web:
     image: nginx:1.30.4-alpine3.24@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - "8080:8080"
     volumes:
@@ -91,8 +101,15 @@ services:
       - /var/run
 
   db:
-    image: postgres:18.4-bookworm
+    image: "healthcare-node-registry-postgres:${HNR_IMAGE_TAG:-0.9.0-rc.1}"
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+      args:
+        APP_VERSION: "${HNR_VERSION:-0.9.0-rc.1}"
+        VCS_REF: "${HNR_REVISION:-unknown}"
     restart: unless-stopped
+    logging: *default-logging
     env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql
@@ -107,8 +124,9 @@ services:
       - no-new-privileges:true
 
   clamav:
-    image: clamav/clamav:1.5.3
+    image: clamav/clamav:1.5.3@sha256:d06c1d6a451d616e1dd79b42f44c8c8c291bba9cf4e75ebc4d0e43c1c6dd87bb
     restart: unless-stopped
+    logging: *default-logging
     volumes:
       - clamav_data:/var/lib/clamav
     networks:
@@ -129,6 +147,7 @@ services:
       dockerfile: docker/php/Dockerfile
       target: development
     profiles: ["test"]
+    logging: *default-logging
     environment:
       APP_NAME: Healthcare Node Registry Tests
       APP_ENV: testing
@@ -162,8 +181,9 @@ services:
       - no-new-privileges:true
 
   db-test:
-    image: postgres:18.4-bookworm
+    image: postgres:18.4-bookworm@sha256:882236b897e39051d2368c5ccc6cda944904723506b2dfc97f2a8f5bc9afa382
     profiles: ["test"]
+    logging: *default-logging
     environment:
       POSTGRES_DB: healthcare_node_registry_test
       POSTGRES_USER: registry_test
@@ -185,12 +205,13 @@ services:
       - no-new-privileges:true
 
   node:
-    image: node:24.18.0-bookworm-slim
+    image: node:24.18.0-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
     working_dir: /app
     user: node
     volumes:
       - ./:/app
     profiles: ["tools"]
+    logging: *default-logging
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 volumes:

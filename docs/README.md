@@ -28,6 +28,7 @@ Diese Dokumentation beschreibt die Healthcare Node Registry (HNR) als proprietä
 | [FAQ](faq/README.md) | Kurze Antworten auf wiederkehrende Produktfragen | Entwurf vorhanden |
 | [Glossar](glossary/README.md) | Verbindliche Terminologie der HNR | konsolidierter Entwurf vorhanden |
 | [Versionshinweise](release-notes/README.md) | Einer Softwareversion zugeordnete Änderungen und Hinweise | Struktur und Vorlage vorhanden |
+| [Pilot-Readiness](Pilot/README.md) | Verbindliche Go/No-Go-Matrix, Betriebs-, Rollen- und Healthcare-Abnahme | technische Gates vorhanden; externe Pilotnachweise offen |
 | [Medien](assets/README.md) | Freigegebene Abbildungen und weitere Dokumentationsmedien | vorgesehen |
 
 ## Aktuell vorhandene Dokumentation

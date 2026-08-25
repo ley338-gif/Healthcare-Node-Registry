@@ -49,6 +49,12 @@ jobs:
             --build-arg "VCS_REF=${GITHUB_SHA}" \
             --tag healthcare-node-registry-web:security \
             --file docker/php/Dockerfile .
+          docker build --pull \
+            --build-arg "APP_VERSION=0.9.0-rc.1" \
+            --build-arg "VCS_REF=${GITHUB_SHA}" \
+            --tag healthcare-node-registry-postgres:security \
+            --file docker/postgres/Dockerfile .
+          docker pull clamav/clamav:1.5.3@sha256:d06c1d6a451d616e1dd79b42f44c8c8c291bba9cf4e75ebc4d0e43c1c6dd87bb
 
       - name: Scan application image
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -74,6 +80,30 @@ jobs:
           exit-code: 1
           timeout: 15m
 
+      - name: Scan database image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.74.0
+          image-ref: healthcare-node-registry-postgres:security
+          scanners: vuln
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+          timeout: 15m
+
+      - name: Scan malware-scanner image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.74.0
+          image-ref: clamav/clamav:1.5.3@sha256:d06c1d6a451d616e1dd79b42f44c8c8c291bba9cf4e75ebc4d0e43c1c6dd87bb
+          scanners: vuln
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+          timeout: 15m
+
       - name: Generate application image SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
@@ -92,6 +122,28 @@ jobs:
           format: cyclonedx-json
           output-file: healthcare-node-registry-web.cdx.json
           artifact-name: healthcare-node-registry-web-sbom
+          syft-version: v1.51.0
+          upload-artifact-retention: 30
+          upload-release-assets: false
+
+      - name: Generate database image SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: healthcare-node-registry-postgres:security
+          format: cyclonedx-json
+          output-file: healthcare-node-registry-postgres.cdx.json
+          artifact-name: healthcare-node-registry-postgres-sbom
+          syft-version: v1.51.0
+          upload-artifact-retention: 30
+          upload-release-assets: false
+
+      - name: Generate malware-scanner image SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: clamav/clamav:1.5.3@sha256:d06c1d6a451d616e1dd79b42f44c8c8c291bba9cf4e75ebc4d0e43c1c6dd87bb
+          format: cyclonedx-json
+          output-file: healthcare-node-registry-clamav.cdx.json
+          artifact-name: healthcare-node-registry-clamav-sbom
           syft-version: v1.51.0
           upload-artifact-retention: 30
           upload-release-assets: false

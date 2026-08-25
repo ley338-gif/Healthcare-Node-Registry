@@ -359,7 +359,10 @@ DICOM-Zielports werden pro registriertem Knoten gespeichert und sind keine einge
 | `DIAGNOSTIC_GET_TEST_STUDY_UID` | Ausschließlich serverseitig konfigurierte Test-Study-UID für C-GET | synthetische UID aus `.env.example` |
 | `DIAGNOSTIC_STORAGE_COMMITMENT_CALLBACK_PORT` | Interner Callback-Port für N-EVENT-REPORT | `11113` |
 | `DIAGNOSTIC_STORAGE_COMMITMENT_HOST_PORT` | Auf dem Docker-Host veröffentlichter Callback-Port | `11113` |
+| `DIAGNOSTIC_STORAGE_COMMITMENT_BIND_ADDRESS` | Host-Adresse für den Callback-Port; im Pilot auf die freigegebene DICOM-Schnittstelle begrenzen | `0.0.0.0` |
 | `DIAGNOSTIC_STORAGE_COMMITMENT_EVENT_TIMEOUT` | Wartezeit auf den N-EVENT-REPORT in Sekunden | `30` |
+| `DOCKER_LOG_MAX_SIZE` | Maximale Größe einer Docker-Logdatei vor Rotation | `10m` |
+| `DOCKER_LOG_MAX_FILES` | Anzahl aufbewahrter Docker-Logdateien je Container | `5` |
 | `REGISTRY_DOCUMENT_EXPIRY_WARNING_DAYS` | Vorlauf für Ablaufwarnungen | `60` |
 | `REGISTRY_DOCUMENT_RETENTION_SHORT_DAYS` | Mindestaufbewahrung für technische Standardunterlagen | `1095` |
 | `REGISTRY_DOCUMENT_RETENTION_STANDARD_DAYS` | Mindestaufbewahrung für Betriebs-, Notfall-, SOP- und Testunterlagen | `2555` |

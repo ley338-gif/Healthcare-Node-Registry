@@ -9,8 +9,11 @@ Storage Commitment ist asynchron. Der App-Container lauscht während des Tests a
 ```env
 DIAGNOSTIC_STORAGE_COMMITMENT_CALLBACK_PORT=11113
 DIAGNOSTIC_STORAGE_COMMITMENT_HOST_PORT=11113
+DIAGNOSTIC_STORAGE_COMMITMENT_BIND_ADDRESS=0.0.0.0
 DIAGNOSTIC_STORAGE_COMMITMENT_EVENT_TIMEOUT=30
 ```
+
+Im Pilot wird `DIAGNOSTIC_STORAGE_COMMITMENT_BIND_ADDRESS` auf die ausdrücklich freigegebene DICOM-Hostschnittstelle gesetzt. Die Host-Firewall erlaubt den Callback-Port nur von den vereinbarten Zielsystemen. Eine Bindung an alle Interfaces ist ohne nachgewiesene gleichwertige Netzsegmentierung ein No-Go.
 
 Wenn das Ziel den N-EVENT-REPORT auf derselben Association sendet, wird dieser ebenfalls verarbeitet. Nur ein Storage-Commitment-Test kann gleichzeitig laufen, damit Calling AE Title und Callback-Port eindeutig bleiben.
 
