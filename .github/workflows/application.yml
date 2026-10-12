@@ -147,7 +147,38 @@ jobs:
           file: docker/php/Dockerfile
           target: release-app
           push: false
+          load: true
           tags: healthcare-node-registry:ci
+      - name: Validate slim release application image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --entrypoint sh healthcare-node-registry:ci -c '
+            set -eu
+            if php -m 2>&1 | grep -iE "warning|unable"; then exit 1; fi
+            for module in intl pdo_pgsql zip pcntl "Zend OPcache"; do
+              php -m | grep -qx "$module" || { echo "missing PHP module: $module"; exit 1; }
+            done
+            if php -m | grep -qx pcov; then echo "pcov must not be loaded"; exit 1; fi
+            for library in "$(php-config --extension-dir)"/*.so; do
+              if ldd "$library" | grep -q "not found"; then echo "unresolved library: $library"; exit 1; fi
+            done
+            for tool in gcc g++ make git composer curl unzip pip pip3; do
+              if command -v "$tool" >/dev/null 2>&1; then echo "unexpected build tool: $tool"; exit 1; fi
+            done
+            if dpkg -s linux-libc-dev libc6-dev libssl-dev zlib1g-dev >/dev/null 2>&1; then
+              echo "header packages must not be installed"; exit 1
+            fi
+            for tool in echoscu findscu storescu movescu getscu dcmdump storescp ping su; do
+              command -v "$tool" >/dev/null || { echo "missing runtime tool: $tool"; exit 1; }
+            done
+            /opt/registry-dicom/bin/python -c "import pydicom, pynetdicom"
+            storescp --aetitle HNR_CI 11200 & storescp_pid=$!
+            sleep 1
+            echoscu --call HNR_CI 127.0.0.1 11200
+            kill "$storescp_pid"
+            cd /var/www/html && php artisan --version
+          '
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .

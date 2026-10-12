@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- App-Release-Image verschlankt: Composer-Installation und Asset-Übernahme laufen in einer eigenen Build-Stufe, die Laufzeitstufe startet vom unveränderten PHP-Basisimage und enthält keine Compiler, Kernel-Header, Composer, git, curl-CLI, pip oder `pcov` mehr. HIGH/CRITICAL-Befunde ohne verfügbaren Fix sinken im App-Image von 233 auf 37 eindeutige CVEs, die Imagegröße von 1,2 GB auf 935 MB; ein neuer CI-Schritt sichert Laufzeitumfang und DICOM-Funktion des Images ab.
+
 - XLSX-Import von AE-Titel-Kandidaten gehärtet: XML-Bestandteile werden nur noch als UTF-8 ohne abweichende Kodierungsdeklaration angenommen, sodass die bestehende DOCTYPE-Sperre nicht über UTF-16, UTF-7 oder andere Zeichenkodierungen umgangen werden kann; Regressionstests decken die abgelehnten Kodierungen und zulässige UTF-8-Varianten ab.
 
 - SEC-01 präzisiert: maßgeblich ist der letzte abgeschlossene Lauf des Supply-Chain-Workflows auf `main` unabhängig vom Auslöser; er muss grün und höchstens sieben Tage alt sein, damit auch ein von GitHub deaktivierter Zeitplan auffällt.
