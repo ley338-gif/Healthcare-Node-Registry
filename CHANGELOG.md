@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- SEC-01 präzisiert: maßgeblich ist der letzte abgeschlossene Lauf des Supply-Chain-Workflows auf `main` unabhängig vom Auslöser; er muss grün und höchstens sieben Tage alt sein, damit auch ein von GitHub deaktivierter Zeitplan auffällt.
+
 - Seit dem 31.08.2026 fehlschlagende wöchentliche Supply-Chain-Prüfung wiederhergestellt: `league/commonmark` 2.10.3, `league/flysystem` 3.36.0, `laravel/framework` 13.35.0 sowie produktive npm-Pakete (`vue` 3.5.43) schließen die neu veröffentlichten Advisories; PostgreSQL auf 18.6 und ClamAV auf 1.5.4 mit neuen Digests angehoben. Composer- und npm-Audit laufen jetzt im Supply-Chain-Workflow und damit auch wöchentlich, die vier Trivy-Scans werden unabhängig ausgeführt und erst in einem abschließenden Gate bewertet, alle Actions sind SHA-gepinnt auf Node-24-Versionen und alle Runner auf `ubuntu-24.04` festgelegt.
 
 - Verbindliche Pilot-Go-/No-Go-Matrix mit Betriebsbaseline (RPO/RTO, Restore, Logrotation, Speicher-/Zertifikats-/Health-Alarme), minimalem Rollenmodell und Healthcare-E2E-Testmatrix ergänzt; PostgreSQL-, ClamAV- und Tool-Images digest-gepinnt, Runtime-Scans/SBOMs auf alle vier Release-Images erweitert und der Storage-Commitment-Callback auf eine konfigurierbare Hostadresse begrenzbar gemacht.
