@@ -216,6 +216,7 @@ final class DiscoveryAeCandidateImportService
 
     private function xml(string $contents): DOMDocument
     {
+        $this->assertUtf8Xml($contents);
         if (stripos($contents, '<!DOCTYPE') !== false) {
             throw new RuntimeException('XLSX-Datei enthält eine unzulässige XML-Deklaration.');
         }
@@ -229,6 +230,28 @@ final class DiscoveryAeCandidateImportService
         }
 
         return $document;
+    }
+
+    /**
+     * The byte-level DOCTYPE check only holds if libxml2 decodes exactly these
+     * bytes, so UTF-16/32, EBCDIC and declared non-UTF-8 encodings such as
+     * UTF-7 are rejected before parsing.
+     */
+    private function assertUtf8Xml(string $contents): void
+    {
+        if (str_contains($contents, "\0") || ! mb_check_encoding($contents, 'UTF-8')) {
+            throw new RuntimeException('XLSX-Datei muss UTF-8-kodiertes XML enthalten.');
+        }
+
+        if (preg_match('/\A(?:\xEF\xBB\xBF)?<\?xml\b(.*?)\?>/s', $contents, $declaration) !== 1) {
+            return;
+        }
+
+        $encodings = preg_match_all('/encoding/i', $declaration[1]);
+        $utf8Encodings = preg_match_all('/\bencoding\s*=\s*(["\'])utf-8\1/i', $declaration[1]);
+        if ($encodings !== $utf8Encodings) {
+            throw new RuntimeException('XLSX-Datei muss UTF-8-kodiertes XML enthalten.');
+        }
     }
 
     private function xpath(DOMDocument $document): DOMXPath

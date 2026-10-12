@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 use ZipArchive;
 
@@ -63,6 +64,46 @@ final class DiscoveryAeCandidateImportTest extends TestCase
         ])->assertSessionHasErrors('ae_candidate_file');
     }
 
+    #[DataProvider('nonUtf8WorkbookXml')]
+    public function test_xlsx_xml_in_other_encodings_is_rejected_before_parsing(string $workbookXml): void
+    {
+        $this->actingAs($this->createRunner())->post('/discovery/ae-candidates/import-preview', [
+            'ae_candidate_file' => $this->xlsx([
+                ['schema_version', 'ae_title', 'role'],
+                ['1', 'RIS_TEST', 'called'],
+            ], workbookXml: $workbookXml),
+        ])->assertSessionHasErrors(['ae_candidate_file' => 'XLSX-Datei muss UTF-8-kodiertes XML enthalten.']);
+    }
+
+    /** @return array<string, array{string}> */
+    public static function nonUtf8WorkbookXml(): array
+    {
+        $doctype = '<!DOCTYPE workbook [<!ENTITY probe "x">]><workbook>&probe;</workbook>';
+
+        return [
+            'UTF-16LE with byte order mark' => ["\xFF\xFE".mb_convert_encoding('<?xml version="1.0" encoding="UTF-16"?>'.$doctype, 'UTF-16LE', 'UTF-8')],
+            'UTF-16BE without byte order mark' => [mb_convert_encoding('<?xml version="1.0" encoding="UTF-16"?>'.$doctype, 'UTF-16BE', 'UTF-8')],
+            'declared UTF-7' => ['<?xml version="1.0" encoding="UTF-7"?>'.mb_convert_encoding($doctype, 'UTF-7', 'UTF-8')],
+            'declared ISO-8859-1' => ['<?xml version="1.0" encoding="ISO-8859-1"?><workbook/>'],
+            'UTF-8 followed by a second encoding' => ['<?xml version="1.0" encoding="UTF-8" encoding="UTF-7"?><workbook/>'],
+        ];
+    }
+
+    public function test_xlsx_accepts_utf8_declaration_variants(): void
+    {
+        $runner = $this->createRunner();
+
+        foreach (["\xEF\xBB\xBF<?xml version='1.0' encoding='utf-8'?>", '<?xml version="1.0"?>', ''] as $declaration) {
+            $this->actingAs($runner)->post('/discovery/ae-candidates/import-preview', [
+                'ae_candidate_file' => $this->xlsx([
+                    ['schema_version', 'ae_title', 'role'],
+                    ['1', 'RIS_TEST', 'called'],
+                ], declaration: $declaration),
+            ])->assertSessionHasNoErrors()
+                ->assertSessionHas('discovery_ae_import_preview.candidates.0.ae_title', 'RIS_TEST');
+        }
+    }
+
     public function test_import_requires_discovery_run_permission_and_supported_extension(): void
     {
         $file = UploadedFile::fake()->createWithContent('candidates.csv', "schema_version,ae_title\n1,PACS");
@@ -76,14 +117,18 @@ final class DiscoveryAeCandidateImportTest extends TestCase
     }
 
     /** @param list<list<string>> $rows */
-    private function xlsx(array $rows, ?string $formulaCell = null): UploadedFile
-    {
+    private function xlsx(
+        array $rows,
+        ?string $formulaCell = null,
+        ?string $workbookXml = null,
+        string $declaration = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
+    ): UploadedFile {
         $path = tempnam(sys_get_temp_dir(), 'discovery-xlsx-');
         self::assertIsString($path);
         $archive = new ZipArchive;
         self::assertTrue($archive->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE));
-        $archive->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Candidates" sheetId="1" r:id="rId1"/></sheets></workbook>');
-        $archive->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>');
+        $archive->addFromString('xl/workbook.xml', $workbookXml ?? $declaration.'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Candidates" sheetId="1" r:id="rId1"/></sheets></workbook>');
+        $archive->addFromString('xl/_rels/workbook.xml.rels', $declaration.'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>');
         $sheetRows = '';
         foreach ($rows as $rowIndex => $row) {
             $cells = '';
@@ -96,7 +141,7 @@ final class DiscoveryAeCandidateImportTest extends TestCase
             }
             $sheetRows .= '<row r="'.($rowIndex + 1).'">'.$cells.'</row>';
         }
-        $archive->addFromString('xl/worksheets/sheet1.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'.$sheetRows.'</sheetData></worksheet>');
+        $archive->addFromString('xl/worksheets/sheet1.xml', $declaration.'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'.$sheetRows.'</sheetData></worksheet>');
         $archive->close();
 
         return new UploadedFile($path, 'candidates.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
