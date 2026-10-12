@@ -1,6 +1,6 @@
 # Pilot-Readiness und Go/No-Go
 
-Diese Seite ist die verbindliche P0-Entscheidungsmatrix für `0.9.0-rc.1`. Ein Pilot-Go ist nur zulässig, wenn alle P0-Kriterien den Status **erfüllt** besitzen. Eine dokumentierte Planung, ein lokal bestandener Test oder eine Risikoakzeptanz ersetzt keinen ausdrücklich geforderten Nachweis auf dem Pilot-Zielsystem.
+Diese Seite ist die verbindliche P0-Entscheidungsmatrix für `0.9.0-rc.2`. Ein Pilot-Go ist nur zulässig, wenn alle P0-Kriterien den Status **erfüllt** besitzen. Eine dokumentierte Planung, ein lokal bestandener Test oder eine Risikoakzeptanz ersetzt keinen ausdrücklich geforderten Nachweis auf dem Pilot-Zielsystem.
 
 Arbeitspakete, Abhängigkeiten, Aufwand und Abnahmekriterien sind im [Pilot-Backlog](Backlog.md) geführt.
 

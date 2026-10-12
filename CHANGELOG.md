@@ -2,11 +2,15 @@
 
 ## Unreleased
 
+## 0.9.0-rc.2 – 2026-10-12
+
 - App-Release-Image verschlankt: Composer-Installation und Asset-Übernahme laufen in einer eigenen Build-Stufe, die Laufzeitstufe startet vom unveränderten PHP-Basisimage und enthält keine Compiler, Kernel-Header, Composer, git, curl-CLI, pip oder `pcov` mehr. HIGH/CRITICAL-Befunde ohne verfügbaren Fix sinken im App-Image von 233 auf 37 eindeutige CVEs, die Imagegröße von 1,2 GB auf 935 MB; ein neuer CI-Schritt sichert Laufzeitumfang und DICOM-Funktion des Images ab.
 
 - XLSX-Import von AE-Titel-Kandidaten gehärtet: XML-Bestandteile werden nur noch als UTF-8 ohne abweichende Kodierungsdeklaration angenommen, sodass die bestehende DOCTYPE-Sperre nicht über UTF-16, UTF-7 oder andere Zeichenkodierungen umgangen werden kann; Regressionstests decken die abgelehnten Kodierungen und zulässige UTF-8-Varianten ab.
 
 - SEC-01 präzisiert: maßgeblich ist der letzte abgeschlossene Lauf des Supply-Chain-Workflows auf `main` unabhängig vom Auslöser; er muss grün und höchstens sieben Tage alt sein, damit auch ein von GitHub deaktivierter Zeitplan auffällt.
+
+## 0.9.0-rc.1 – 2026-10-12
 
 - Seit dem 31.08.2026 fehlschlagende wöchentliche Supply-Chain-Prüfung wiederhergestellt: `league/commonmark` 2.10.3, `league/flysystem` 3.36.0, `laravel/framework` 13.35.0 sowie produktive npm-Pakete (`vue` 3.5.43) schließen die neu veröffentlichten Advisories; PostgreSQL auf 18.6 und ClamAV auf 1.5.4 mit neuen Digests angehoben. Composer- und npm-Audit laufen jetzt im Supply-Chain-Workflow und damit auch wöchentlich, die vier Trivy-Scans werden unabhängig ausgeführt und erst in einem abschließenden Gate bewertet, alle Actions sind SHA-gepinnt auf Node-24-Versionen und alle Runner auf `ubuntu-24.04` festgelegt.
 

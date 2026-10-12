@@ -126,7 +126,7 @@ RUN rm \
         /usr/local/etc/php/conf.d/docker-php-ext-pcov.ini \
         /usr/local/etc/php/conf.d/20-pcov.ini
 
-ARG APP_VERSION=0.9.0-rc.1
+ARG APP_VERSION=0.9.0-rc.2
 ARG VCS_REF=unknown
 
 LABEL org.opencontainers.image.title="Healthcare Node Registry" \
@@ -148,7 +148,7 @@ FROM nginx:1.30.4-alpine3.24@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9f
 
 RUN apk upgrade --no-cache
 
-ARG APP_VERSION=0.9.0-rc.1
+ARG APP_VERSION=0.9.0-rc.2
 ARG VCS_REF=unknown
 
 LABEL org.opencontainers.image.title="Healthcare Node Registry Web" \

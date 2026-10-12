@@ -2,7 +2,7 @@
 
 ## Release-Kandidat
 
-Der erste Pilot-Kandidat ist als `0.9.0-rc.1` vorgesehen. Ein freigegebenes Artefakt wird durch drei gemeinsam dokumentierte Werte identifiziert:
+Der aktuelle Pilot-Kandidat ist `0.9.0-rc.2`. `0.9.0-rc.1` ist für den Pilot nicht zu verwenden, weil er eine in `0.9.0-rc.2` behobene Schwachstelle im XLSX-Import enthält. Ein freigegebenes Artefakt wird durch drei gemeinsam dokumentierte Werte identifiziert:
 
 - Git-Commit (`HNR_REVISION`),
 - fachliche Version (`HNR_VERSION`),
@@ -15,8 +15,8 @@ Für einen belastbaren Nachweis muss `HNR_IMAGE_TAG` eindeutig sein; `latest` is
 Die Release-Überlagerung baut Anwendungscode, Composer-Abhängigkeiten und Frontend-Artefakte in die Images ein. Anders als der Entwicklungs-Stack bindet sie keinen Quellcode vom Host ein.
 
 ```bash
-export HNR_VERSION=0.9.0-rc.1
-export HNR_IMAGE_TAG=0.9.0-rc.1
+export HNR_VERSION=0.9.0-rc.2
+export HNR_IMAGE_TAG=0.9.0-rc.2
 export HNR_REVISION="$(git rev-parse HEAD)"
 docker compose -f docker-compose.yml -f docker-compose.release.yml build --pull
 docker image inspect "healthcare-node-registry-app:${HNR_IMAGE_TAG}" --format '{{.Id}}'
