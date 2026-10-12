@@ -4,7 +4,7 @@
 
 - Ein Pilot-Go bleibt blockiert, bis Zielhostinstallation, Restore/RPO/RTO, Alarmwege, namentliches Rollen-/MFA-Review, Healthcare-E2E mit synthetischen Daten, UX-Abnahme und formale Dokumentfreigabe in einer autorisierten Pilotumgebung nachgewiesen sind. Die technische Go/No-Go-Matrix ist vorhanden, ersetzt diese externen Nachweise aber ausdrücklich nicht.
 
-- Die bestehenden Application-/Documentation-Workflows verwenden teilweise noch Actions auf Node-20-Basis, die GitHub derzeit unter Node 24 ausführt und mit einer Deprecation-Warnung versieht. Der neue Supply-Chain-Workflow verwendet bereits SHA-gepinnte Node-24-Actions; die übrige CI-Aktualisierung ist als nicht pilot-blockierende Wartung offen.
+- Die reinen Entwicklungswerkzeuge für das Linting besitzen bekannte Advisories (`braces`/`micromatch`/`fast-glob` über `@vue/eslint-config-typescript`, `postcss-selector-parser` über `eslint-plugin-vue`). Sie sind weder in den Release-Images noch in ausgelieferten Frontend-Artefakten enthalten; die Behebung erfordert Major-Upgrades der ESLint-Konfiguration und ist als nicht pilot-blockierende Wartung offen.
 
 - Der Audit-Trail besitzt eine interne SHA-256-Hash-Chain und kontrollierte Aufbewahrung;
   eine externe signierte Verankerung gegen Angreifer mit vollständigem Datenbank-Schreibzugriff

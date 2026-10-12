@@ -2,7 +2,7 @@
 
 ## Verbindliche CI-Nachweise
 
-Der Workflow `.github/workflows/security.yml` läuft für Pull Requests, Änderungen auf `main`, manuelle Prüfungen und wöchentlich ohne Codeänderung. Fremde Actions sind auf unveränderliche Commit-SHAs festgelegt.
+Der Workflow `.github/workflows/security.yml` läuft für Pull Requests, Änderungen auf `main`, manuelle Prüfungen und wöchentlich ohne Codeänderung. In allen Workflows sind fremde Actions auf unveränderliche Commit-SHAs mit Node-24-Runtime und die Runner auf `ubuntu-24.04` festgelegt, damit ein Wechsel des `ubuntu-latest`-Labels die Nachweise nicht unbemerkt verändert.
 
 | Kontrolle | Umfang | Merge-Gate |
 |---|---|---|
@@ -11,6 +11,8 @@ Der Workflow `.github/workflows/security.yml` läuft für Pull Requests, Änderu
 | npm Audit | produktive Pakete aus `package-lock.json` | hohe und kritische Befunde blockieren |
 | Trivy | Release-App-, Web-, PostgreSQL- und ClamAV-Image, OS- und Bibliothekspakete | behebbare hohe und kritische Befunde blockieren |
 | CycloneDX SBOM | alle vier im Release-Stack eingesetzten Images | Erzeugung der vier 30 Tage aufbewahrten Artefakte ist verpflichtend |
+
+Composer- und npm-Audit laufen auf Basis der Lockfiles in einem eigenen Job und damit auch im wöchentlichen Lauf. Die vier Trivy-Scans laufen unabhängig voneinander; ein abschließender Gate-Schritt fasst ihre Ergebnisse in der Job-Zusammenfassung zusammen und lässt den Job fehlschlagen, sobald ein Image nicht bestanden hat. Ein Befund in einem Image verdeckt dadurch keine Befunde in den übrigen Images.
 
 Nicht behebbare Containerbefunde werden im automatischen Gate nicht als Fehler gewertet, müssen aber vor einem Pilot-Release anhand des vollständigen Scanreports risikobewertet werden. Ausnahmen oder Ignore-Regeln benötigen eine dokumentierte CVE-bezogene Begründung, Owner, Ablaufdatum und Security-Freigabe. Pauschale oder unbegrenzte Ausnahmen sind unzulässig.
 
@@ -25,3 +27,5 @@ Die SBOM-Dateien gehören zum Release-Nachweis und dürfen keine Secrets enthalt
 ## Regelmäßige Prüfung
 
 Der wöchentliche Lauf erkennt neu veröffentlichte Schwachstellen auch ohne Repositoryänderung. Ein fehlgeschlagener Zeitplanlauf eröffnet keinen automatischen Produktionszugriff: Security bewertet den Befund, sperrt betroffene Release-Kandidaten und priorisiert einen Patch-Build. Für den Pilot gilt ein offener kritischer oder hoher, praktisch relevanter Befund als No-Go.
+
+SEC-01 der [Pilot-Entscheidungsmatrix](../Pilot/README.md) gilt nur als erfüllt, solange der jeweils letzte Zeitplanlauf auf `main` grün ist. Zwischen dem 31.08. und dem 12.10.2026 schlug der Zeitplanlauf wegen neu veröffentlichter Advisories zu `league/commonmark` sowie veralteter PostgreSQL- und ClamAV-Basisimages wiederholt fehl, ohne dass dies bemerkt wurde. Basis-Image-Digests werden deshalb bei einem roten Zeitplanlauf auf den aktuellen Patchstand derselben Hauptversion angehoben, statt Ausnahmen einzutragen.

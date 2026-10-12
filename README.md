@@ -51,7 +51,7 @@ Der aktuelle Stand ist eine aktiv entwickelte Anwendung. Die unten aufgeführten
 - DICOM Discovery: geführter Wizard, sofortige sowie täglich oder wöchentlich geplante asynchrone Netzwerk-Scans (Ping/Reverse-DNS, TCP-Portprüfung, begrenzte DICOM-C-ECHO-Tests), regelbasierte Klassifizierung mit Confidence-Score, Review-Queue mit Export, Vergleich abgeschlossener Scanstände, In-App-Hinweise bei neuen oder verschwundenen Hosts, Duplikaterkennung und Übernahme in die System-Registry (siehe `docs/Features/dicom-discovery.md`)
 - Backup- und Restore-Skripte für PostgreSQL und privaten Dokumentenspeicher
 
-Der Docker-Stack bindet ClamAV 1.5.3 über das interne ClamD-Netzwerk an. Uploads werden synchron gescannt; ein stündlicher Scheduler prüft offene Scans erneut. Ist der Scanner deaktiviert oder nicht erreichbar, werden Dateien mit `unavailable` privat gespeichert und Download sowie Vorschau bleiben fail-closed gesperrt.
+Der Docker-Stack bindet ClamAV 1.5.4 über das interne ClamD-Netzwerk an. Uploads werden synchron gescannt; ein stündlicher Scheduler prüft offene Scans erneut. Ist der Scanner deaktiviert oder nicht erreichbar, werden Dateien mit `unavailable` privat gespeichert und Download sowie Vorschau bleiben fail-closed gesperrt.
 
 ## Nicht enthalten
 
@@ -226,8 +226,8 @@ Dieser Zugang ist synthetisch und darf nicht in produktiven oder gemeinsam errei
 | `app` | Laravel auf PHP-FPM, Port 9000 nur im Compose-Netz | keiner | Standard | `unless-stopped` |
 | `worker` | Queue-Worker (`php artisan queue:work database --queue=discovery,default`) für asynchrone Discovery-Scan-Läufe; Heartbeat- und Datenbank-Healthcheck | keiner | Standard | `unless-stopped` |
 | `scheduler` | Laravel-Scheduler für Discovery-Zeitpläne, Malware-Rescans, Dokument-Ablaufprüfung und Audit-Aufbewahrung | keiner | Standard | `unless-stopped` |
-| `clamav` | ClamAV 1.5.3 mit ClamD und FreshClam | keiner | Standard | `unless-stopped` |
-| `db` | PostgreSQL 18.4 | keiner | Standard | `unless-stopped` |
+| `clamav` | ClamAV 1.5.4 mit ClamD und FreshClam | keiner | Standard | `unless-stopped` |
+| `db` | PostgreSQL 18.6 | keiner | Standard | `unless-stopped` |
 | `node` | npm-/Vite-Werkzeugcontainer | keiner | `tools` | keine |
 | `app-test` | isolierte Backend-Testausführung | keiner | `test` | keine |
 | `db-test` | isolierte PostgreSQL-Testdatenbank | keiner | `test` | keine |

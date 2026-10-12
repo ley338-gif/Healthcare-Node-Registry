@@ -22,7 +22,7 @@ docker compose -f docker-compose.yml -f docker-compose.release.yml build --pull
 docker image inspect "healthcare-node-registry-app:${HNR_IMAGE_TAG}" --format '{{.Id}}'
 docker image inspect "healthcare-node-registry-web:${HNR_IMAGE_TAG}" --format '{{.Id}}'
 docker image inspect "healthcare-node-registry-postgres:${HNR_IMAGE_TAG}" --format '{{.Id}}'
-docker image inspect "clamav/clamav:1.5.3@sha256:d06c1d6a451d616e1dd79b42f44c8c8c291bba9cf4e75ebc4d0e43c1c6dd87bb" --format '{{.Id}}'
+docker image inspect "clamav/clamav:1.5.4@sha256:638d90201ee7ee6a82d249a2fc23b132e578673b5f1f2766852b127676ca1ef6" --format '{{.Id}}'
 ```
 
 Das Datenbankimage entfernt den Root-Startpfad des offiziellen Basisimages und läuft fest als Benutzer `postgres`. Nach dem Push der drei gebauten Images in eine interne Registry ist zusätzlich der dort ausgewiesene Repo-Digest zu protokollieren und beim Zielabruf zu verifizieren; der gepinnte ClamAV-Digest wird ebenfalls festgehalten. Auf PowerShell werden die drei Werte über `$env:HNR_VERSION`, `$env:HNR_IMAGE_TAG` und `$env:HNR_REVISION` gesetzt. Vor einer Freigabe müssen beide Compose-Varianten validiert werden:

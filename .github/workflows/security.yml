@@ -15,7 +15,7 @@ permissions:
 jobs:
   secrets:
     name: Secret history
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout full history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -26,9 +26,31 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  dependencies:
+    name: Dependency advisories
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.4"
+          coverage: none
+          tools: composer:v2
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: Audit Composer lock file
+        run: composer audit --locked --no-interaction
+      - name: Audit production npm packages
+        if: ${{ !cancelled() }}
+        run: npm audit --omit=dev --audit-level=high --package-lock-only
+
   release-images:
     name: Release images and SBOM
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -54,9 +76,13 @@ jobs:
             --build-arg "VCS_REF=${GITHUB_SHA}" \
             --tag healthcare-node-registry-postgres:security \
             --file docker/postgres/Dockerfile .
-          docker pull clamav/clamav:1.5.3@sha256:d06c1d6a451d616e1dd79b42f44c8c8c291bba9cf4e75ebc4d0e43c1c6dd87bb
+          docker pull clamav/clamav:1.5.4@sha256:638d90201ee7ee6a82d249a2fc23b132e578673b5f1f2766852b127676ca1ef6
 
+      # Each scan reports independently so one finding cannot hide the
+      # remaining images; the final gate step fails the job afterwards.
       - name: Scan application image
+        id: scan-app
+        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
@@ -69,6 +95,8 @@ jobs:
           timeout: 15m
 
       - name: Scan web image
+        id: scan-web
+        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
@@ -81,6 +109,8 @@ jobs:
           timeout: 15m
 
       - name: Scan database image
+        id: scan-database
+        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
@@ -93,10 +123,12 @@ jobs:
           timeout: 15m
 
       - name: Scan malware-scanner image
+        id: scan-malware-scanner
+        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
-          image-ref: clamav/clamav:1.5.3@sha256:d06c1d6a451d616e1dd79b42f44c8c8c291bba9cf4e75ebc4d0e43c1c6dd87bb
+          image-ref: clamav/clamav:1.5.4@sha256:638d90201ee7ee6a82d249a2fc23b132e578673b5f1f2766852b127676ca1ef6
           scanners: vuln
           vuln-type: os,library
           severity: HIGH,CRITICAL
@@ -140,10 +172,43 @@ jobs:
       - name: Generate malware-scanner image SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
-          image: clamav/clamav:1.5.3@sha256:d06c1d6a451d616e1dd79b42f44c8c8c291bba9cf4e75ebc4d0e43c1c6dd87bb
+          image: clamav/clamav:1.5.4@sha256:638d90201ee7ee6a82d249a2fc23b132e578673b5f1f2766852b127676ca1ef6
           format: cyclonedx-json
           output-file: healthcare-node-registry-clamav.cdx.json
           artifact-name: healthcare-node-registry-clamav-sbom
           syft-version: v1.51.0
           upload-artifact-retention: 30
           upload-release-assets: false
+
+      - name: Enforce container vulnerability gate
+        if: always()
+        shell: bash
+        env:
+          SCAN_APP: ${{ steps.scan-app.outcome }}
+          SCAN_WEB: ${{ steps.scan-web.outcome }}
+          SCAN_DATABASE: ${{ steps.scan-database.outcome }}
+          SCAN_MALWARE_SCANNER: ${{ steps.scan-malware-scanner.outcome }}
+        run: |
+          set -euo pipefail
+
+          failed=0
+          {
+            echo "| Image | Trivy outcome |"
+            echo "|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          for result in \
+            "application:${SCAN_APP}" \
+            "web:${SCAN_WEB}" \
+            "database:${SCAN_DATABASE}" \
+            "malware-scanner:${SCAN_MALWARE_SCANNER}"; do
+            image="${result%%:*}"
+            outcome="${result#*:}"
+            echo "| ${image} | ${outcome:-not run} |" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$outcome" != "success" ]; then
+              echo "::error title=Container vulnerability gate::${image} image scan outcome: ${outcome:-not run}"
+              failed=1
+            fi
+          done
+
+          exit "$failed"

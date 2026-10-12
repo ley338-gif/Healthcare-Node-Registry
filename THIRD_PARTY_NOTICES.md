@@ -12,6 +12,6 @@ The complete license texts are included in the installed package metadata inside
 
 The Docker Compose stack uses the official ClamAV container image:
 
-- `clamav/clamav` 1.5.3 — GNU General Public License, version 2
+- `clamav/clamav` 1.5.4 — GNU General Public License, version 2
 
 Source and license information: https://github.com/Cisco-Talos/clamav
