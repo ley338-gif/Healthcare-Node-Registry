@@ -61,18 +61,18 @@ jobs:
           set -euo pipefail
           docker build --pull \
             --target release-app \
-            --build-arg "APP_VERSION=0.9.0-rc.1" \
+            --build-arg "APP_VERSION=0.9.0-rc.2" \
             --build-arg "VCS_REF=${GITHUB_SHA}" \
             --tag healthcare-node-registry-app:security \
             --file docker/php/Dockerfile .
           docker build --pull \
             --target release-web \
-            --build-arg "APP_VERSION=0.9.0-rc.1" \
+            --build-arg "APP_VERSION=0.9.0-rc.2" \
             --build-arg "VCS_REF=${GITHUB_SHA}" \
             --tag healthcare-node-registry-web:security \
             --file docker/php/Dockerfile .
           docker build --pull \
-            --build-arg "APP_VERSION=0.9.0-rc.1" \
+            --build-arg "APP_VERSION=0.9.0-rc.2" \
             --build-arg "VCS_REF=${GITHUB_SHA}" \
             --tag healthcare-node-registry-postgres:security \
             --file docker/postgres/Dockerfile .

@@ -1,6 +1,6 @@
 # Roadmap
 
-## 0.9.0-rc.1 – Pilot-Readiness
+## 0.9.0-rc.2 – Pilot-Readiness
 
 - [x] unveränderlicher Release-Build ohne produktive Quellcode-Bind-Mounts
 - [x] dokumentierter Installations-, Upgrade- und Rollback-Prozess

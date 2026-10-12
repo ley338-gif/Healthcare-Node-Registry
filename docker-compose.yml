@@ -101,12 +101,12 @@ services:
       - /var/run
 
   db:
-    image: "healthcare-node-registry-postgres:${HNR_IMAGE_TAG:-0.9.0-rc.1}"
+    image: "healthcare-node-registry-postgres:${HNR_IMAGE_TAG:-0.9.0-rc.2}"
     build:
       context: .
       dockerfile: docker/postgres/Dockerfile
       args:
-        APP_VERSION: "${HNR_VERSION:-0.9.0-rc.1}"
+        APP_VERSION: "${HNR_VERSION:-0.9.0-rc.2}"
         VCS_REF: "${HNR_REVISION:-unknown}"
     restart: unless-stopped
     logging: *default-logging
