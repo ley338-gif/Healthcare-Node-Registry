@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Die kompakte DICOM-Statusanzeige bewertet gespeicherte C-ECHO-Ergebnisse und die registrierte C-ECHO-Unterstützung; sie ist kein kontinuierliches Monitoring. Fehlende Endpunktdaten und zwischenzeitliche Änderungen der Erreichbarkeit sind am jeweiligen Knoten zu prüfen.
+- Die vereinfachte Registry-Navigation und Systemansicht ersetzen noch keinen geführten Erfassungsassistenten. Für Passwortwiederherstellung fehlt weiterhin ein eigener interaktiver Konsolenbefehl; der vorhandene MFA-Reset bleibt unverändert.
+
 - Ein Pilot-Go bleibt blockiert, bis Zielhostinstallation, Restore/RPO/RTO, Alarmwege, namentliches Rollen-/MFA-Review, Healthcare-E2E mit synthetischen Daten, UX-Abnahme und formale Dokumentfreigabe in einer autorisierten Pilotumgebung nachgewiesen sind. Die technische Go/No-Go-Matrix ist vorhanden, ersetzt diese externen Nachweise aber ausdrücklich nicht.
 
 - Die reinen Entwicklungswerkzeuge für das Linting besitzen bekannte Advisories (`braces`/`micromatch`/`fast-glob` über `@vue/eslint-config-typescript`, `postcss-selector-parser` über `eslint-plugin-vue`). Sie sind weder in den Release-Images noch in ausgelieferten Frontend-Artefakten enthalten; die Behebung erfordert Major-Upgrades der ESLint-Konfiguration und ist als nicht pilot-blockierende Wartung offen.

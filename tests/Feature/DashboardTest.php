@@ -8,6 +8,7 @@ use App\Models\DicomNode;
 use App\Models\Organization;
 use App\Models\Role;
 use App\Models\Site;
+use App\Models\System;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -44,6 +45,34 @@ final class DashboardTest extends TestCase
             ->has('diagnostics.lastSuccessfulEchoAt')
             ->has('diagnostics.recentTests', 3)
             ->where('summary.unverifiedDicomNodes', 1));
+    }
+
+    public function test_echo_status_groups_do_not_count_unsupported_or_incomplete_results_as_success(): void
+    {
+        $this->withoutVite();
+        $system = System::factory()->create(['name' => 'Prüfstatus-Testsystem']);
+        DicomNode::factory()->for($system)->create(['last_verified_at' => now(), 'last_verification_status' => 'success']);
+        DicomNode::factory()->for($system)->create(['last_verified_at' => now(), 'last_verification_status' => 'failed']);
+        DicomNode::factory()->for($system)->create();
+        DicomNode::factory()->for($system)->create(['last_verification_status' => 'success']);
+        DicomNode::factory()->for($system)->create(['last_verified_at' => now()]);
+        DicomNode::factory()->for($system)->create(['supports_echo' => false]);
+        DicomNode::factory()->for($system)->create(['supports_echo' => false, 'last_verified_at' => now(), 'last_verification_status' => 'success']);
+        DicomNode::factory()->for($system)->create(['archived_at' => now(), 'last_verified_at' => now(), 'last_verification_status' => 'success']);
+
+        $this->actingAs(User::factory()->create())->get('/')->assertInertia(fn ($page) => $page
+            ->where('summary.dicomNodes', 7)
+            ->where('summary.successfulDicomNodes', 1)
+            ->where('summary.failedDicomNodes', 1)
+            ->where('summary.unverifiedDicomNodes', 3)
+            ->where('summary.notTestableDicomNodes', 2));
+    }
+
+    public function test_unsupported_node_does_not_complete_the_echo_task(): void
+    {
+        $this->withoutVite();
+        DicomNode::factory()->create(['supports_echo' => false]);
+        $this->actingAs(User::factory()->create())->get('/')->assertInertia(fn ($page) => $page->where('tasks.3.completed', false));
     }
 
     public function test_diagnostic_details_are_hidden_without_existing_view_permission(): void

@@ -29,6 +29,8 @@ final class SystemOverviewQuery
                 'dicomNodes as dicom_nodes_count' => fn ($query) => $query->active(),
                 'dicomNodes as failed_dicom_nodes_count' => fn ($query) => $query
                     ->active()
+                    ->where('supports_echo', true)
+                    ->whereNotNull('last_verified_at')
                     ->whereNotNull('last_verification_status')
                     ->where('last_verification_status', '!=', 'success'),
             ])

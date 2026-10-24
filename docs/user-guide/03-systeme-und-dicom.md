@@ -4,8 +4,8 @@ description: Systeme, DICOM-Knoten und Kommunikationsbeziehungen pflegen.
 document_type: Benutzerhandbuch
 chapter: 3
 status: draft
-version: 0.1
-last_updated: 2026-08-02
+version: 0.2
+last_updated: 2026-10-24
 ---
 
 # Systeme und DICOM
@@ -29,3 +29,29 @@ Ein DICOM-Knoten beschreibt eine Application Entity mit AE Title, Rolle, Status,
 Eine Verbindung ordnet Quellknoten, Zielknoten und DICOM-Dienst zu. Sie dokumentiert einen erwarteten Kommunikationsweg, garantiert aber weder Erreichbarkeit noch fachliche Freigabe.
 
 Archivieren Sie veraltete Knoten oder Beziehungen. Nutzen Sie Diagnosefunktionen erst nach Freigabe des Zielsystems. Fachliche Hintergründe stehen in der [DICOM-Referenz](../dicom-reference/README.md).
+
+## Systemansicht
+
+Die Systemansicht hat vier Reiter:
+
+- **Übersicht:** Produkt, Hersteller, Version, Betriebsstatus, Standort und Verantwortlichkeit. Ergänzende technische Angaben wie Betriebssystem, Inventar- und Seriennummer sowie System-ID stehen unter **Weitere Details**.
+- **Schnittstellen:** Netzwerkinterfaces, DICOM-Knoten, Kommunikationsverbindungen und Topologie des Systems.
+- **Dokumentation:** Strukturierte Betriebsdokumentation und zugehörige Dateien.
+- **Historie:** Änderungen und Audit-Ereignisse.
+
+Die kompakte DICOM-Statuszeile fasst Knoten und bisherige Prüfungen zusammen. **Verbindung prüfen** öffnet den Schnittstellenbereich; die konkrete C-ECHO-Prüfung wird dort am gewünschten Knoten gestartet. Beim Wechsel des Systems öffnet sich wieder die Übersicht. Ein HL7-Reiter wird erst mit einer nutzbaren HL7-Funktion angeboten.
+
+## Bestand und Detailseite
+
+Der Systembestand zeigt eine kompakte Tabelle und auf kleinen Bildschirmen eine Liste. Über den Systemnamen öffnet sich eine eigene Detailseite. **Zurück zum Systembestand** führt zur vorherigen Liste einschließlich angewendeter Filter und Seitennummer. Die Seitennavigation erschließt auch Bestände mit mehr als 20 Systemen.
+
+Der DICOM-Prüfstatus unterscheidet erfolgreich geprüfte, fehlgeschlagene, ungeprüfte und nicht per C-ECHO prüfbare Knoten. Ein gespeicherter Erfolg belegt die letzte Prüfung, nicht die aktuelle Erreichbarkeit. Knoten ohne C-ECHO-Unterstützung zählen nicht als erfolgreich geprüft.
+
+
+## Ansichten
+
+Die folgenden Screenshots zeigen ausschließlich synthetische lokale Beispieldaten:
+
+![Systembestand mit direkter Registry-Navigation](../assets/registry/systembestand-desktop.png)
+
+![Produkt- und Betriebsübersicht eines Systems](../assets/registry/systemdetail-desktop.png)

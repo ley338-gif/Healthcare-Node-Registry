@@ -4,8 +4,8 @@ description: Anmeldung, Hauptnavigation und globale Suche.
 document_type: Benutzerhandbuch
 chapter: 1
 status: draft
-version: 0.1
-last_updated: 2026-08-02
+version: 0.2
+last_updated: 2026-10-24
 ---
 
 # Einstieg, Navigation und Suche
@@ -20,7 +20,13 @@ Dieses Kapitel erklärt Anmeldung, Navigation und projektweite Suche.
 
 ## Arbeitsbereiche
 
-Die linke Navigation führt zu Dashboard, Organisationsstruktur, Systemen, Dokumenten, Topologie, Tests, Audit und Einstellungen. Nicht erlaubte Bereiche oder Aktionen können ausgeblendet beziehungsweise serverseitig abgewiesen werden.
+Die Hauptnavigation führt direkt zur **Übersicht**, zu den drei Registry-Bereichen **Systeme**, **Organisation** und **Dokumente**, zu **Netzwerk** und **Werkzeuge** unter DICOM sowie zur **Verwaltung**.
+
+Systeme, Organisation und Dokumente sind eigenständige Arbeitsbereiche. Dokumentation und Dateien bleiben zusätzlich direkt am jeweiligen System, Standort oder der Organisation erreichbar.
+
+Nur Netzwerk (Topologie, Verbindungen, Firewall-Matrix), Werkzeuge (Geräte finden, Tests) und Verwaltung (Audit, Einstellungen) zeigen eine zusätzliche Bereichsnavigation. Auf kleinen Bildschirmen sind dieselben Hauptziele oberhalb des Inhalts erreichbar. Bereiche ohne Berechtigung werden ausgeblendet; die serverseitigen Berechtigungsprüfungen bleiben bestehen.
+
+Für den Einstieg zunächst die Organisationsstruktur erfassen, anschließend ein Healthcare-System mit seinen DICOM-Knoten dokumentieren und schließlich die Kommunikationsbeziehungen anlegen und prüfen. Die Aufgaben auf der Übersicht zeigen den bisherigen Fortschritt.
 
 ## Globale Suche
 

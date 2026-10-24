@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Registry-Navigation vereinfacht: Systeme, Organisation und Dokumente sind eigenständige direkte Einstiege; Netzwerk und Werkzeuge sind unter DICOM gebündelt, Audit und Einstellungen unter Verwaltung. Nicht zugängliche Bereiche werden ausgeblendet; mobile Navigation und Aktionsleisten passen sich der Bildschirmbreite an.
+- Systembestand als kompakte Tabelle beziehungsweise mobile Liste mit Seitennavigation und separater Detailseite gestaltet. Rücksprung erhält angewendete Listenfilter und Seitennummer; bisherige `selected`-Links werden zur Systemdetailseite weitergeführt.
+- Systemdetail auf Übersicht, Schnittstellen, Dokumentation und Historie reduziert. Produkt- und Betriebsdaten stehen im Vordergrund, ergänzende Metadaten sind einklappbar, Netzwerkinterfaces und DICOM-Kommunikation einschließlich Topologie sind zusammengeführt. Der nicht implementierte HL7-Platzhalter entfällt.
+- DICOM-Prüfstatus korrigiert: Nur vollständige gespeicherte C-ECHO-Ergebnisse zählen als Erfolg oder Fehler; ungeprüfte Knoten und Knoten ohne C-ECHO-Unterstützung sind getrennt ausgewiesen. Nicht prüfbare Knoten schließen die Dashboard-Einstiegsaufgabe zur C-ECHO-Prüfung nicht mehr ab. Ein gespeichertes Ergebnis wird ausdrücklich nicht als laufendes Monitoring dargestellt.
+
 ## 0.9.0-rc.2 – 2026-10-12
 
 - App-Release-Image verschlankt: Composer-Installation und Asset-Übernahme laufen in einer eigenen Build-Stufe, die Laufzeitstufe startet vom unveränderten PHP-Basisimage und enthält keine Compiler, Kernel-Header, Composer, git, curl-CLI, pip oder `pcov` mehr. HIGH/CRITICAL-Befunde ohne verfügbaren Fix sinken im App-Image von 233 auf 37 eindeutige CVEs, die Imagegröße von 1,2 GB auf 935 MB; ein neuer CI-Schritt sichert Laufzeitumfang und DICOM-Funktion des Images ab.
