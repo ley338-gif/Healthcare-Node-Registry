@@ -1,5 +1,14 @@
 # Roadmap
 
+## Registry-Bedienbarkeit – Unreleased
+
+- [x] direkte Registry-Einstiege für Systeme, Organisation und Dokumente
+- [x] kompakter Systembestand mit separaten Detailseiten und Rückweg zur gefilterten Liste
+- [x] vier Systemreiter mit gemeinsamer Schnittstellenansicht und Produkt-/Betriebsübersicht
+- [x] eindeutige Trennung gespeicherter C-ECHO-Ergebnisse von ungeprüften und nicht prüfbaren Knoten
+- [ ] geführter Ablauf zur erstmaligen Erfassung eines Healthcare-Produkts
+- [ ] dokumentierter interaktiver Konsolenbefehl zur Passwortwiederherstellung
+
 ## 0.9.0-rc.2 – Pilot-Readiness
 
 - [x] unveränderlicher Release-Build ohne produktive Quellcode-Bind-Mounts

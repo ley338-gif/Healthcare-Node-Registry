@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import type { NetworkNode, NetworkConnection } from '../../../Components/network/DicomNetworkMap.vue';
 import { ArrowLeft } from '@lucide/vue';
 import type { DicomConnection, DicomNodeOption } from '../../../Components/registry/dicom/DicomConnectionManager.vue';
 import type { DicomNode } from '../../../Components/registry/dicom/DicomNodeManager.vue';
@@ -12,13 +13,15 @@ import SystemWorkspaceDetail, {
     type SystemDetail,
 } from '../../../Components/registry/systems/SystemWorkspaceDetail.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import type { AuditEvent } from '../../../Components/audit/AuditHistoryPanel.vue';
 import type { RegistryDocumentationItem } from '../../../Components/documentation/documentationTypes';
 import type { RegistryDocumentPagination } from '../../../Components/documents/RegistryDocumentList.vue';
 
 defineProps<{
     system: SystemDetail;
+    topologyNodes: NetworkNode[];
+    topologyConnections: NetworkConnection[];
     systemTypes: SelectOption[];
     statuses: SelectOption[];
     manufacturers: SelectOption[];
@@ -56,6 +59,12 @@ defineProps<{
 }>();
 
 const editPanelOpen = ref(false);
+const page = usePage();
+const initialReturnTo = new URLSearchParams(page.url.split('?')[1] ?? '').get('return_to') ?? '';
+const returnUrl = computed(() => {
+    const value = new URLSearchParams(page.url.split('?')[1] ?? '').get('return_to') ?? initialReturnTo;
+    return /^\/systems(?:\?|$)/.test(value) ? value : '/systems';
+});
 </script>
 
 <template>
@@ -63,14 +72,16 @@ const editPanelOpen = ref(false);
 
     <AppLayout>
         <Link
-            :href="`/systems?selected=${system.public_id}`"
+            :href="returnUrl"
             class="mb-5 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-blue-700"
         >
             <ArrowLeft :size="17" />
-            Im System-Workspace öffnen
+            Zurück zum Systembestand
         </Link>
 
         <SystemWorkspaceDetail
+            :topology-nodes="topologyNodes"
+            :topology-connections="topologyConnections"
             :system="system"
             :system-types="systemTypes"
             :statuses="statuses"

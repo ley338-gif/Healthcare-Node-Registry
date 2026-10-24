@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
+import SectionNavigation from '../Components/layout/SectionNavigation.vue';
 import AppHeader from '../Components/layout/AppHeader.vue';
 import AppSidebar from '../Components/layout/AppSidebar.vue';
 import type { PageProps } from '../types';
@@ -10,6 +11,7 @@ const page = usePage<PageProps>();
         <AppSidebar />
         <div class="lg:pl-72">
             <AppHeader />
+            <SectionNavigation />
             <main class="p-5 lg:p-8">
                 <div
                     v-if="page.props.flash.success"

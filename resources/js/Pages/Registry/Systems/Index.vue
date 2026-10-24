@@ -1,21 +1,11 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Download, FilterX, Search, Server } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import SystemCreateSlideOver from '../../../Components/registry/systems/SystemCreateSlideOver.vue';
-import SystemEditSlideOver from '../../../Components/registry/systems/SystemEditSlideOver.vue';
-import type { DicomConnection, DicomNodeOption } from '../../../Components/registry/dicom/DicomConnectionManager.vue';
-import type { DicomNode } from '../../../Components/registry/dicom/DicomNodeManager.vue';
-import SystemWorkspaceDetail, {
-    type SystemDetail,
-} from '../../../Components/registry/systems/SystemWorkspaceDetail.vue';
-import type { NetworkConnection, NetworkNode } from '../../../Components/network/DicomNetworkMap.vue';
 import EmptyState from '../../../Components/ui/EmptyState.vue';
 import PageHeader from '../../../Components/ui/PageHeader.vue';
 import AppLayout from '../../../Layouts/AppLayout.vue';
-import type { RegistryDocumentationItem } from '../../../Components/documentation/documentationTypes';
-import type { RegistryDocumentPagination } from '../../../Components/documents/RegistryDocumentList.vue';
-
 type SelectOption = {
     value: string;
     label: string;
@@ -79,57 +69,42 @@ type SystemItem = {
 type PaginatedSystems = {
     data: SystemItem[];
     total: number;
+    links: Array<{ url: string | null; label: string; active: boolean }>;
 };
 
-const props = withDefaults(
-    defineProps<{
-        items: PaginatedSystems;
-        filters: {
-            search: string;
-            type: string;
-            status: string;
-            manufacturer: string;
-            criticality: string;
-            organization: number | null;
-            site: number | null;
-            department: number | null;
-            selected: string | null;
-        };
-        systemTypes: SelectOption[];
-        statuses: SelectOption[];
-        manufacturers: SelectOption[];
-        criticalities: SelectOption[];
-        organizations: OrganizationOption[];
-        sites: SiteOption[];
-        departments: DepartmentOption[];
-        selectedSystem: SystemDetail | null;
-        dicomNodes: DicomNode[];
-        dicomConnections: DicomConnection[];
-        dicomNodeOptions: DicomNodeOption[];
-        documentation: RegistryDocumentationItem[];
-        documents: RegistryDocumentPagination;
-        documentFilters: Record<string, string | undefined>;
-        documentUploaders: Array<{ public_id: string; name: string }>;
-        documentCategories: Array<{ value: string; label: string }>;
-        canUploadDocuments: boolean;
-        canManageDocumentVersions: boolean;
-        canDownloadDocuments: boolean;
-        canViewDocuments: boolean;
-        canUpdateDocuments: boolean;
-        canArchiveDocuments: boolean;
-        topologyNodes?: NetworkNode[];
-        topologyConnections?: NetworkConnection[];
-        canManage: boolean;
-        canManageSelected: boolean;
-        canManageDicomNodes: boolean;
-        canManageDicomConnections: boolean;
-        runnableDicomConnectionServices: DicomConnection['service'][];
-    }>(),
-    {
-        topologyNodes: () => [],
-        topologyConnections: () => [],
-    },
-);
+const props = defineProps<{
+    items: PaginatedSystems;
+    filters: {
+        search: string;
+        type: string;
+        status: string;
+        manufacturer: string;
+        criticality: string;
+        organization: number | null;
+        site: number | null;
+        department: number | null;
+    };
+    systemTypes: SelectOption[];
+    statuses: SelectOption[];
+    manufacturers: SelectOption[];
+    criticalities: SelectOption[];
+    organizations: OrganizationOption[];
+    sites: SiteOption[];
+    departments: DepartmentOption[];
+    canManage: boolean;
+}>();
+const page = usePage();
+onMounted(() => {
+    const query = new URLSearchParams(page.url.split('?')[1] ?? '');
+    const selected = query.get('selected');
+    if (selected && /^[a-f0-9-]{36}$/i.test(selected)) {
+        query.delete('selected');
+        const returnTo = '/systems' + (query.size ? '?' + query.toString() : '');
+        router.visit(`/systems/${selected}?return_to=${encodeURIComponent(returnTo)}`, { replace: true });
+    }
+});
+const detailUrl = (system: SystemItem): string =>
+    `/systems/${system.public_id}?return_to=${encodeURIComponent(page.url)}`;
 
 const search = ref(props.filters.search);
 const type = ref(props.filters.type);
@@ -141,12 +116,6 @@ const site = ref<number | null>(props.filters.site);
 const department = ref<number | null>(props.filters.department);
 
 const createPanelOpen = ref(false);
-const editPanelOpen = ref(false);
-
-const focusedSystem = ref<SystemItem | null>(
-    props.items.data.find((item) => item.public_id === props.selectedSystem?.public_id) ?? props.items.data[0] ?? null,
-);
-const actionSystem = ref<SystemDetail | SystemItem | null>(null);
 
 const hasSystems = computed(() => props.items.data.length > 0);
 
@@ -185,18 +154,6 @@ watch(site, () => {
     }
 });
 
-watch(
-    () => [props.items.data, props.selectedSystem?.public_id] as const,
-    ([systems, selectedPublicId]) => {
-        if (systems.length === 0) {
-            focusedSystem.value = null;
-            return;
-        }
-
-        focusedSystem.value = systems.find((system) => system.public_id === selectedPublicId) ?? systems[0];
-    },
-);
-
 const applyFilters = (): void => {
     router.get(
         '/systems',
@@ -209,7 +166,6 @@ const applyFilters = (): void => {
             organization: organization.value ?? undefined,
             site: site.value ?? undefined,
             department: department.value ?? undefined,
-            selected: props.selectedSystem?.public_id ?? undefined,
         },
         {
             preserveState: true,
@@ -263,60 +219,6 @@ const statusClass = (value: string): string =>
         inactive: 'bg-slate-100 text-slate-600 ring-slate-200',
         retired: 'bg-slate-200 text-slate-700 ring-slate-300',
     })[value] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
-
-const criticalityClass = (value: string): string =>
-    ({
-        low: 'bg-slate-100 text-slate-600 ring-slate-200',
-        medium: 'bg-blue-50 text-blue-700 ring-blue-200',
-        high: 'bg-amber-50 text-amber-700 ring-amber-200',
-        critical: 'bg-red-50 text-red-700 ring-red-200',
-    })[value] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
-
-const selectSystem = (system: SystemItem): void => {
-    focusedSystem.value = system;
-
-    router.get(
-        '/systems',
-        {
-            search: search.value || undefined,
-            type: type.value || undefined,
-            status: status.value || undefined,
-            manufacturer: manufacturer.value || undefined,
-            criticality: criticality.value || undefined,
-            organization: organization.value ?? undefined,
-            site: site.value ?? undefined,
-            department: department.value ?? undefined,
-            selected: system.public_id,
-        },
-        {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-            only: [
-                'selectedSystem',
-                'dicomNodes',
-                'dicomConnections',
-                'dicomNodeOptions',
-                'documentation',
-                'topologyNodes',
-                'topologyConnections',
-                'canManageSelected',
-                'canManageDicomNodes',
-                'canManageDicomConnections',
-            ],
-        },
-    );
-};
-
-const openEditPanel = (system: SystemDetail | SystemItem): void => {
-    actionSystem.value = system;
-    editPanelOpen.value = true;
-};
-
-const closeEditPanel = (): void => {
-    editPanelOpen.value = false;
-    actionSystem.value = null;
-};
 </script>
 
 <template>
@@ -361,7 +263,7 @@ const closeEditPanel = (): void => {
 
         <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <form @submit.prevent="applyFilters">
-                <div class="grid gap-3 xl:grid-cols-[minmax(260px,1.4fr)_160px_160px_180px_160px_auto_auto]">
+                <div class="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
                     <div class="relative">
                         <Search :size="18" class="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
 
@@ -373,28 +275,44 @@ const closeEditPanel = (): void => {
                         />
                     </div>
 
-                    <select v-model="type" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                    <select
+                        v-model="type"
+                        aria-label="Systemtyp"
+                        class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                    >
                         <option value="">Alle Typen</option>
                         <option v-for="option in systemTypes" :key="option.value" :value="option.value">
                             {{ option.label }}
                         </option>
                     </select>
 
-                    <select v-model="status" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                    <select
+                        v-model="status"
+                        aria-label="Betriebsstatus"
+                        class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                    >
                         <option value="">Alle Status</option>
                         <option v-for="option in statuses" :key="option.value" :value="option.value">
                             {{ option.label }}
                         </option>
                     </select>
 
-                    <select v-model="manufacturer" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                    <select
+                        v-model="manufacturer"
+                        aria-label="Hersteller"
+                        class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                    >
                         <option value="">Alle Hersteller</option>
                         <option v-for="option in manufacturers" :key="option.value" :value="option.value">
                             {{ option.label }}
                         </option>
                     </select>
 
-                    <select v-model="criticality" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                    <select
+                        v-model="criticality"
+                        aria-label="Kritikalität"
+                        class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+                    >
                         <option value="">Alle Kritikalitäten</option>
                         <option v-for="option in criticalities" :key="option.value" :value="option.value">
                             {{ option.label }}
@@ -457,115 +375,99 @@ const closeEditPanel = (): void => {
             :icon="Server"
         />
 
-        <div v-else class="mt-6 grid min-h-[720px] gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
-            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-                    <div>
-                        <h2 class="font-semibold text-slate-950">Systemauswahl</h2>
-                        <p class="text-xs text-slate-500">{{ items.total }} Systeme gefunden</p>
-                    </div>
-                </header>
-
-                <div class="max-h-[760px] divide-y divide-slate-100 overflow-y-auto">
-                    <button
-                        v-for="system in items.data"
-                        :key="system.public_id"
-                        type="button"
-                        class="w-full px-4 py-4 text-left transition"
-                        :class="
-                            focusedSystem?.public_id === system.public_id
-                                ? 'bg-blue-50 ring-1 ring-blue-200 ring-inset'
-                                : 'hover:bg-slate-50'
-                        "
-                        @click="selectSystem(system)"
-                    >
-                        <div class="flex items-start gap-3">
-                            <span
-                                class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
-                                :class="
-                                    system.failed_dicom_nodes_count > 0
-                                        ? 'bg-red-500'
-                                        : system.status === 'active'
-                                          ? 'bg-emerald-500'
-                                          : 'bg-amber-500'
-                                "
-                            />
-
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-start justify-between gap-2">
-                                    <p class="truncate text-sm font-semibold text-slate-950">
-                                        {{ system.name }}
-                                    </p>
-
-                                    <span
-                                        class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset"
-                                        :class="statusClass(system.status)"
-                                    >
-                                        {{ labelFor(statuses, system.status) }}
-                                    </span>
-                                    <span
-                                        v-if="system.criticality"
-                                        class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset"
-                                        :class="criticalityClass(system.criticality)"
-                                    >
-                                        {{ labelFor(criticalities, system.criticality) }}
-                                    </span>
-                                </div>
-
-                                <p class="mt-1 text-xs font-medium text-blue-700">
-                                    {{ labelFor(systemTypes, system.system_type) }}
+        <section v-else class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <header class="border-b border-slate-200 px-5 py-4">
+                <h2 class="font-semibold text-slate-950">Systembestand</h2>
+                <p class="text-sm text-slate-500">
+                    {{ items.total }} Systeme · System öffnen, um Details und Schnittstellen zu bearbeiten.
+                </p>
+            </header>
+            <div class="divide-y divide-slate-100 md:hidden">
+                <Link
+                    v-for="system in items.data"
+                    :key="system.public_id"
+                    :href="detailUrl(system)"
+                    class="block px-5 py-4 hover:bg-slate-50"
+                >
+                    <span class="font-semibold text-blue-700">{{ system.name }}</span>
+                    <p class="mt-1 text-sm text-slate-600">
+                        {{ labelFor(systemTypes, system.system_type) }} · {{ labelFor(statuses, system.status) }}
+                    </p>
+                    <p class="mt-1 text-xs text-slate-500">
+                        {{ system.site?.name || system.organization.name }} ·
+                        {{ system.dicom_nodes_count }} DICOM-Knoten
+                    </p>
+                    <p v-if="system.failed_dicom_nodes_count" class="mt-1 text-xs text-red-700">
+                        {{ system.failed_dicom_nodes_count }} Prüfungen fehlgeschlagen
+                    </p>
+                </Link>
+            </div>
+            <div class="hidden overflow-x-auto md:block">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 text-xs text-slate-500">
+                        <tr>
+                            <th class="px-5 py-3">System / Produkt</th>
+                            <th class="px-5 py-3">Typ</th>
+                            <th class="px-5 py-3">Betriebsstatus</th>
+                            <th class="px-5 py-3">Standort</th>
+                            <th class="px-5 py-3">Netzwerk</th>
+                            <th class="px-5 py-3">DICOM</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr v-for="system in items.data" :key="system.public_id" class="hover:bg-slate-50">
+                            <td class="px-5 py-4">
+                                <Link :href="detailUrl(system)" class="font-semibold text-blue-700 hover:underline">{{
+                                    system.name
+                                }}</Link>
+                                <p v-if="system.product || system.version" class="mt-1 text-xs text-slate-500">
+                                    {{ [system.product, system.version].filter(Boolean).join(' · ') }}
                                 </p>
-
-                                <p class="mt-2 truncate font-mono text-xs text-slate-500">
-                                    {{ system.ip_address || system.hostname || 'Kein Netzwerkendpunkt' }}
-                                </p>
-
-                                <div class="mt-2 flex items-center gap-3 text-[11px] text-slate-500">
-                                    <span>
-                                        {{ system.dicom_nodes_count }}
-                                        DICOM
-                                    </span>
-
-                                    <span v-if="system.failed_dicom_nodes_count > 0" class="font-semibold text-red-700">
-                                        {{ system.failed_dicom_nodes_count }}
-                                        auffällig
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </button>
-                </div>
-            </section>
-
-            <SystemWorkspaceDetail
-                v-if="selectedSystem"
-                :system="selectedSystem"
-                :system-types="systemTypes"
-                :statuses="statuses"
-                :criticalities="criticalities"
-                :dicom-nodes="dicomNodes"
-                :dicom-connections="dicomConnections"
-                :dicom-node-options="dicomNodeOptions"
-                :topology-nodes="topologyNodes"
-                :topology-connections="topologyConnections"
-                :can-manage="canManageSelected"
-                :can-manage-dicom-nodes="canManageDicomNodes"
-                :can-manage-dicom-connections="canManageDicomConnections"
-                :runnable-dicom-connection-services="runnableDicomConnectionServices"
-                :documentation="documentation"
-                :documents="documents"
-                :document-categories="documentCategories"
-                :can-upload-documents="canUploadDocuments"
-                :can-manage-document-versions="canManageDocumentVersions"
-                :can-download-documents="canDownloadDocuments"
-                :can-view-documents="canViewDocuments"
-                :can-update-documents="canUpdateDocuments"
-                :can-archive-documents="canArchiveDocuments"
-                :document-filters="documentFilters"
-                :document-uploaders="documentUploaders"
-                @edit="openEditPanel"
-            />
-        </div>
+                            </td>
+                            <td class="px-5 py-4">{{ labelFor(systemTypes, system.system_type) }}</td>
+                            <td class="px-5 py-4">
+                                <span
+                                    class="inline-flex rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset"
+                                    :class="statusClass(system.status)"
+                                    >{{ labelFor(statuses, system.status) }}</span
+                                >
+                            </td>
+                            <td class="px-5 py-4">
+                                {{ system.site?.name || 'Nicht zugeordnet' }}
+                                <p class="mt-1 text-xs text-slate-500">{{ system.organization.name }}</p>
+                            </td>
+                            <td class="px-5 py-4 font-mono text-xs">
+                                {{ system.ip_address || system.hostname || 'Nicht hinterlegt' }}
+                            </td>
+                            <td class="px-5 py-4">
+                                {{ system.dicom_nodes_count }} Knoten<span
+                                    v-if="system.failed_dicom_nodes_count > 0"
+                                    class="mt-1 block text-xs text-red-700"
+                                    >{{ system.failed_dicom_nodes_count }} fehlgeschlagen</span
+                                >
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <nav v-if="items.links.length > 3" aria-label="Systemseiten" class="mt-4 flex flex-wrap gap-2">
+            <template v-for="(link, index) in items.links" :key="index">
+                <Link
+                    v-if="link.url"
+                    :href="link.url"
+                    :aria-current="link.active ? 'page' : undefined"
+                    class="rounded-lg border px-3 py-2 text-sm"
+                    :class="
+                        link.active ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-300 text-slate-600'
+                    "
+                    >{{ index === 0 ? 'Zurück' : index === items.links.length - 1 ? 'Weiter' : link.label }}</Link
+                >
+                <span v-else class="px-3 py-2 text-sm text-slate-400">{{
+                    index === 0 ? 'Zurück' : index === items.links.length - 1 ? 'Weiter' : link.label
+                }}</span>
+            </template>
+        </nav>
 
         <SystemCreateSlideOver
             :open="createPanelOpen"
@@ -577,19 +479,6 @@ const closeEditPanel = (): void => {
             :manufacturers="manufacturers"
             :criticalities="criticalities"
             @close="createPanelOpen = false"
-        />
-
-        <SystemEditSlideOver
-            :open="editPanelOpen"
-            :system="actionSystem"
-            :organizations="organizations"
-            :sites="sites"
-            :departments="departments"
-            :system-types="systemTypes"
-            :statuses="statuses"
-            :manufacturers="manufacturers"
-            :criticalities="criticalities"
-            @close="closeEditPanel"
         />
     </AppLayout>
 </template>

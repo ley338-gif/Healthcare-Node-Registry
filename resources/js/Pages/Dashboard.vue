@@ -26,6 +26,8 @@ type Summary = {
     systems: number;
     dicomNodes: number;
     connections: number;
+    successfulDicomNodes: number;
+    notTestableDicomNodes: number;
     failedDicomNodes: number;
     unverifiedDicomNodes: number;
 };
@@ -138,16 +140,18 @@ const changeIconClass = (eventType: string): string => {
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head title="Übersicht" />
 
     <AppLayout>
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
                 <p class="text-xs font-semibold tracking-wider text-blue-600 uppercase">Betriebsübersicht</p>
 
-                <h1 class="mt-2 text-2xl font-semibold text-slate-950">Dashboard</h1>
+                <h1 class="mt-2 text-2xl font-semibold text-slate-950">Healthcare-Registry</h1>
 
-                <p class="mt-1 text-sm text-slate-500">Aktueller Zustand der System- und DICOM-Registry.</p>
+                <p class="mt-1 text-sm text-slate-500">
+                    Healthcare-Systeme erfassen, DICOM-Kommunikation dokumentieren und Verbindungen prüfen.
+                </p>
             </div>
 
             <div class="flex flex-wrap gap-2">
@@ -421,16 +425,11 @@ const changeIconClass = (eventType: string): string => {
                     <div class="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3">
                         <div class="flex items-center gap-3">
                             <CircleCheck :size="18" class="text-emerald-600" />
-                            <span class="text-sm text-slate-700"> Ohne bekannten Fehler </span>
+                            <span class="text-sm text-slate-700"> Erfolgreich geprüft </span>
                         </div>
 
                         <strong class="text-slate-950">
-                            {{
-                                Math.max(
-                                    summary.dicomNodes - summary.failedDicomNodes - summary.unverifiedDicomNodes,
-                                    0,
-                                )
-                            }}
+                            {{ summary.successfulDicomNodes }}
                         </strong>
                     </div>
 
@@ -457,6 +456,14 @@ const changeIconClass = (eventType: string): string => {
                             {{ summary.unverifiedDicomNodes }}
                         </strong>
                     </div>
+                    <div class="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3">
+                        <span class="text-sm text-slate-600">Nicht per C-ECHO prüfbar</span>
+                        <strong class="text-slate-700">{{ summary.notTestableDicomNodes }}</strong>
+                    </div>
+                    <p class="text-xs leading-5 text-slate-500">
+                        Gespeichertes Ergebnis der letzten C-ECHO-Prüfung; keine Aussage zur aktuellen Erreichbarkeit.
+                        Knoten ohne C-ECHO-Unterstützung werden separat gezählt.
+                    </p>
                 </div>
 
                 <Link

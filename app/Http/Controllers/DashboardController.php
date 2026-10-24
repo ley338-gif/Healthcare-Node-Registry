@@ -119,17 +119,17 @@ final class DashboardController extends Controller
             ];
         }
 
-        $failedDicomNodes = DicomNode::query()
-            ->active()
+        $successfulDicomNodes = DicomNode::query()->active()
+            ->where('supports_echo', true)->whereNotNull('last_verified_at')
+            ->where('last_verification_status', 'success')->count();
+        $failedDicomNodes = DicomNode::query()->active()
+            ->where('supports_echo', true)->whereNotNull('last_verified_at')
             ->whereNotNull('last_verification_status')
-            ->where('last_verification_status', '!=', 'success')
-            ->count();
-
-        $unverifiedDicomNodes = DicomNode::query()
-            ->active()
+            ->where('last_verification_status', '!=', 'success')->count();
+        $unverifiedDicomNodes = DicomNode::query()->active()
             ->where('supports_echo', true)
-            ->whereNull('last_verified_at')
-            ->count();
+            ->where(fn ($query) => $query->whereNull('last_verified_at')->orWhereNull('last_verification_status'))->count();
+        $notTestableDicomNodes = DicomNode::query()->active()->where('supports_echo', false)->count();
 
         /** @var Collection<int, SecurityEvent> $events */
         $events = SecurityEvent::query()
@@ -189,6 +189,8 @@ final class DashboardController extends Controller
                 'systems' => $systems,
                 'dicomNodes' => $dicomNodes,
                 'connections' => $connections,
+                'successfulDicomNodes' => $successfulDicomNodes,
+                'notTestableDicomNodes' => $notTestableDicomNodes,
                 'failedDicomNodes' => $failedDicomNodes,
                 'unverifiedDicomNodes' => $unverifiedDicomNodes,
             ],
@@ -214,7 +216,7 @@ final class DashboardController extends Controller
                 ],
                 [
                     'label' => 'C-ECHO-Prüfungen durchführen',
-                    'completed' => ($dicomNodes - $unverifiedDicomNodes) > 0,
+                    'completed' => ($successfulDicomNodes + $failedDicomNodes) > 0,
                     'href' => '/systems',
                 ],
             ],

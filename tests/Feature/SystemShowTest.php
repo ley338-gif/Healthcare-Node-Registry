@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\DicomNode;
 use App\Models\Role;
 use App\Models\System;
 use App\Models\User;
@@ -31,6 +32,8 @@ final class SystemShowTest extends TestCase
             'status' => 'active',
         ]);
 
+        DicomNode::factory()->for($system)->create();
+
         $this
             ->actingAs($user)
             ->get("/systems/{$system->public_id}")
@@ -43,7 +46,9 @@ final class SystemShowTest extends TestCase
                 ->has('system.organization')
                 ->has('system.site')
                 ->has('system.department')
-                ->has('dicomNodes')
+                ->has('dicomNodes', 1)
+                ->has('topologyNodes', 1)
+                ->has('topologyConnections', 0)
                 ->where('canManageDicomNodes', true)
                 ->has('systemTypes')
                 ->has('statuses')
